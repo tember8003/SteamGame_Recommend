@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Recommend UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 40px; }
+        .section h2 { margin-bottom: 10px; }
+        label { display: block; margin-top: 5px; }
+        input[type="text"], input[type="number"] { width: 300px; padding: 5px; }
+        button { margin-top: 10px; padding: 5px 10px; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+
+        #random-tags-container {
+          display: flex;
+          flex-wrap: wrap;
+          margin-top: 5px;
+        }
+        #random-tags-container label {
+          width: calc(100% / 8 - 10px);
+          margin-right: 10px;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+        #random-tags-container label:nth-child(8n) {
+          margin-right: 0;
+        }
+        label { display: block; margin-top: 10px; }
+        input[type="text"], input[type="number"] { width: 200px; padding: 5px; }
+
+        button { margin-top: 10px; padding: 5px 10px; cursor: pointer; }
+
+        .game-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 20px;
+          background: #f9f9f9;
+          border: 1px solid #ddd;
+          padding: 15px;
+          border-radius: 8px;
+          margin-top: 20px;
+          max-width: 800px;
+        }
+        .game-card img {
+          width: 200px;
+          height: auto;
+          border-radius: 4px;
+        }
+        .game-info {
+          flex: 1;
+        }
+        .game-info h3 {
+          margin: 0 0 10px;
+        }
+        .game-info p {
+          margin: 0 0 10px;
+          line-height: 1.4;
+        }
+        .game-info a {
+          display: inline-block;
+          margin-top: 10px;
+          color: #007bff;
+          text-decoration: none;
+        }
+        .game-info a:hover {
+          text-decoration: underline;
+        }
+        .tags-list {
+          margin-top: 10px;
+        }
+        .tags-list span {
+          display: inline-block;
+          background: #e0e0e0;
+          color: #333;
+          padding: 2px 6px;
+          border-radius: 4px;
+          margin-right: 5px;
+          margin-bottom: 5px;
+          font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<h1>Game Recommendation Tester</h1>
+
+<div class="section" id="random">
+    <h2>태그 기반 랜덤 추천</h2>
+    <fieldset>
+        <legend>Tags</legend>
+        <div id="random-tags-container"></div>
+    </fieldset>
+    <label>Review score (number): <input type="number" id="random-review" value="0" /></label>
+    <label><input type="checkbox" id="random-korean" /> Korean only?</label>
+    <label><input type="checkbox" id="random-free" /> Free only?</label>
+    <button onclick="callRandom()">추천 받기</button>
+    <div id="random-result"></div>
+</div>
+
+<div class="section" id="input">
+    <h2>직접 입력 태그 추천</h2>
+    <label>Text: <input type="text" id="input-text" /></label>
+    <button onclick="callInput()">추천 받기</button>
+    <div id="input-result"></div>
+</div>
+
+<div class="section" id="profile">
+    <h2>내 프로필 게임 기반 추천</h2>
+    <label>Steam ID: <input type="text" id="profile-id" /></label>
+    <button onclick="callProfile()">추천 받기</button>
+    <div id="profile-result"></div>
+</div>
+
+<div class="section" id="recent">
+    <h2>최근 2주간 플레이 기준 추천</h2>
+    <label>Steam ID: <input type="text" id="recent-id" /></label>
+    <button onclick="callRecent()">추천 받기</button>
+    <div id="recent-result"></div>
+</div>
+
+<div class="section" id="similar">
+    <h2>비슷한 태그 게임 추천</h2>
+    <label>Game Name: <input type="text" id="similar-name" /></label>
+    <button onclick="callSimilar()">추천 받기</button>
+    <div id="similar-result"></div>
+</div>
+
+<div class="section" id="tags">
+    <h2>모든 태그 리스트</h2>
+    <button onclick="callTags()">태그 불러오기</button>
+    <div id="tags-result"></div>
+</div>
+
+<script>
+    const tagsList = [
+      "2D","3D","RPG","액션","어드벤처","캐주얼","인디","전략","시뮬레이션",
+      "멀티플레이어","싱글 플레이어","협동","앞서 해보기","오픈 월드","풍부한 스토리",
+      "퍼즐","플랫폼","슈팅","FPS","3인칭","VR","판타지","SF","공포","생존",
+      "애니메이션","비주얼 노벨","픽셀 그래픽","턴제","카드 게임","샌드박스",
+      "건설","크래프팅","미스터리","코미디","어두운","고어","폭력","귀여운",
+      "심리적 공포","수사","좀비","온라인 협동","핵 앤 슬래시","격투","비뎀업",
+      "탄막 슈팅","횡스크롤","로그라이크","로그라이트","액션 RPG","액션 어드벤처",
+      "MMO","JRPG","던전 크롤러","매치 3","스포츠","레이싱","1인칭","3인칭 슈팅",
+      "리듬","음악","경영","클리커","전술","잠입","탐험"
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('random-tags-container');
+      tagsList.forEach(tag => {
+        const lbl = document.createElement('label');
+        lbl.innerHTML = `<input type="checkbox" name="tags" value="${tag}"> ${tag}`;
+        container.appendChild(lbl);
+      });
+    });
+
+    const baseUrl = '';
+    async function callRandom() {
+      const tags = Array
+        .from(document.querySelectorAll('#random-tags-container input[name="tags"]:checked'))
+        .map(cb => cb.value);
+
+      const body = {
+        tags,
+        review: +document.getElementById('random-review').value,
+        korean_check: document.getElementById('random-korean').checked,
+        free_check:   document.getElementById('random-free').checked
+      };
+
+      const res = await fetch(baseUrl + '/api/recommend/random', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      renderGameResult(data);
+    }
+
+    function renderGameResult(data, containerId = 'random-result') {
+      let game, usedTags;
+      if (data.recommendedGame) {
+        game = data.recommendedGame;
+        usedTags = data.usedTags;
+      } else {
+        game = data;
+      }
+
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
+        <div class="game-card">
+          <img src="${game.headerImage}" alt="${game.name} header" />
+          <div class="game-info">
+            <h3>${game.name} (AppID: ${game.appid})</h3>
+            <p>${game.shortDescription}</p>
+            <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
+            ${usedTags ? `
+              <div class="tags-list">
+                ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+
+    async function callInput() {
+      const text = document.getElementById('input-text').value;
+      const res = await fetch(baseUrl + '/api/recommend/input', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ text }) });
+      const data = await res.json();
+      renderGameResult(data, 'input-result');
+    }
+
+    async function callProfile() {
+      const steamId = document.getElementById('profile-id').value;
+      const res = await fetch(baseUrl + '/api/recommend/profile', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ steamId }) });
+      const data = await res.json();
+      renderGameResult(data, 'profile-result');
+    }
+
+    async function callRecent() {
+      const steamId = document.getElementById('recent-id').value;
+      const res = await fetch(baseUrl + '/api/recommend/RecentPlay', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ steamId }) });
+      const data = await res.json();
+      renderGameResult(data, 'recent-result');
+    }
+
+    async function callSimilar() {
+      const name = encodeURIComponent(document.getElementById('similar-name').value);
+      const res = await fetch(baseUrl + '/api/recommend/similar?gameName=' + name);
+      const data = await res.json();
+      renderGameResult(data, 'similar-result');
+    }
+
+    async function callTags() {
+      const res = await fetch(baseUrl + '/api/tags');
+      document.getElementById('tags-result').textContent = await res.json().then(JSON.stringify);
+    }
+
+</script>
+</body>
+</html>

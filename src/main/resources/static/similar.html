@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Game Recommend By Similar Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; padding:0; background:#f2f5f9; font-family:'Roboto',Arial,sans-serif; color:#333; }
+        .container { max-width:900px; margin:30px auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+        h1,h2 { text-align:center; color:#111827; margin-bottom:20px; }
+        a.back { display:inline-block; margin-bottom:20px; color:#3b82f6; text-decoration:none; font-weight:500; }
+        a.back:hover { text-decoration:underline; }
+        input[type="text"] { width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
+        button { display:block; background:#3b82f6; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin:20px auto; transition:background 0.3s; }
+        button:hover { background:#2563eb; }
+        .game-card { display:flex; flex-wrap:wrap; gap:20px; background:#fafafa; border:1px solid #ddd; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); margin-top:20px; }
+        .game-card img { width:180px; border-radius:8px; flex-shrink:0; }
+        .game-info { flex:1; min-width:0; }
+        .game-info h3 { margin-bottom:10px; font-size:1.2em; }
+        .game-info p { margin-bottom:10px; font-size:0.95em; line-height:1.4; }
+        .game-info a { display:inline-block; color:#3b82f6; text-decoration:none; font-weight:500; }
+        .game-info a:hover { text-decoration:underline; }
+        .tags-list span { display:inline-block; background:#e5e7eb; color:#374151; padding:4px 8px; border-radius:5px; margin:3px 5px 0 0; font-size:0.85em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎮 비슷한 태그 게임 추천</h1>
+    <a href="index.html" class="back">← 홈으로 돌아가기</a>
+    <div class="section" id="similar">
+        <h2>게임 이름으로 추천 받기</h2>
+        <input type="text" id="similar-name" placeholder="추천받을 게임 이름을 입력하세요" />
+        <button onclick="callSimilar()">추천 받기</button>
+        <div id="similar-result"></div>
+    </div>
+</div>
+<script>
+    const baseUrl = '';
+    async function callSimilar() {
+      const name = encodeURIComponent(document.getElementById('similar-name').value);
+      const res = await fetch(`${baseUrl}/api/recommend/similar?gameName=${name}`);
+      const data = await res.json();
+      renderGameResult(data);
+    }
+    function renderGameResult(data, containerId='similar-result') {
+      const game = data.recommendedGame || data;
+      const usedTags = data.usedTags || [];
+      const container = document.getElementById(containerId);
+      if (!game.appid) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#d00; font-weight:500;">
+                  게임을 찾지 못했습니다!
+                </div>
+            `;
+            return;
+      }
+      container.innerHTML = `
+        <div class="game-card">
+          <img src="${game.headerImage}" alt="${game.name}" />
+          <div class="game-info">
+            <h3>${game.name} (AppID: ${game.appid})</h3>
+            <p>${game.shortDescription}</p>
+            <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
+            ${usedTags.length ? `
+              <div class="tags-list">
+                ${usedTags.map(t=>`<span>${t}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+</script>
+</body>
+</html>

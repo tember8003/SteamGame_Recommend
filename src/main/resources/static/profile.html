@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Recommend By Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f5f9;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #111827;
+        }
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .game-card {
+            display: flex;
+            gap: 20px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        .game-card img {
+            width: 180px;
+            border-radius: 8px;
+        }
+        .game-info {
+            flex: 1;
+        }
+        .tags-list span {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 4px 8px;
+            border-radius: 5px;
+            margin-right: 5px;
+            margin-top: 5px;
+            display: inline-block;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎮 내 프로필 게임 기반 추천</h1>
+    <p style="text-align:center;"><a href="index.html">← 홈으로 돌아가기</a></p>
+
+    <div class="section" id="profile">
+        <h2>Steam ID 입력</h2>
+        <input type="text" id="profile-id" placeholder="Steam ID를 입력하세요" />
+        <button onclick="callProfile()">추천 받기</button>
+        <div id="profile-result"></div>
+    </div>
+</div>
+
+<script>
+    const baseUrl = '';
+
+    function renderGameResult(data, containerId = 'profile-result') {
+      let game, usedTags;
+      if (data.recommendedGame) {
+        game = data.recommendedGame;
+        usedTags = data.usedTags;
+      } else {
+        game = data;
+      }
+
+      const container = document.getElementById(containerId);
+
+      if (!game.appid) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#d00; font-weight:500;">
+                  게임을 찾지 못했습니다!
+                </div>
+            `;
+            return;
+      }
+      container.innerHTML = `
+        <div class="game-card">
+          <img src="${game.headerImage}" alt="${game.name} header" />
+          <div class="game-info">
+            <h3>${game.name} (AppID: ${game.appid})</h3>
+            <p>${game.shortDescription}</p>
+            <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
+            ${usedTags ? `
+              <div class="tags-list">
+                ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    async function callProfile() {
+      const steamId = document.getElementById('profile-id').value;
+      const res = await fetch(baseUrl + '/api/recommend/profile', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ steamId })
+      });
+      const data = await res.json();
+      renderGameResult(data);
+    }
+</script>
+</body>
+</html>
