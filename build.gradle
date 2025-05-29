@@ -1,0 +1,54 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'SteamGame'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+	maven {
+		name = 'Central Portal Snapshots'
+		url = 'https://central.sonatype.com/repository/maven-snapshots/'
+	}
+}
+
+dependencies {
+	implementation 'mysql:mysql-connector-java:8.0.33'
+	implementation 'org.springframework.ai:spring-ai-core:0.8.1'
+	implementation 'org.springframework.ai:spring-ai-vertex-ai-spring-boot-starter:0.8.0-SNAPSHOT'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'com.bucket4j:bucket4j-core:8.3.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
