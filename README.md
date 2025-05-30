@@ -1,10 +1,18 @@
 # 🎮 SteamGame Recommend API & UI
 
-Steam 게임을 태그 기반, 사용자 프로필, 최근 플레이 정보 등 다양한 방식으로 추천해주는 시스템입니다.
+Steam 게임을 태그 기반으로 하여금 사용자 프로필, 최근 플레이 정보, Gemini API 등 다양한 정보를 활용해 게임을 추천해주는 시스템입니다.
+
+### ✨추가 정보
+
+약 60000개 정도의 게임 정보가 데이터베이스 내에 담겨있습니다.  **2025년 5월 기준 데이터**임을 참고해주시길 바랍니다.
+
+실행 날짜에 따라 없는 게임도 있을 수 있습니다 😭
+
+---
 
 ## 📁 프로젝트 구성
 
-SteamGame_public/
+SteamGame_recommend/
 
 ├── backend/                 # Spring Boot REST API
 
@@ -27,6 +35,8 @@ SteamGame_public/
 │   └── similar.html         # 비슷한 태그 추천
 
 └── docker-compose.yml       # MySQL 컨테이너 설정
+
+---
 
 ## ✅ 사전 준비 사항
 
@@ -62,8 +72,8 @@ SteamGame_public/
 ### 1. 프로젝트 클론
 
 ```bash
-git clone <https://github.com/your-org/SteamGame_public.git>
-cd SteamGame_public
+git clone https://github.com/tember8003/SteamGame_Recommend.git
+cd SteamGame_Recommend
 ```
 
 ### 2. MySQL 컨테이너 실행
@@ -117,12 +127,14 @@ cd backend
 
 | 기능 설명 | 파일 경로 |
 | --- | --- |
-| 홈 (기능 선택) | `/index.html` |
+| 홈 (기능 선택) | `/` |
 | 태그 기반 추천 | `/random.html` |
 | 직접 입력 태그 추천 | `/input.html` |
 | 프로필 기반 추천 | `/profile.html` |
 | 최근 2주 플레이 기반 추천 | `/recent.html` |
 | 비슷한 태그 추천 | `/similar.html` |
+
+---
 
 ## ⚙️ 설정 예시
 
