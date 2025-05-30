@@ -2,39 +2,24 @@
 
 Steam 게임을 태그 기반으로 하여금 사용자 프로필, 최근 플레이 정보, Gemini API 등 다양한 정보를 활용해 게임을 추천해주는 시스템입니다.
 
-### ✨추가 정보
-
-약 60000개 정도의 게임 정보가 데이터베이스 내에 담겨있습니다.  **2025년 5월 기준 데이터**임을 참고해주시길 바랍니다.
-
-실행 날짜에 따라 없는 게임도 있을 수 있습니다 😭
+> 🔍 약 60,000개 게임 데이터 기반 (2025년 5월 기준). 일부 게임은 이후 삭제되어 추천되지 않을 수 있습니다.
 
 ---
 
 ## 📁 프로젝트 구성
 
-SteamGame_recommend/
-
-├── backend/                 # Spring Boot REST API
-
-│   └── src/main/resources/
-
-│       └── application.properties
-
-├── templates/                    # HTML 기반 추천 UI (기능별 페이지)
-
-│   ├── index.html           # 홈 (메뉴)
-
-│   ├── random.html          # 태그 기반 랜덤 추천
-
-│   ├── input.html           # 직접 입력 태그 추천
-
-│   ├── profile.html         # 프로필 기반 추천
-
-│   ├── recent.html          # 최근 2주 플레이 기반 추천
-
-│   └── similar.html         # 비슷한 태그 추천
-
-└── docker-compose.yml       # MySQL 컨테이너 설정
+recommend/
+├── src/main
+│ └── java/SteamGame.recommend/ # Spring Boot REST API
+│ └── resources/application.properties
+├ └── resources/templates/ # HTML 기반 추천 UI
+│     ├── index.html # 홈 (기능 메뉴)
+│     ├── random.html # 태그 기반 랜덤 추천
+│     ├── input.html # 직접 입력 태그 추천
+│     ├── profile.html # 프로필 기반 추천
+│     ├── recent.html # 최근 2주 플레이 기반 추천
+│     └── similar.html # 비슷한 태그 추천
+└── docker-compose.yml # MySQL 컨테이너 설정
 
 ---
 
@@ -42,29 +27,35 @@ SteamGame_recommend/
 
 - JDK 17 이상
 - Git
-- (선택) Docker & Docker Compose
+- Docker & Docker Compose
 - 다음 환경변수 설정 필요:
     - `STEAM_API_KEY`: Steam Web API 키
     - `GEMINI_API_KEY`: Google Gemini API 키
+- 사용 포트: **3307 (MySQL)**, **6379 (Redis)** → 포트 충돌이 없는지 확인 필수
 
 ## 🔑 API Key 발급
 
 ### 1. Steam Web API Key
 
-1. Steam 계정으로 [Steam API Key 등록 페이지](https://steamcommunity.com/dev/apikey)에 접속
-2. 도메인 입력란(`Domain Name`)에 `localhost` 또는 여러분 서버 도메인을 입력
-3. **“Register”** 클릭 → 발급된 **API Key** 복사해서 `STEAM_API_KEY` 로 설정
+Steam 계정으로 로그인한 후 Steam API Key 등록 페이지(https://steamcommunity.com/dev/apikey)에 접속
 
-### 2. Google Gemini API Key
+Domain Name에는 아무 주소나 입력 (예: localhost)
 
-1. Google Cloud Console 열기: https://console.cloud.google.com/
-2. 새 프로젝트 생성 혹은 기존 프로젝트 선택
-3. 좌측 메뉴 **“APIs & Services > Library”**
-    - “Vertex AI API” (또는 “Generative AI API”) 검색 → **Enable**
-4. **“APIs & Services > Credentials”**
-    - **Create credentials > API key** 클릭 → 생성된 키 복사
-    - `GEMINI_API_KEY` 로 설정
+하단의 “I agree” 체크 후 “Register” 클릭
 
+발급된 API Key를 복사해서 하단 실행 방법 3 환경변수 설정에 `STEAM_API_KEY`로 설정
+
+> ⚠️ Steam Guard 미인증 계정, 커뮤니티 제한 계정은 발급 불가
+
+### 2. Google Gemini API Key 발급 방법 (Google AI Studio 기준)
+
+Google AI Studio(https://aistudio.google.com/app/apikey) 접속
+
+로그인 후, “Create API Key” 클릭
+
+생성된 API Key를 복사해서 하단 실행 방법 3 환경변수 설정에 `GEMINI_API_KEY`로 설정
+
+> 
 ---
 
 ## 🚀 실행 방법
@@ -100,20 +91,9 @@ $Env:STEAM_API_KEY = "YOUR_STEAM_API_KEY"
 $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 ```
 
-**Tip**:
-
-`.env`  파일을 쓰고 싶다면, `spring-boot-dotenv` 같은 라이브러리를 추가하거나
-
-```
-spring.config.import=optional:dotenv:
-```
-
-를 `application.properties` 에 선언할 수 있습니다.
-
-### 4. 백엔드 서버 실행
+### 4. 서버 실행
 
 ```bash
-cd backend
 ./gradlew clean bootRun
 ```
 
@@ -121,7 +101,7 @@ cd backend
 - Swagger-UI: http://localhost:8080/swagger-ui/index.html
 - OpenAPI JSON: http://localhost:8080/v3/api-docs
 
-### 5. UI 페이지 확인
+## 🖥️ UI 페이지 확인
 
 브라우저로 아래 파일을 열어 추천 기능을 확인할 수 있습니다:
 
@@ -138,12 +118,12 @@ cd backend
 
 ## ⚙️ 설정 예시
 
-`backend/src/main/resources/application.properties` 파일 예시:
+`/src/main/resources/application.properties` 파일 예시:
 
 ```bash
 steam.api.key=${STEAM_API_KEY}
 spring.ai.google.api-key=${GEMINI_API_KEY}
-spring.datasource.url=jdbc:mysql://localhost:3306/testdb?serverTimezone=UTC
+spring.datasource.url=jdbc:mysql://localhost:3307/testdb?serverTimezone=UTC
 ```
 
 ## 문의
