@@ -28,4 +28,7 @@ public class Game {
 
     @Column(name = "korean_support")
     private boolean koreanSupport;
+
+    @Column(name = "is_free")
+    private boolean is_free;
 }
