@@ -13,7 +13,7 @@ recommend/
 ├── src/main
 │ └── java/SteamGame.recommend/ # Spring Boot REST API
 │ └── resources/application.properties
-├ └── resources/templates/ # HTML 기반 추천 UI
+├ └── resources/static/ # HTML 기반 추천 UI
 │     ├── index.html # 홈 (기능 메뉴)
 │     ├── random.html # 태그 기반 랜덤 추천
 │     ├── input.html # 직접 입력 태그 추천
