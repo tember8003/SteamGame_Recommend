@@ -8,6 +8,7 @@ Steam 게임을 태그 기반으로 하여금 사용자 프로필, 최근 플레
 
 ## 📁 프로젝트 구성
 
+```
 recommend/
 ├── src/main
 │ └── java/SteamGame.recommend/ # Spring Boot REST API
@@ -20,6 +21,7 @@ recommend/
 │     ├── recent.html # 최근 2주 플레이 기반 추천
 │     └── similar.html # 비슷한 태그 추천
 └── docker-compose.yml # MySQL 컨테이너 설정
+```
 
 ---
 
@@ -55,7 +57,6 @@ Google AI Studio(https://aistudio.google.com/app/apikey) 접속
 
 생성된 API Key를 복사해서 하단 실행 방법 3 환경변수 설정에 `GEMINI_API_KEY`로 설정
 
-> 
 ---
 
 ## 🚀 실행 방법
