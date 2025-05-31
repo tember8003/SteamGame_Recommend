@@ -30,5 +30,5 @@ public class Game {
     private boolean koreanSupport;
 
     @Column(name = "is_free")
-    private boolean is_free;
+    private boolean isFree;
 }
