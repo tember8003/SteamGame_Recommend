@@ -114,6 +114,20 @@
     <div class="section" id="recent">
         <h2>Steam ID 입력</h2>
         <input type="text" id="recent-id" placeholder="Steam ID를 입력하세요" />
+    <div class="controls">
+        <label>
+            Review score:
+            <input type="number" id="input-review" value="0" min="0" />
+        </label>
+        <label>
+            <input type="checkbox" id="input-korean" />
+            Korean only?
+        </label>
+        <label>
+            <input type="checkbox" id="input-free" />
+            Free only?
+        </label>
+    </div>
         <button onclick="callRecent()">추천 받기</button>
         <div id="recent-result"></div>
     </div>
@@ -170,10 +184,16 @@
 
     async function callRecent() {
         const steamId = document.getElementById('recent-id').value;
+        const body = {
+        steamId,
+        review: +document.getElementById('input-review').value,
+        korean_check: document.getElementById('input-korean').checked,
+        free_check:   document.getElementById('input-free').checked
+        };
         const res = await fetch(`${baseUrl}/api/recommend/RecentPlay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ steamId })
+            body: JSON.stringify(body)
         });
         const data = await res.json();
         renderGameResult(data);

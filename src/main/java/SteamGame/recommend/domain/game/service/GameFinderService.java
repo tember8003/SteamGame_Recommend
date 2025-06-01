@@ -54,4 +54,14 @@ public class GameFinderService {
             return appList;
         }
     }
+
+    public Game findGameByAppid(long appid){
+        Game game = gameRepository.findByAppid(appid).orElseThrow();
+
+        if(game==null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게임이 존재하지 않습니다.");
+        }
+
+        return game;
+    }
 }

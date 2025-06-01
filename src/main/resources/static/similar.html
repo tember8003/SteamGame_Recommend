@@ -31,6 +31,20 @@
     <div class="section" id="similar">
         <h2>게임 이름으로 추천 받기</h2>
         <input type="text" id="similar-name" placeholder="추천받을 게임 이름을 입력하세요" />
+        <div class="controls">
+            <label>
+                Review score:
+                <input type="number" id="input-review" value="0" min="0" />
+            </label>
+            <label>
+                <input type="checkbox" id="input-korean" />
+                Korean only?
+            </label>
+            <label>
+                <input type="checkbox" id="input-free" />
+                Free only?
+            </label>
+        </div>
         <button onclick="callSimilar()">추천 받기</button>
         <div id="similar-result"></div>
     </div>
@@ -38,8 +52,18 @@
 <script>
     const baseUrl = '';
     async function callSimilar() {
-      const name = encodeURIComponent(document.getElementById('similar-name').value);
-      const res = await fetch(`${baseUrl}/api/recommend/similar?gameName=${name}`);
+      const gameName = document.getElementById('similar-name').value;
+      const body = {
+        gameName,
+        review: +document.getElementById('input-review').value,
+        korean_check: document.getElementById('input-korean').checked,
+        free_check:   document.getElementById('input-free').checked
+      };
+      const res = await fetch(`${baseUrl}/api/recommend/similar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+      });
       const data = await res.json();
       renderGameResult(data);
     }

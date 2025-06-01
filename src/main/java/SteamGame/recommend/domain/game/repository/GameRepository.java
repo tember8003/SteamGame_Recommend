@@ -33,4 +33,5 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     //대소문자 구분없이 게임 찾기
     Optional<Game> findByNameIgnoreCase(String name);
 
+    Optional<Game> findByAppid(long appid);
 }

@@ -9,4 +9,8 @@ import lombok.Setter;
 public class SteamIdRequestDTO {
     @NotBlank
     private String steamId;
+    private int review;
+    private Boolean korean_check;
+    private Boolean free_check;
+
 }

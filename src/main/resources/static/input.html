@@ -92,6 +92,20 @@
         <h2>직접 입력 태그 추천</h2>
         <h4>⚠️ 적어도 3글자 이상 입력해야 작동합니다! </h4>
         <input type="text" id="input-text" placeholder="원하는 게임 특징을 입력하세요" />
+        <div class="controls">
+            <label>
+                Review score:
+                <input type="number" id="input-review" value="0" min="0" />
+            </label>
+            <label>
+                <input type="checkbox" id="input-korean" />
+                Korean only?
+            </label>
+            <label>
+                <input type="checkbox" id="input-free" />
+                Free only?
+            </label>
+        </div>
         <button onclick="callInput()">추천 받기</button>
         <div id="input-result"></div>
     </div>
@@ -148,10 +162,17 @@
 
     async function callInput() {
       const text = document.getElementById('input-text').value;
+      const body = {
+        text,
+        review: +document.getElementById('input-review').value,
+        korean_check: document.getElementById('input-korean').checked,
+        free_check:   document.getElementById('input-free').checked
+      };
+
       const res = await fetch(baseUrl + '/api/recommend/input', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ text })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       renderGameResult(data);

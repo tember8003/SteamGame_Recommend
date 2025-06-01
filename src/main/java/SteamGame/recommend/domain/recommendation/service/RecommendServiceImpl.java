@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.recommendation.service;
 
+import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.service.GameFinderService;
 import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
@@ -60,7 +61,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     //Gemini API를 활용해 게임 태그 추출해 게임 찾기
     @Override
-    public SteamDTO.RecommendationResult selectInfo(String input) {
+    public SteamDTO.RecommendationResult selectInfo(String input,int review, Boolean koreanCheck, Boolean freeCheck) {
         if (input == null || input.length() < 3) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "입력 문장이 너무 짧습니다.");
@@ -70,7 +71,7 @@ public class RecommendServiceImpl implements RecommendService {
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
+            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck);
             return new SteamDTO.RecommendationResult(cachingTags, game);
         }
 
@@ -87,13 +88,13 @@ public class RecommendServiceImpl implements RecommendService {
         cacheService.cacheTags(shaInput,tags);
 
         // 최종 추천
-        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
+        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck);
         return new SteamDTO.RecommendationResult(tags, game);
     }
 
     //스팀 사용자 프로필에 있는 게임들 리스트를 받아와 태그 뽑아내기
     @Override
-    public SteamDTO.RecommendationResult recommendByProfile(String steamId){
+    public SteamDTO.RecommendationResult recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck){
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
         List<String> topTags = tagService.getTopTagsByProfile(steamId,8);
 
@@ -124,7 +125,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,5,7);
-            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags);
+            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
 
             List<SteamDTO.SteamApp> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
@@ -147,22 +148,22 @@ public class RecommendServiceImpl implements RecommendService {
 
     //사용자 프로필에서 뽑아낸 태그들을 바탕으로 게임 찾기
     @Override
-    public List<SteamDTO.SteamApp> recommendWithCooccurrence(List<String> topTags) {
+    public List<SteamDTO.SteamApp> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck) {
         Optional<TagPairKey> optKey = cooccurrenceService.findOptimalPairKey(topTags, CO_THRESHOLD);
 
         if (optKey.isPresent()) {
             TagPairKey key = optKey.get();
             return findGame(
                     new String[]{ key.getFirstTag(), key.getSecondTag() },
-                    DEFAULT_REVIEW,
-                    true,
-                    null
+                    review,
+                    koreanCheck,
+                    freeCheck
             );
         }
 
         for (String tag : topTags) {
             try {
-                return findGame(new String[]{tag}, DEFAULT_REVIEW, true, null);
+                return findGame(new String[]{tag}, review, koreanCheck, freeCheck);
             } catch (ResponseStatusException ignored) { }
         }
 
@@ -174,7 +175,7 @@ public class RecommendServiceImpl implements RecommendService {
     //최근 플레이(2주) 게임 태그들을 뽑아내 게임 찾기
     @Override
     @Transactional(readOnly = true)
-    public SteamDTO.RecommendationResult recommendByRecentPlay(String steamId) {
+    public SteamDTO.RecommendationResult recommendByRecentPlay(String steamId,int review, Boolean koreanCheck, Boolean freeCheck) {
         List<Long> recentAppIds = steamApiService.getRecentPlayedGameIds(steamId);
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
 
@@ -192,7 +193,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,4,7);
-            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags);
+            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
 
             List<SteamDTO.SteamApp> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
@@ -214,7 +215,7 @@ public class RecommendServiceImpl implements RecommendService {
     }
 
     @Override
-    public SteamDTO.RecommendationResult recommendBySimilarGame(String gameName){
+    public SteamDTO.RecommendationResult recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck){
         List<String> selectedTags = tagService.getTagsByGame(gameName);
 
         if (selectedTags.isEmpty()) {
@@ -227,7 +228,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> topTags = tagService.getTopTags(selectedTags,8);
 
-        List<SteamDTO.SteamApp> game = recommendWithCooccurrence(topTags);
+        List<SteamDTO.SteamApp> game = recommendWithCooccurrence(topTags,review,koreanCheck,freeCheck);
 
         return new SteamDTO.RecommendationResult(topTags, game);
     }
@@ -236,5 +237,20 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     public List<String> getTags(){
         return tagService.getFilteredTagNames();
+    }
+
+    //게임 아이디로 게임 찾기
+    @Override
+    public SteamDTO.SteamApp findGameByAppid(long appid){
+        Game game = gameFinderService.findGameByAppid(appid);
+
+        SteamDTO.SteamApp steamApp = new SteamDTO.SteamApp();
+        steamApp.setAppid(game.getAppid());
+        steamApp.setName(game.getName());
+        steamApp.setShortDescription(game.getDescription());
+        steamApp.setHeaderImage(game.getImageUrl());
+        steamApp.setSteamStore("");
+
+        return steamApp;
     }
 }

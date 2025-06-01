@@ -6,9 +6,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TextRequestDTO {
+public class GameNameRequestDTO {
     @NotBlank
-    private String text;
+    private String GameName;
     private int review;
     private Boolean korean_check;
     private Boolean free_check;

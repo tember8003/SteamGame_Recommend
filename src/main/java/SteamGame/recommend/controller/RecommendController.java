@@ -1,5 +1,6 @@
 package SteamGame.recommend.controller;
 
+import SteamGame.recommend.domain.game.dto.GameNameRequestDTO;
 import SteamGame.recommend.domain.game.dto.GameRequestDTO;
 import SteamGame.recommend.domain.game.dto.SteamIdRequestDTO;
 import SteamGame.recommend.domain.game.dto.TextRequestDTO;
@@ -36,21 +37,21 @@ public class RecommendController {
     @PostMapping("/recommend/input")
     public SteamDTO.RecommendationResult inputRandomGame(
             @RequestBody TextRequestDTO dto) {
-        return recommendService.selectInfo(dto.getText());
+        return recommendService.selectInfo(dto.getText(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
     }
 
     @Operation(summary="내 프로필 게임 기반 추천")
     @ApiResponse(responseCode="200", description="성공")
     @PostMapping("/recommend/profile")
     public SteamDTO.RecommendationResult randomGameByProfile(@RequestBody SteamIdRequestDTO dto) {
-        return recommendService.recommendByProfile(dto.getSteamId());
+        return recommendService.recommendByProfile(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
     }
 
     @Operation(summary="최근 2주간 플레이 기준 추천")
     @ApiResponse(responseCode="200", description="성공")
     @PostMapping("/recommend/RecentPlay")
     public SteamDTO.RecommendationResult randomGameByRecentPlay(@RequestBody SteamIdRequestDTO dto){
-        return recommendService.recommendByRecentPlay(dto.getSteamId());
+        return recommendService.recommendByRecentPlay(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
     }
 
     @Operation(summary="모든 태그들 리스트 반환")
@@ -62,8 +63,15 @@ public class RecommendController {
 
     @Operation(summary="게임 하나 고르면 비슷한 태그의 게임들 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @GetMapping("/recommend/similar")
-    public SteamDTO.RecommendationResult randomGameBySimilarGame(@RequestParam("gameName") String gameName){
-        return recommendService.recommendBySimilarGame(gameName);
+    @PostMapping("/recommend/similar")
+    public SteamDTO.RecommendationResult randomGameBySimilarGame(@RequestBody GameNameRequestDTO dto){
+        return recommendService.recommendBySimilarGame(dto.getGameName(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
+    }
+
+    @Operation(summary = "AppId로 게임 조회하기")
+    @ApiResponse(responseCode="200", description="성공")
+    @GetMapping("/appid")
+    public SteamDTO.SteamApp getGameByAppid(@RequestParam long appid){
+        return recommendService.findGameByAppid(appid);
     }
 }
