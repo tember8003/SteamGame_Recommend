@@ -22,9 +22,9 @@ public interface GameRepository extends JpaRepository<Game, Long> {
         GROUP BY g.id
         HAVING COUNT(DISTINCT t.name) = :tagCount
         ORDER BY RAND()
-        LIMIT 1
+        LIMIT 10
     """, nativeQuery = true)
-    Optional<Game> findRandomGameByTags(@Param("tagNames") List<String> tagNames,
+    List<Game> findRandomGameByTags(@Param("tagNames") List<String> tagNames,
                                         @Param("tagCount") long tagCount, @Param("review") int review,
                                         @Param("korean_check") Boolean korean_check,
                                         @Param("free") Boolean free

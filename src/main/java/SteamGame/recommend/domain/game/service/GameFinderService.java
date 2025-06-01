@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -26,23 +27,31 @@ public class GameFinderService {
     }
 
     @Transactional(readOnly = true)
-    public SteamDTO.SteamApp findNonDuplicate(String[] tags, int review, Boolean korean_check, Boolean free_check) {
+    public List<SteamDTO.SteamApp> findNonDuplicate(String[] tags, int review, Boolean korean_check, Boolean free_check) {
+        List<SteamDTO.SteamApp> appList= new ArrayList<>();
         List<String> tagList = Arrays.asList(tags);
-        for (int i = 0; i < 10; i++) {
-            Optional<Game> optionalGame = gameRepository.findRandomGameByTags(tagList,tagList.size(),review,korean_check,free_check);
 
-            if (optionalGame.isEmpty()) {
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "조건에 맞는 게임을 찾을 수 없습니다.");
+        int count = 0;
+
+        while (appList.size() < 4 && count < 3) {
+            List<Game> Games = gameRepository.findRandomGameByTags(tagList,tagList.size(),review,korean_check,free_check);
+            for (Game g : Games) {
+                if (!cacheService.isAlreadyRecommended(g.getAppid())) {
+                    cacheService.setRecommended(g.getAppid());
+                    appList.add(GameMapper.convertToDTO(g));
+                    if (appList.size() == 4) {
+                        break;
+                    }
+                }
             }
-
-            Game candidate = optionalGame.get();
-
-            if (!cacheService.isAlreadyRecommended(candidate.getAppid())) {
-                cacheService.setRecommended(candidate.getAppid());
-                return GameMapper.convertToDTO(candidate);
-            }
+            count++;
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND,"조건에 맞는 새로운 게임을 찾을 수 없습니다. (중복으로 인해 추천 실패)");
+
+        if(appList.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"조건에 맞는 새로운 게임을 찾을 수 없습니다.");
+        }
+        else{
+            return appList;
+        }
     }
 }

@@ -101,40 +101,50 @@
     const baseUrl = '';
 
     function renderGameResult(data, containerId = 'input-result') {
-      let game, usedTags;
-      if (data.recommendedGame) {
-        game = data.recommendedGame;
-        usedTags = data.usedTags;
-      } else {
-        game = data;
-      }
+        const container = document.getElementById(containerId);
 
-      if (!game.appid) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:20px; color:#d00; font-weight:500;">
-                  게임을 찾지 못했습니다!
-                </div>
-            `;
-            return;
-      }
+        // data 객체에서 usedTags, recommendedGames 추출
+        const usedTags = data.usedTags || [];
+        const games    = data.recommendedGame  || [];
 
-      const container = document.getElementById(containerId);
-      container.innerHTML = `
-        <div class="game-card">
-          <img src="${game.headerImage}" alt="${game.name} header" />
-          <div class="game-info">
-            <h3>${game.name} (AppID: ${game.appid})</h3>
-            <p>${game.shortDescription}</p>
-            <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
-            ${usedTags ? `
-              <div class="tags-list">
-                ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
+        // 추천 게임이 하나도 없으면 에러 메시지 출력
+        if (!Array.isArray(games) || games.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #d00; font-weight: 500;">
+              게임을 찾지 못했습니다!
+            </div>
+          `;
+          return;
+        }
+
+        // HTML 문자열을 구성
+        let html = '';
+
+        // 1) 사용된 태그가 있으면 상단에 한 번만 보여주기
+        if (usedTags.length > 0) {
+          html += `
+            <div class="tags-list" style="margin-bottom: 15px;">
+              ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
+            </div>
+          `;
+        }
+
+        // 2) 배열 안의 각 게임 객체를 카드 형태로 렌더링
+        games.forEach(game => {
+          html += `
+            <div class="game-card">
+              <img src="${game.headerImage}" alt="${game.name} header" />
+              <div class="game-info">
+                <h3>${game.name} (AppID: ${game.appid})</h3>
+                <p>${game.shortDescription}</p>
+                <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
               </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+  }
 
     async function callInput() {
       const text = document.getElementById('input-text').value;

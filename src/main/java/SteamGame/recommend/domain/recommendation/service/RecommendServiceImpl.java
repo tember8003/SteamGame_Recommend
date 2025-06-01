@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -53,7 +54,7 @@ public class RecommendServiceImpl implements RecommendService {
     //태그, 리뷰, 한글화, 무료여부 등 조건으로 게임 찾기.
     @Override
     @Transactional(readOnly=true)
-    public SteamDTO.SteamApp findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck) {
+    public List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck) {
         return gameFinderService.findNonDuplicate(tags,review,koreanCheck,freeCheck);
     }
 
@@ -69,8 +70,8 @@ public class RecommendServiceImpl implements RecommendService {
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            SteamDTO.SteamApp game = findGame(cachingTags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
-            return toResult(cachingTags, game);
+            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
+            return new SteamDTO.RecommendationResult(cachingTags, game);
         }
 
         boolean hit = cachingTags != null && !cachingTags.isEmpty();
@@ -86,8 +87,8 @@ public class RecommendServiceImpl implements RecommendService {
         cacheService.cacheTags(shaInput,tags);
 
         // 최종 추천
-        SteamDTO.SteamApp game = findGame(tags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
-        return toResult(tags, game);
+        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), DEFAULT_REVIEW, true,null);
+        return new SteamDTO.RecommendationResult(tags, game);
     }
 
     //스팀 사용자 프로필에 있는 게임들 리스트를 받아와 태그 뽑아내기
@@ -118,24 +119,35 @@ public class RecommendServiceImpl implements RecommendService {
             }
         }
          */
-        List<String> tags;
+        List<String> tags = null;
+        List<SteamDTO.SteamApp> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,5,7);
-            SteamDTO.SteamApp game = recommendWithCooccurrence(tags);
-            if (!ownedAppIds.contains(game.getAppid())) {
-                return new SteamDTO.RecommendationResult(tags, game);
+            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags);
+
+            List<SteamDTO.SteamApp> filteredGames = games.stream()
+                    .filter(app -> !ownedAppIds.contains(app.getAppid()))
+                    .collect(Collectors.toList());
+
+            if(!filteredGames.isEmpty()){
+                resultGames = filteredGames;
+                break;
             }
         }
 
-        throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
-        );
+        if (resultGames == null || resultGames.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
+            );
+        }
+
+        return new SteamDTO.RecommendationResult(tags,resultGames);
     }
 
     //사용자 프로필에서 뽑아낸 태그들을 바탕으로 게임 찾기
     @Override
-    public SteamDTO.SteamApp recommendWithCooccurrence(List<String> topTags) {
+    public List<SteamDTO.SteamApp> recommendWithCooccurrence(List<String> topTags) {
         Optional<TagPairKey> optKey = cooccurrenceService.findOptimalPairKey(topTags, CO_THRESHOLD);
 
         if (optKey.isPresent()) {
@@ -175,19 +187,30 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> topTags = tagService.getTopTags(allTags,8);
 
-        List<String> tags;
+        List<String> tags = null;
+        List<SteamDTO.SteamApp> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,4,7);
-            SteamDTO.SteamApp game = recommendWithCooccurrence(tags);
-            if (!ownedAppIds.contains(game.getAppid())) {
-                return new SteamDTO.RecommendationResult(tags, game);
+            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags);
+
+            List<SteamDTO.SteamApp> filteredGames = games.stream()
+                    .filter(app -> !ownedAppIds.contains(app.getAppid()))
+                    .collect(Collectors.toList());
+
+            if(!filteredGames.isEmpty()){
+                resultGames = filteredGames;
+                break;
             }
         }
 
-        throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
-        );
+        if (resultGames == null || resultGames.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
+            );
+        }
+
+        return new SteamDTO.RecommendationResult(tags,resultGames);
     }
 
     @Override
@@ -204,7 +227,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> topTags = tagService.getTopTags(selectedTags,8);
 
-        SteamDTO.SteamApp game = recommendWithCooccurrence(topTags);
+        List<SteamDTO.SteamApp> game = recommendWithCooccurrence(topTags);
 
         return new SteamDTO.RecommendationResult(topTags, game);
     }
@@ -213,13 +236,5 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     public List<String> getTags(){
         return tagService.getFilteredTagNames();
-    }
-
-    // RecommendationResult(게임 추천에 사용된 태그, 추천된 게임 정보) 규격에 맞추기
-    private SteamDTO.RecommendationResult toResult(List<String> tags, SteamDTO.SteamApp game) {
-        SteamDTO.RecommendationResult r = new SteamDTO.RecommendationResult();
-        r.setUsedTags(tags);
-        r.setRecommendedGame(game);
-        return r;
     }
 }

@@ -37,6 +37,6 @@ public class SteamDTO {
     @Getter @Setter
     public static class RecommendationResult {
         private List<String> usedTags;
-        private SteamApp recommendedGame;
+        private List<SteamApp> recommendedGame;
     }
 }

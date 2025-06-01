@@ -27,7 +27,7 @@ public class RecommendController {
     @Operation(summary="태그 기반 랜덤 추천")
     @ApiResponse(responseCode="200", description="성공")
     @PostMapping("/recommend/random")
-    public SteamDTO.SteamApp randomGame(@RequestBody GameRequestDTO request) {
+    public List<SteamDTO.SteamApp> randomGame(@RequestBody GameRequestDTO request) {
         return recommendService.findGame(request.getTags(),request.getReview(),request.getKorean_check(),request.getFree_check());
     }
 
@@ -60,7 +60,7 @@ public class RecommendController {
         return recommendService.getTags();
     }
 
-    @Operation(summary="게임 하나 고르면 비슷한 태그의 게임 추천")
+    @Operation(summary="게임 하나 고르면 비슷한 태그의 게임들 추천")
     @ApiResponse(responseCode="200", description="성공")
     @GetMapping("/recommend/similar")
     public SteamDTO.RecommendationResult randomGameBySimilarGame(@RequestParam("gameName") String gameName){
