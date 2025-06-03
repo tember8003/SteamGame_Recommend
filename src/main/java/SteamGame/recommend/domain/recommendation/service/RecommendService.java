@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface RecommendService {
     // 태그, 리뷰, 한글화, 무료여부 등 조건으로 게임 찾기.
-    List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck);
+    List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck,Boolean excluded_check,String[] excludedTag);
 
     // Gemini API를 활용해 게임 태그 추출 후 추천
     SteamDTO.RecommendationResult selectInfo(String input,int review, Boolean koreanCheck, Boolean freeCheck);

@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class GameFinderService {
@@ -27,14 +24,29 @@ public class GameFinderService {
     }
 
     @Transactional(readOnly = true)
-    public List<SteamDTO.SteamApp> findNonDuplicate(String[] tags, int review, Boolean korean_check, Boolean free_check) {
+    public List<SteamDTO.SteamApp> findNonDuplicate(String[] tags,
+                                                    int review,
+                                                    Boolean korean_check,
+                                                    Boolean free_check,
+                                                    Boolean excluded_check,
+                                                    String[] excludedTag) {
         List<SteamDTO.SteamApp> appList= new ArrayList<>();
         List<String> tagList = Arrays.asList(tags);
+
+        List<String> excludedList = (excludedTag != null)
+                ? Arrays.asList(excludedTag)
+                : Collections.emptyList();
 
         int count = 0;
 
         while (appList.size() < 4 && count < 3) {
-            List<Game> Games = gameRepository.findRandomGameByTags(tagList,tagList.size(),review,korean_check,free_check);
+            List<Game> Games = gameRepository.findRandomGameByTags(tagList,
+                    tagList.size(),
+                    review,
+                    korean_check,
+                    free_check,
+                    excluded_check,
+                    excludedList);
             for (Game g : Games) {
                 if (!cacheService.isAlreadyRecommended(g.getAppid())) {
                     cacheService.setRecommended(g.getAppid());

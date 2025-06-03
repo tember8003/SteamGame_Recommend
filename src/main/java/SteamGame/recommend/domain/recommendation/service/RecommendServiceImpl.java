@@ -55,8 +55,8 @@ public class RecommendServiceImpl implements RecommendService {
     //태그, 리뷰, 한글화, 무료여부 등 조건으로 게임 찾기.
     @Override
     @Transactional(readOnly=true)
-    public List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck) {
-        return gameFinderService.findNonDuplicate(tags,review,koreanCheck,freeCheck);
+    public List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck,Boolean excluded_check,String[] excludedTag) {
+        return gameFinderService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
     }
 
     //Gemini API를 활용해 게임 태그 추출해 게임 찾기
@@ -71,7 +71,7 @@ public class RecommendServiceImpl implements RecommendService {
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck);
+            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
             return new SteamDTO.RecommendationResult(cachingTags, game);
         }
 
@@ -88,7 +88,7 @@ public class RecommendServiceImpl implements RecommendService {
         cacheService.cacheTags(shaInput,tags);
 
         // 최종 추천
-        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck);
+        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
         return new SteamDTO.RecommendationResult(tags, game);
     }
 
@@ -157,13 +157,21 @@ public class RecommendServiceImpl implements RecommendService {
                     new String[]{ key.getFirstTag(), key.getSecondTag() },
                     review,
                     koreanCheck,
-                    freeCheck
+                    freeCheck,
+                    false,
+                    null
             );
         }
 
         for (String tag : topTags) {
             try {
-                return findGame(new String[]{tag}, review, koreanCheck, freeCheck);
+                return findGame(
+                        new String[]{tag},
+                        review,
+                        koreanCheck,
+                        freeCheck,
+                        false,
+                        null);
             } catch (ResponseStatusException ignored) { }
         }
 

@@ -29,7 +29,17 @@ public class RecommendController {
     @ApiResponse(responseCode="200", description="성공")
     @PostMapping("/recommend/random")
     public List<SteamDTO.SteamApp> randomGame(@RequestBody GameRequestDTO request) {
-        return recommendService.findGame(request.getTags(),request.getReview(),request.getKorean_check(),request.getFree_check());
+        Boolean excluded_check;
+
+        if(request.getExcludedTag()==null){
+            excluded_check=false;
+        }
+        else{
+            excluded_check=true;
+        }
+
+        return recommendService.findGame(request.getTags(),request.getReview(),request.getKorean_check(),request.getFree_check(),excluded_check,request.getExcludedTag());
+
     }
 
     @Operation(summary="직접 입력 태그 추천")
