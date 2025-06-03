@@ -15,7 +15,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
         SELECT g.* FROM games g
         JOIN game_tags gt ON g.id = gt.game_id
         JOIN tags t ON t.id = gt.tag_id
-        WHERE t.name IN :tagNames
+        WHERE (:tagCount = 0 OR t.name IN :tagNames)
             AND g.review_count >= :review
             AND (:korean_check IS NULL OR g.korean_support = :korean_check)
             AND (:free IS NULL OR g.is_free = :free)
@@ -30,7 +30,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                 )
             )
         GROUP BY g.id
-        HAVING COUNT(DISTINCT t.name) = :tagCount
+        HAVING (:tagCount = 0 OR COUNT(DISTINCT t.name) = :tagCount)
         ORDER BY RAND()
         LIMIT 10
     """, nativeQuery = true)
