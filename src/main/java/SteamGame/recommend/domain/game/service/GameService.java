@@ -1,10 +1,14 @@
 package SteamGame.recommend.domain.game.service;
 
+import SteamGame.recommend.domain.game.dto.GameSearchResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.recommendation.service.CacheService;
+import SteamGame.recommend.domain.tag.service.TagService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,13 +17,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 @Service
-public class GameFinderService {
+public class GameService {
     private final GameRepository gameRepository;
     private final CacheService cacheService;
+    private final TagService tagService;
 
-    public GameFinderService(GameRepository gameRepository, CacheService cacheService){
+    public GameService(GameRepository gameRepository,TagService tagService, CacheService cacheService){
         this.gameRepository = gameRepository;
-
+        this.tagService = tagService;
         this.cacheService = cacheService;
     }
 
@@ -67,13 +72,40 @@ public class GameFinderService {
         }
     }
 
-    public Game findGameByAppid(long appid){
+    public SteamDTO.SteamApp findGameByAppid(long appid){
         Game game = gameRepository.findByAppid(appid).orElseThrow();
 
         if(game==null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게임이 존재하지 않습니다.");
         }
 
-        return game;
+        SteamDTO.SteamApp steamApp = new SteamDTO.SteamApp();
+        steamApp.setAppid(game.getAppid());
+        steamApp.setName(game.getName());
+        steamApp.setShortDescription(game.getDescription());
+        steamApp.setHeaderImage(game.getImageUrl());
+        steamApp.setSteamStore("");
+
+        return steamApp;
+    }
+
+    public List<String> getTags(){
+        return tagService.getFilteredTagNames();
+    }
+
+    public List<GameSearchResponseDTO> searchNames(String prefix) {
+        Pageable limit5 = PageRequest.of(0, 5);
+        List<Game> gameList = gameRepository.findByNameStartingWithIgnoreCase(prefix, limit5);
+
+        List<GameSearchResponseDTO> gameName = new ArrayList<>();
+
+        for(Game g : gameList){
+            GameSearchResponseDTO dto = new GameSearchResponseDTO();
+            dto.setGameName(g.getName());
+            dto.setHeaderImage(g.getImageUrl());
+            gameName.add(dto);
+        }
+
+        return gameName;
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 
 @Tag(name="recommend", description="게임 추천 API")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/recommend")
 public class RecommendController {
 
     private final RecommendService recommendService;
@@ -27,7 +27,7 @@ public class RecommendController {
 
     @Operation(summary="태그 기반 랜덤 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/recommend/random")
+    @PostMapping("/random")
     public List<SteamDTO.SteamApp> randomGame(@RequestBody GameRequestDTO request) {
         Boolean excluded_check;
 
@@ -44,7 +44,7 @@ public class RecommendController {
 
     @Operation(summary="직접 입력 태그 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/recommend/input")
+    @PostMapping("/input")
     public SteamDTO.RecommendationResult inputRandomGame(
             @RequestBody TextRequestDTO dto) {
         return recommendService.selectInfo(dto.getText(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
@@ -52,36 +52,22 @@ public class RecommendController {
 
     @Operation(summary="내 프로필 게임 기반 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/recommend/profile")
+    @PostMapping("/profile")
     public SteamDTO.RecommendationResult randomGameByProfile(@RequestBody SteamIdRequestDTO dto) {
         return recommendService.recommendByProfile(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
     }
 
     @Operation(summary="최근 2주간 플레이 기준 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/recommend/RecentPlay")
+    @PostMapping("/RecentPlay")
     public SteamDTO.RecommendationResult randomGameByRecentPlay(@RequestBody SteamIdRequestDTO dto){
         return recommendService.recommendByRecentPlay(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
     }
 
-    @Operation(summary="모든 태그들 리스트 반환")
-    @ApiResponse(responseCode="200", description="성공")
-    @GetMapping("/tags")
-    public List<String> getTags(){
-        return recommendService.getTags();
-    }
-
     @Operation(summary="게임 하나 고르면 비슷한 태그의 게임들 추천")
     @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/recommend/similar")
+    @PostMapping("/similar")
     public SteamDTO.RecommendationResult randomGameBySimilarGame(@RequestBody GameNameRequestDTO dto){
         return recommendService.recommendBySimilarGame(dto.getGameName(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
-    }
-
-    @Operation(summary = "AppId로 게임 조회하기")
-    @ApiResponse(responseCode="200", description="성공")
-    @GetMapping("/appid")
-    public SteamDTO.SteamApp getGameByAppid(@RequestParam long appid){
-        return recommendService.findGameByAppid(appid);
     }
 }

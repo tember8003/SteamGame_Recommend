@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.recommendation.service;
 
 import SteamGame.recommend.domain.game.entity.Game;
-import SteamGame.recommend.domain.game.service.GameFinderService;
+import SteamGame.recommend.domain.game.service.GameService;
 import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
@@ -31,7 +31,7 @@ public class RecommendServiceImpl implements RecommendService {
     private final TagService tagService;
     private final TagRepository tagRepository;
     private final CacheService cacheService;
-    private final GameFinderService gameFinderService;
+    private final GameService gameService;
     private final CooccurrenceService cooccurrenceService;
 
     public RecommendServiceImpl(
@@ -40,7 +40,7 @@ public class RecommendServiceImpl implements RecommendService {
             TagService tagService,
             TagRepository tagRepository,
             CacheService cacheService,
-            GameFinderService gameFinderService,
+            GameService gameService,
             CooccurrenceService cooccurrenceService
     ) {
         this.steamApiService = steamApiService;
@@ -48,7 +48,7 @@ public class RecommendServiceImpl implements RecommendService {
         this.tagService = tagService;
         this.tagRepository = tagRepository;
         this.cacheService = cacheService;
-        this.gameFinderService = gameFinderService;
+        this.gameService = gameService;
         this.cooccurrenceService = cooccurrenceService;
     }
 
@@ -56,7 +56,7 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     @Transactional(readOnly=true)
     public List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck,Boolean excluded_check,String[] excludedTag) {
-        return gameFinderService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
+        return gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
     }
 
     //Gemini API를 활용해 게임 태그 추출해 게임 찾기
@@ -241,24 +241,4 @@ public class RecommendServiceImpl implements RecommendService {
         return new SteamDTO.RecommendationResult(topTags, game);
     }
 
-    //전체 태그 반환
-    @Override
-    public List<String> getTags(){
-        return tagService.getFilteredTagNames();
-    }
-
-    //게임 아이디로 게임 찾기
-    @Override
-    public SteamDTO.SteamApp findGameByAppid(long appid){
-        Game game = gameFinderService.findGameByAppid(appid);
-
-        SteamDTO.SteamApp steamApp = new SteamDTO.SteamApp();
-        steamApp.setAppid(game.getAppid());
-        steamApp.setName(game.getName());
-        steamApp.setShortDescription(game.getDescription());
-        steamApp.setHeaderImage(game.getImageUrl());
-        steamApp.setSteamStore("");
-
-        return steamApp;
-    }
 }

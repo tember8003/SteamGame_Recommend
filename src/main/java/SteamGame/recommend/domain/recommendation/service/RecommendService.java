@@ -22,9 +22,4 @@ public interface RecommendService {
 
     //원하는 게임과 비슷한 게임 찾기
     SteamDTO.RecommendationResult recommendBySimilarGame(String game,int review, Boolean koreanCheck, Boolean freeCheck);
-
-    // 전체 태그 목록 반환
-    List<String> getTags();
-
-    SteamDTO.SteamApp findGameByAppid(long appid);
 }

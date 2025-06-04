@@ -2,6 +2,7 @@ package SteamGame.recommend.domain.game.repository;
 
 import SteamGame.recommend.domain.game.entity.Game;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -45,4 +46,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     Optional<Game> findByNameIgnoreCase(String name);
 
     Optional<Game> findByAppid(long appid);
+
+    List<Game> findByNameStartingWithIgnoreCase(String prefix, Pageable pageable);
 }
