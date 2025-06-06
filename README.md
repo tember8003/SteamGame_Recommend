@@ -1,8 +1,9 @@
 # 🎮 SteamGame Recommend API & UI
 
-Steam 게임을 태그 기반으로 하여금 사용자 프로필, 최근 플레이 정보, Gemini API 등 다양한 정보를 활용해 게임을 추천해주는 시스템입니다.
+Steam 게임의 태그 정보를 기반으로 사용자 프로필, 최근 플레이 정보, Gemini API 등을 활용하여 게임을 추천해주는 시스템입니다.
 
-> 🔍 약 96,000개 게임 데이터 기반 (2025년 6월 기준). 일부 게임은 추천되지 않을 수 있습니다.
+> 🔍 약 96,000개의 게임 데이터 기반 (2025년 6월 기준). 일부 게임은 추천되지 않을 수 있습니다.
+>
 
 ---
 
@@ -31,31 +32,32 @@ recommend/
 - Git
 - Docker & Docker Compose
 - 다음 환경변수 설정 필요:
-    - `STEAM_API_KEY`: Steam Web API 키
-    - `GEMINI_API_KEY`: Google Gemini API 키
+  - `STEAM_API_KEY`: Steam Web API 키
+  - `GEMINI_API_KEY`: Google Gemini API 키
 - 사용 포트: **3307 (MySQL)**, **6379 (Redis)** → 포트 충돌이 없는지 확인 필수
 
 ## 🔑 API Key 발급
 
 ### 1. Steam Web API Key
 
-Steam 계정으로 로그인한 후 Steam API Key 등록 페이지(https://steamcommunity.com/dev/apikey)에 접속
+Steam 계정으로 로그인한 후 Steam API Key 등록 페이지(https://steamcommunity.com/dev/apikey)에 접속하세요.
 
-Domain Name에는 아무 주소나 입력 (예: localhost)
+Domain Name에는 아무 주소나 입력하세요. (예: localhost)
 
-하단의 “I agree” 체크 후 “Register” 클릭
+하단의 "I agree" 체크 후 "Register"를 클릭하세요.
 
-발급된 API Key를 복사해서 하단 실행 방법 3 환경변수 설정에 `STEAM_API_KEY`로 설정
+발급된 API Key를 복사하여 하단 실행 방법 3의 환경변수 설정에서 `STEAM_API_KEY`로 설정하세요.
 
-> ⚠️ Steam Guard 미인증 계정, 커뮤니티 제한 계정은 발급 불가
+> ⚠️ Steam Guard 미인증 계정이나 커뮤니티 제한 계정은 발급이 불가합니다.
+>
 
 ### 2. Google Gemini API Key 발급 방법 (Google AI Studio 기준)
 
-Google AI Studio(https://aistudio.google.com/app/apikey) 접속
+Google AI Studio(https://aistudio.google.com/app/apikey)에 접속하세요.
 
-로그인 후, “Create API Key” 클릭
+로그인 후, "Create API Key"를 클릭하세요.
 
-생성된 API Key를 복사해서 하단 실행 방법 3 환경변수 설정에 `GEMINI_API_KEY`로 설정
+생성된 API Key를 복사하여 하단 실행 방법 3의 환경변수 설정에서 `GEMINI_API_KEY`로 설정하세요.
 
 ---
 
@@ -64,9 +66,11 @@ Google AI Studio(https://aistudio.google.com/app/apikey) 접속
 ### 1. 프로젝트 클론
 
 ```bash
-git clone https://github.com/tember8003/SteamGame_Recommend.git
+git clone &lt;https://github.com/tember8003/SteamGame_Recommend.git&gt;
 cd SteamGame_Recommend
 ```
+
+---
 
 ### 2. MySQL 컨테이너 실행
 
@@ -74,23 +78,55 @@ cd SteamGame_Recommend
 docker-compose up -d
 ```
 
-- `testdb`라는 이름의 MySQL 데이터베이스가 자동 생성됩니다.
+- `testdb`라는 이름의 MySQL 데이터베이스가 자동으로 생성됩니다.
+
+---
 
 ### 3. 환경변수 설정
 
-### macOS / Linux (bash, zsh)
+### 방법 1.
+
+- **`.env.example` 파일 복사**
+  - 프로젝트 최상단(루트) 폴더의 `.env.example` 파일을 `.env` 파일로 복사합니다.
+  - macOS / Linux:
+
+      ```bash
+      cp .env.example .env
+      ```
+
+  - Windows (PowerShell):
+
+      ```powershell
+      copy .env.example .env
+      ```
+
+- **`.env` 파일 설정하기**
+  - 생성된 `.env` 파일을 엽니다.
+  - `STEAM_API_KEY`와 `GEMINI_API_KEY`에 발급받은 API 키를 입력합니다.
+
+      ```
+      STEAM_API_KEY=YOUR_STEAM_API_KEY
+      GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+      ```
+
+
+### 방법 2.
+
+**macOS / Linux (bash, zsh)**
 
 ```bash
 export STEAM_API_KEY=YOUR_STEAM_API_KEY
 export GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 ```
 
-### Windows (PowerShell)
+**Windows (PowerShell)**
 
 ```powershell
 $Env:STEAM_API_KEY = "YOUR_STEAM_API_KEY"
 $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 ```
+
+---
 
 ### 4. 서버 실행
 
@@ -104,7 +140,7 @@ $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 
 ## 🖥️ UI 페이지 확인
 
-브라우저로 아래 파일을 열어 추천 기능을 확인할 수 있습니다:
+브라우저에서 아래 경로로 접속하여 추천 기능을 확인할 수 있습니다:
 
 | 기능 설명 | 파일 경로 |
 | --- | --- |
@@ -129,4 +165,4 @@ spring.datasource.url=jdbc:mysql://localhost:3307/testdb?serverTimezone=UTC
 
 ## 문의
 
-이 프로젝트와 관련한 문의는 Issues 에 등록해주세요.
+이 프로젝트와 관련한 문의는 Issues에 등록해 주세요.
