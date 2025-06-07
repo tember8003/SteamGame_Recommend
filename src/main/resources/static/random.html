@@ -4,206 +4,613 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Game Recommend By Tags</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
     :root {
-      --primary: #007bff;
-      --bg: #f0f2f5;
-      --card-bg: #ffffff;
-      --border: #ddd;
-      --text: #333;
+      --primary: #00d4ff;
+      --primary-dark: #0099cc;
+      --secondary: #7c3aed;
+      --accent: #f59e0b;
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #1a1a2e;
+      --bg-tertiary: #16213e;
+      --bg-card: #1e1e2e;
+      --border: #333344;
+      --border-hover: #4a4a6a;
+      --text-primary: #ffffff;
+      --text-secondary: #b4b4c8;
+      --text-muted: #8b8ba3;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+      --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
     body {
-      background: var(--bg);
-      font-family: 'Arial', sans-serif;
-      color: var(--text);
-      line-height: 1.5;
+      background: var(--bg-primary);
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
     }
+
     .container {
-      max-width: 900px;
-      margin: 30px auto;
-      background: var(--card-bg);
-      padding: 20px 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
     }
-    h1 {
-      margin-bottom: 20px;
-      font-size: 1.8em;
+
+    .header {
       text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 0;
     }
-    a.back {
-      display: inline-block;
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .header .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
       margin-bottom: 20px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
       color: var(--primary);
       text-decoration: none;
-      font-size: 0.95em;
-    }
-    a.back:hover {
-      text-decoration: underline;
-    }
-    fieldset {
+      padding: 12px 24px;
+      border-radius: 50px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 15px 20px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+
+    .back-button:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    }
+
+    .main-content {
+      display: grid;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .section-card {
+      background: var(--gradient-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .section-card:hover::before {
+      opacity: 1;
+    }
+
+    .section-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px var(--shadow);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-primary);
       margin-bottom: 20px;
-      background: #fafafa;
     }
-    legend {
-      padding: 0 8px;
-      font-weight: bold;
-      font-size: 1em;
+
+    .section-title i {
+      color: var(--primary);
+      font-size: 1.1rem;
     }
+
     .tag-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .tag-grid label {
-      display: flex;
-      align-items: center;
-      padding: 6px 8px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.9em;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .tag-grid label:hover {
-      background: #f5f5f5;
-      border-color: var(--primary);
-    }
-    .tag-grid input {
-      margin-right: 6px;
-      accent-color: var(--primary);
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .controls label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.95em;
-    }
-    .controls input[type="number"] {
-      width: 80px;
-      padding: 4px 6px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-    }
-    .button {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 10px 18px;
-      font-size: 0.95em;
-      cursor: pointer;
-      transition: filter 0.2s;
-    }
-    .button:hover {
-      filter: brightness(90%);
-    }
-    .game-card {
-      background: var(--card-bg);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 20px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      max-width: 100%;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
       margin-top: 20px;
     }
-    .game-card img {
-      width: 200px;
-      height: auto;
-      border-radius: 4px;
-      flex-shrink: 0;
+
+    .tag-item {
+      position: relative;
+      overflow: hidden;
     }
-    .game-info {
+
+    .tag-item input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .tag-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tag-label::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--gradient-primary);
+      transition: left 0.3s ease;
+      z-index: -1;
+    }
+
+    .tag-item:hover .tag-label {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.2);
+    }
+
+    .tag-item input:checked + .tag-label {
+      background: var(--primary);
+      color: var(--bg-primary);
+      border-color: var(--primary);
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    .tag-item input:checked + .tag-label::before {
+      left: 0;
+    }
+
+    .excluded-tag input:checked + .tag-label {
+      background: var(--error);
+      border-color: var(--error);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .controls {
+      background: var(--gradient-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .control-item:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-tertiary);
+    }
+
+    .control-item label {
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
       flex: 1;
-      min-width: 0;
     }
+
+    .control-item input[type="number"] {
+      width: 80px;
+      padding: 8px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .control-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .recommend-button {
+      width: 100%;
+      background: var(--gradient-primary);
+      color: var(--bg-primary);
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .recommend-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 212, 255, 0.4);
+    }
+
+    .recommend-button:active {
+      transform: translateY(0);
+    }
+
+    .recommend-button.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .recommend-button .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    .recommend-button.loading .loading-spinner {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .result-section {
+      margin-top: 40px;
+    }
+
+    .game-card {
+      background: var(--gradient-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 30px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-card:hover::before {
+      opacity: 1;
+    }
+
+    .game-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px var(--shadow);
+    }
+
+    .game-content {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+
+    .game-image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .game-image:hover img {
+      transform: scale(1.05);
+    }
+
     .game-info h3 {
-      margin-bottom: 10px;
-      font-size: 1.2em;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
     }
-    .game-info p {
-      margin-bottom: 10px;
-      font-size: 0.95em;
+
+    .game-info .app-id {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
     }
-    .game-info a {
-      display: inline-block;
-      margin-top: 6px;
-      color: var(--primary);
+
+    .game-info .description {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .steam-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gradient-primary);
+      color: var(--bg-primary);
       text-decoration: none;
-      font-size: 0.95em;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: all 0.3s ease;
     }
-    .game-info a:hover {
-      text-decoration: underline;
+
+    .steam-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
     }
-    .tags-list {
-      margin-top: 10px;
+
+    .used-tags {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: 1px solid var(--border);
     }
-    .tags-list span {
+
+    .used-tags h4 {
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+
+    .used-tags .tag {
       display: inline-block;
-      background: #e0e0e0;
-      color: var(--text);
-      padding: 3px 7px;
-      border-radius: 4px;
-      margin: 3px 5px 0 0;
-      font-size: 0.85em;
+      background: var(--primary);
+      color: var(--bg-primary);
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin: 4px 8px 4px 0;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--gradient-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .no-results i {
+      font-size: 4rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .no-results h3 {
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .no-results p {
+      color: var(--text-muted);
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .loading-content {
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .loading-content .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .tag-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+      }
+
+      .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .game-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .game-image {
+        max-width: 300px;
+        margin: 0 auto;
+      }
     }
   </style>
 </head>
 <body>
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <h3>게임을 찾고 있습니다...</h3>
+    <p>잠시만 기다려주세요</p>
+  </div>
+</div>
+
 <div class="container">
-  <h1>Game Recommend By Tags</h1>
-  <p style="text-align:center;"><a href="index.html" class="back">← 홈으로 돌아가기</a></p>
-  <p style="text-align:center;"><b>원하는 게임 태그를 골라주세요! 제외한 태그들은 나오지 않습니다!</b></p>
-
-  <br>
-
-  <fieldset>
-    <legend>선택한 태그 (SELECTED TAG)</legend>
-    <div class="tag-grid" id="random-tags-container"></div>
-  </fieldset>
-
-  <fieldset>
-    <legend>제외한 태그(EXCLUDED TAG)</legend>
-    <div class="tag-grid" id="excluded-tags-container"></div>
-  </fieldset>
-
-  <div class="controls">
-    <label>
-      Review score:
-      <input type="number" id="random-review" value="0" min="0" />
-    </label>
-    <label>
-      <input type="checkbox" id="random-korean" />
-      Korean only?
-    </label>
-    <label>
-      <input type="checkbox" id="random-free" />
-      Free only?
-    </label>
-    <button id="btn-random" class="button">추천 받기</button>
+  <div class="header">
+    <h1><i class="fas fa-gamepad"></i> Game Recommend</h1>
+    <p class="subtitle">원하는 태그를 선택하고 완벽한 게임을 찾아보세요!</p>
+    <a href="index.html" class="back-button">
+      <i class="fas fa-arrow-left"></i>
+      홈으로 돌아가기
+    </a>
   </div>
 
-  <div id="random-result"></div>
+  <div class="main-content">
+    <div class="section-card">
+      <h2 class="section-title">
+        <i class="fas fa-star"></i>
+        선택한 태그
+      </h2>
+      <div class="tag-grid" id="random-tags-container"></div>
+    </div>
+
+    <div class="section-card">
+      <h2 class="section-title">
+        <i class="fas fa-ban"></i>
+        제외한 태그
+      </h2>
+      <div class="tag-grid excluded-tags" id="excluded-tags-container"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="controls-grid">
+      <div class="control-item">
+        <label for="random-review">리뷰 수</label>
+        <input type="number" id="random-review" value="0" min="0" max="1000000" />
+      </div>
+      <div class="control-item">
+        <label for="random-korean">한국어 지원만</label>
+        <input type="checkbox" id="random-korean" />
+      </div>
+      <div class="control-item">
+        <label for="random-free">무료 게임만</label>
+        <input type="checkbox" id="random-free" />
+      </div>
+    </div>
+    <button id="btn-random" class="recommend-button">
+      <span class="loading-spinner"></span>
+      <i class="fas fa-magic"></i>
+      게임 추천 받기
+    </button>
+  </div>
+
+  <div id="random-result" class="result-section"></div>
 </div>
 
 <script>
@@ -226,47 +633,100 @@
     const excludedContainer = document.getElementById('excluded-tags-container');
 
     tagsList.forEach(tag => {
-      const lbl1 = document.createElement('label');
-      lbl1.innerHTML = `<input type="checkbox" name="tags" value="${tag}" /> ${tag}`;
-      container.append(lbl1);
+      // 선택 태그
+      const tagItem1 = document.createElement('div');
+      tagItem1.className = 'tag-item';
+      tagItem1.innerHTML = `
+        <input type="checkbox" name="tags" value="${tag}" id="tag-${tag}" />
+        <label for="tag-${tag}" class="tag-label">${tag}</label>
+      `;
+      container.append(tagItem1);
 
-      const lbl2 = document.createElement('label');
-      lbl2.innerHTML = `<input type="checkbox" name="excludedTags" value="${tag}" /> ${tag}`;
-      excludedContainer.append(lbl2);
+      // 제외 태그
+      const tagItem2 = document.createElement('div');
+      tagItem2.className = 'tag-item excluded-tag';
+      tagItem2.innerHTML = `
+        <input type="checkbox" name="excludedTags" value="${tag}" id="excluded-${tag}" />
+        <label for="excluded-${tag}" class="tag-label">${tag}</label>
+      `;
+      excludedContainer.append(tagItem2);
+    });
+
+    // 태그 선택 시 애니메이션 효과
+    document.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox' && (e.target.name === 'tags' || e.target.name === 'excludedTags')) {
+        const label = e.target.nextElementSibling;
+        if (e.target.checked) {
+          label.style.transform = 'scale(1.05)';
+          setTimeout(() => {
+            label.style.transform = '';
+          }, 200);
+        }
+      }
     });
   });
 
   document.getElementById('btn-random').addEventListener('click', async () => {
-    const tags = Array
-      .from(document.querySelectorAll('#random-tags-container input[name="tags"]:checked'))
-      .map(cb => cb.value);
+    const button = document.getElementById('btn-random');
+    const loadingOverlay = document.getElementById('loading-overlay');
 
-     const excludedTags = Array
-      .from(document.querySelectorAll('#excluded-tags-container input[name="excludedTags"]:checked'))
-      .map(cb => cb.value);
+    // 로딩 상태 시작
+    button.classList.add('loading');
+    loadingOverlay.classList.add('show');
 
-    const body = {
-      tags,
-      review: +document.getElementById('random-review').value,
-      korean_check: document.getElementById('random-korean').checked,
-      free_check:   document.getElementById('random-free').checked,
-      excludedTag: excludedTags.length > 0 ? excludedTags : null
-    };
+    try {
+      const tags = Array
+        .from(document.querySelectorAll('#random-tags-container input[name="tags"]:checked'))
+        .map(cb => cb.value);
 
-    const res = await fetch(`${baseUrl}/api/recommend/random`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    renderGameResult(data);
+      const excludedTags = Array
+        .from(document.querySelectorAll('#excluded-tags-container input[name="excludedTags"]:checked'))
+        .map(cb => cb.value);
+
+      const body = {
+        tags,
+        review: +document.getElementById('random-review').value,
+        korean_check: document.getElementById('random-korean').checked,
+        free_check: document.getElementById('random-free').checked,
+        excludedTag: excludedTags.length > 0 ? excludedTags : null
+      };
+
+      const res = await fetch(`${baseUrl}/api/recommend/random`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      // 결과 표시 전 잠시 대기 (UX 개선)
+      setTimeout(() => {
+        renderGameResult(data);
+
+        // 결과로 스크롤
+        document.getElementById('random-result').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 500);
+
+    } catch (error) {
+      console.error('Error:', error);
+      renderErrorResult();
+    } finally {
+      // 로딩 상태 종료
+      setTimeout(() => {
+        button.classList.remove('loading');
+        loadingOverlay.classList.remove('show');
+      }, 800);
+    }
   });
 
   function renderGameResult(data, containerId = 'random-result') {
     const container = document.getElementById(containerId);
 
     let usedTags = [];
-    let games    = [];
+    let games = [];
 
     if (Array.isArray(data)) {
       games = data;
@@ -275,11 +735,12 @@
       games = data.recommendedGames || data.recommendedGame || [];
     }
 
-
     if (!Array.isArray(games) || games.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: #d00; font-weight: 500;">
-          게임을 찾지 못했습니다!
+        <div class="no-results">
+          <i class="fas fa-search"></i>
+          <h3>게임을 찾지 못했습니다</h3>
+          <p>다른 태그 조합을 시도해보세요!</p>
         </div>
       `;
       return;
@@ -289,8 +750,11 @@
 
     if (usedTags.length > 0) {
       html += `
-        <div class="tags-list" style="margin-bottom: 15px;">
-          ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
+        <div class="used-tags">
+          <h4><i class="fas fa-tags"></i> 사용된 태그</h4>
+          <div>
+            ${usedTags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+          </div>
         </div>
       `;
     }
@@ -298,18 +762,61 @@
     games.forEach(game => {
       html += `
         <div class="game-card">
-          <img src="${game.headerImage}" alt="${game.name} header" />
-          <div class="game-info">
-            <h3>${game.name} (AppID: ${game.appid})</h3>
-            <p>${game.shortDescription}</p>
-            <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
+          <div class="game-content">
+            <div class="game-image">
+              <img src="${game.headerImage}" alt="${game.name} header" />
+            </div>
+            <div class="game-info">
+              <h3>${game.name}</h3>
+              <p class="app-id">AppID: ${game.appid}</p>
+              <p class="description">${game.shortDescription}</p>
+              <a href="${game.steamStore}" target="_blank" class="steam-link">
+                <i class="fab fa-steam"></i>
+                Steam에서 보기
+              </a>
+            </div>
           </div>
         </div>
       `;
     });
 
     container.innerHTML = html;
+
+    const cards = container.querySelectorAll('.game-card');
+    cards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        card.style.transition = 'all 0.5s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, index * 200);
+    });
   }
+
+  function renderErrorResult() {
+    const container = document.getElementById('random-result');
+    container.innerHTML = `
+      <div class="no-results">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>오류가 발생했습니다</h3>
+        <p>잠시 후 다시 시도해주세요.</p>
+      </div>
+    `;
+  }
+
+  window.addEventListener('load', () => {
+    const elements = document.querySelectorAll('.section-card, .controls');
+    elements.forEach((el, index) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      setTimeout(() => {
+        el.style.transition = 'all 0.6s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, index * 200);
+    });
+  });
 </script>
 </body>
 </html>

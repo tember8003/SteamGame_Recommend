@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.recommendation.service;
 
 import SteamGame.recommend.domain.game.entity.Game;
+import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.service.GameService;
 import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
@@ -32,6 +33,7 @@ public class RecommendServiceImpl implements RecommendService {
     private final TagRepository tagRepository;
     private final CacheService cacheService;
     private final GameService gameService;
+    private final GameRepository gameRepository;
     private final CooccurrenceService cooccurrenceService;
 
     public RecommendServiceImpl(
@@ -41,12 +43,14 @@ public class RecommendServiceImpl implements RecommendService {
             TagRepository tagRepository,
             CacheService cacheService,
             GameService gameService,
+            GameRepository gameRepository,
             CooccurrenceService cooccurrenceService
     ) {
         this.steamApiService = steamApiService;
         this.geminiApiService = geminiApiService;
         this.tagService = tagService;
         this.tagRepository = tagRepository;
+        this.gameRepository = gameRepository;
         this.cacheService = cacheService;
         this.gameService = gameService;
         this.cooccurrenceService = cooccurrenceService;
@@ -225,6 +229,9 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     public SteamDTO.RecommendationResult recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck){
         List<String> selectedTags = tagService.getTagsByGame(gameName);
+        Optional<Game> selectedGame = gameRepository.findByNameIgnoreCase(gameName);
+        long selectedAppId = selectedGame.orElseThrow().getAppid();
+
 
         if (selectedTags.isEmpty()) {
             throw new ResponseStatusException(
@@ -235,10 +242,28 @@ public class RecommendServiceImpl implements RecommendService {
         log.info(selectedTags.toString());
 
         List<String> topTags = tagService.getTopTags(selectedTags,8);
+        List<SteamDTO.SteamApp> resultGames = null;
 
-        List<SteamDTO.SteamApp> game = recommendWithCooccurrence(topTags,review,koreanCheck,freeCheck);
+        for (int attempt = 0; attempt < 5; attempt++) {
+             List<SteamDTO.SteamApp> games =recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck);
 
-        return new SteamDTO.RecommendationResult(topTags, game);
+            List<SteamDTO.SteamApp> filteredGames = games.stream()
+                    .filter(app -> !app.getAppid().equals(selectedAppId))
+                    .collect(Collectors.toList());
+
+            if(!filteredGames.isEmpty()){
+                resultGames = filteredGames;
+                break;
+            }
+        }
+
+        if (resultGames == null || resultGames.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "게임과 비슷한 태그를 가지는 게임을 탐색하는데 실패했습니다."
+            );
+        }
+
+        return new SteamDTO.RecommendationResult(topTags, resultGames);
     }
 
 }

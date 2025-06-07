@@ -1,198 +1,739 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Game Recommend By RecentPlay</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>최근 플레이 기반 게임 추천</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+          --primary: #00d4ff;
+          --primary-dark: #0099cc;
+          --secondary: #7c3aed;
+          --accent: #f59e0b;
+          --bg-primary: #0a0a0f;
+          --bg-secondary: #1a1a2e;
+          --bg-tertiary: #16213e;
+          --bg-card: #1e1e2e;
+          --border: #333344;
+          --border-hover: #4a4a6a;
+          --text-primary: #ffffff;
+          --text-secondary: #b4b4c8;
+          --text-muted: #8b8ba3;
+          --success: #10b981;
+          --warning: #f59e0b;
+          --error: #ef4444;
+          --shadow: rgba(0, 0, 0, 0.3);
+          --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+          --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        }
+
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: #f2f5f9;
-            margin: 0;
-            padding: 20px;
-            color: #333;
+          background: var(--bg-primary);
+          background-image:
+            radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+          font-family: 'Inter', sans-serif;
+          color: var(--text-primary);
+          line-height: 1.6;
+          min-height: 100vh;
         }
+
         .container {
-            max-width: 900px;
-            margin: 30px auto;
-            background: #fff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+          position: relative;
+          z-index: 1;
         }
-        h1, h2 {
-            text-align: center;
-            color: #111827;
-            margin-bottom: 20px;
+
+        .header {
+          text-align: center;
+          margin-bottom: 40px;
+          padding: 40px 0;
         }
-        a.back {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
+
+        .header h1 {
+          font-size: 3rem;
+          font-weight: 700;
+          background: var(--gradient-primary);
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 16px;
+          text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
         }
-        a.back:hover {
-            text-decoration: underline;
+
+        .header .subtitle {
+          font-size: 1.2rem;
+          color: var(--text-secondary);
+          margin-bottom: 20px;
         }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            margin-top: 10px;
+
+        .back-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--bg-card);
+          color: var(--primary);
+          text-decoration: none;
+          padding: 12px 24px;
+          border-radius: 50px;
+          border: 1px solid var(--border);
+          transition: all 0.3s ease;
+          font-weight: 500;
+          backdrop-filter: blur(10px);
         }
-        button {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: background-color 0.3s;
+
+        .back-button:hover {
+          background: var(--bg-tertiary);
+          border-color: var(--primary);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
         }
-        button:hover {
-            background-color: #2563eb;
+
+        .section-card {
+          background: var(--gradient-card);
+          border-radius: 16px;
+          border: 1px solid var(--border);
+          padding: 30px;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          margin-bottom: 30px;
         }
+
+        .section-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--gradient-primary);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .section-card:hover::before {
+          opacity: 1;
+        }
+
+        .section-card:hover {
+          border-color: var(--border-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 20px 40px var(--shadow);
+        }
+
+        .section-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 20px;
+        }
+
+        .section-title i {
+          color: var(--primary);
+          font-size: 1.1rem;
+        }
+
+        .warning-text {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px solid var(--warning);
+          border-radius: 10px;
+          padding: 12px 16px;
+          margin-bottom: 20px;
+          color: var(--warning);
+          font-size: 0.9rem;
+        }
+
+        .input-group {
+          margin-bottom: 20px;
+        }
+
+        .input-text {
+          width: 100%;
+          padding: 16px 20px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          color: var(--text-primary);
+          font-size: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .input-text:focus {
+          outline: none;
+          border-color: var(--primary);
+          background: var(--bg-tertiary);
+          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .input-text::placeholder {
+          color: var(--text-muted);
+        }
+
+        .controls {
+          background: var(--bg-secondary);
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 30px;
+          border: 1px solid var(--border);
+        }
+
+        .controls-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .control-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          transition: all 0.3s ease;
+        }
+
+        .control-item:hover {
+          border-color: var(--border-hover);
+          background: var(--bg-card);
+        }
+
+        .control-item label {
+          font-weight: 500;
+          color: var(--text-secondary);
+          cursor: pointer;
+          flex: 1;
+        }
+
+        .control-item input[type="number"] {
+          width: 80px;
+          padding: 8px 12px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          color: var(--text-primary);
+          font-size: 0.9rem;
+        }
+
+        .control-item input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+          accent-color: var(--primary);
+          cursor: pointer;
+        }
+
+        .recommend-button {
+          width: 100%;
+          background: var(--gradient-primary);
+          color: var(--bg-primary);
+          border: none;
+          border-radius: 12px;
+          padding: 16px 32px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .recommend-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .recommend-button:active {
+          transform: translateY(0);
+        }
+
+        .recommend-button.loading {
+          pointer-events: none;
+          opacity: 0.7;
+        }
+
+        .recommend-button .loading-spinner {
+          display: none;
+          width: 20px;
+          height: 20px;
+          border: 2px solid transparent;
+          border-top: 2px solid currentColor;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-right: 8px;
+        }
+
+        .recommend-button.loading .loading-spinner {
+          display: inline-block;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+          margin-top: 40px;
+        }
+
         .game-card {
-            display: flex;
-            gap: 20px;
-            background: #fafafa;
-            border: 1px solid #ddd;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            align-items: center;
+          background: var(--gradient-card);
+          border-radius: 16px;
+          border: 1px solid var(--border);
+          padding: 30px;
+          margin-bottom: 20px;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s ease;
+          overflow: hidden;
+          position: relative;
         }
-        .game-card img {
-            width: 180px;
-            border-radius: 8px;
-            flex-shrink: 0;
+
+        .game-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: var(--gradient-primary);
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
-        .game-info {
-            flex: 1;
-            min-width: 0;
+
+        .game-card:hover::before {
+          opacity: 1;
         }
+
+        .game-card:hover {
+          border-color: var(--border-hover);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px var(--shadow);
+        }
+
+        .game-content {
+          display: grid;
+          grid-template-columns: 250px 1fr;
+          gap: 30px;
+          align-items: start;
+        }
+
+        .game-image {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-image img {
+          width: 100%;
+          height: auto;
+          display: block;
+          transition: transform 0.3s ease;
+        }
+
+        .game-image:hover img {
+          transform: scale(1.05);
+        }
+
         .game-info h3 {
-            margin-bottom: 10px;
-            font-size: 1.2em;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 8px;
         }
-        .game-info p {
-            margin-bottom: 10px;
-            font-size: 0.95em;
-            line-height: 1.4;
+
+        .game-info .app-id {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          margin-bottom: 16px;
         }
-        .game-info a {
-            display: inline-block;
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
+
+        .game-info .description {
+          color: var(--text-secondary);
+          font-size: 1rem;
+          line-height: 1.6;
+          margin-bottom: 20px;
         }
-        .game-info a:hover {
-            text-decoration: underline;
+
+        .steam-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--gradient-primary);
+          color: var(--bg-primary);
+          text-decoration: none;
+          padding: 12px 24px;
+          border-radius: 50px;
+          font-weight: 600;
+          transition: all 0.3s ease;
         }
-        .tags-list span {
-            display: inline-block;
-            background: #e5e7eb;
-            color: #374151;
-            padding: 4px 8px;
-            border-radius: 5px;
-            margin-right: 5px;
-            margin-top: 5px;
-            font-size: 0.85em;
+
+        .steam-link:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .used-tags {
+          background: var(--bg-secondary);
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 30px;
+          border: 1px solid var(--border);
+        }
+
+        .used-tags h4 {
+          color: var(--primary);
+          margin-bottom: 12px;
+          font-size: 1.1rem;
+        }
+
+        .used-tags .tag {
+          display: inline-block;
+          background: var(--primary);
+          color: var(--bg-primary);
+          padding: 6px 12px;
+          border-radius: 20px;
+          margin: 4px 8px 4px 0;
+          font-size: 0.85rem;
+          font-weight: 500;
+        }
+
+        .no-results {
+          text-align: center;
+          padding: 60px 20px;
+          background: var(--gradient-card);
+          border-radius: 16px;
+          border: 1px solid var(--border);
+        }
+
+        .no-results i {
+          font-size: 4rem;
+          color: var(--text-muted);
+          margin-bottom: 20px;
+        }
+
+        .no-results h3 {
+          font-size: 1.5rem;
+          color: var(--text-secondary);
+          margin-bottom: 10px;
+        }
+
+        .no-results p {
+          color: var(--text-muted);
+        }
+
+        .loading-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(10, 10, 15, 0.8);
+          backdrop-filter: blur(4px);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .loading-overlay.show {
+          display: flex;
+        }
+
+        .loading-content {
+          text-align: center;
+          color: var(--text-primary);
+        }
+
+        .loading-content .spinner {
+          width: 60px;
+          height: 60px;
+          border: 4px solid var(--border);
+          border-top: 4px solid var(--primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 20px;
+        }
+
+        @media (max-width: 768px) {
+          .container {
+            padding: 15px;
+          }
+
+          .header h1 {
+            font-size: 2rem;
+          }
+
+          .controls-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+
+          .game-content {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .game-image {
+            max-width: 300px;
+            margin: 0 auto;
+          }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🎮 최근 2주 플레이 기반 추천</h1>
-    <p style="text-align:center;"><a href="index.html" class="back">← 홈으로 돌아가기</a>
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h3>최근 플레이를 분석하고 있습니다...</h3>
+        <p>잠시만 기다려주세요</p>
+    </div>
+</div>
 
-    <div class="section" id="recent">
-        <h2>Steam ID 입력</h2>
-        <input type="text" id="recent-id" placeholder="Steam ID를 입력하세요" />
-    <div class="controls">
-        <label>
-            Review score:
-            <input type="number" id="input-review" value="0" min="0" />
-        </label>
-        <label>
-            <input type="checkbox" id="input-korean" />
-            Korean only?
-        </label>
-        <label>
-            <input type="checkbox" id="input-free" />
-            Free only?
-        </label>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-clock"></i> 최근 플레이 기반 추천</h1>
+        <p class="subtitle">최근 2주간 플레이한 게임을 분석하여 맞춤형 추천을 받아보세요!</p>
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            홈으로 돌아가기
+        </a>
     </div>
-        <button onclick="callRecent()">추천 받기</button>
-        <div id="recent-result"></div>
+
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-gamepad"></i>
+            최근 플레이 분석
+        </h2>
+
+        <div class="warning-text">
+            <i class="fas fa-info-circle"></i>
+            Steam ID를 정확히 입력해주세요. 최근 2주간의 플레이 기록을 분석합니다.
+        </div>
+
+        <div class="input-group">
+            <input
+                    type="text"
+                    id="recent-id"
+                    class="input-text"
+                    placeholder="Steam ID를 입력하세요"
+            />
+        </div>
+
+        <div class="controls">
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label for="input-review">리뷰 수</label>
+                    <input type="number" id="input-review" value="0" min="0" max="1000000" />
+                </div>
+                <div class="control-item">
+                    <label for="input-korean">한국어 지원만</label>
+                    <input type="checkbox" id="input-korean" />
+                </div>
+                <div class="control-item">
+                    <label for="input-free">무료 게임만</label>
+                    <input type="checkbox" id="input-free" />
+                </div>
+            </div>
+            <button id="btn-recent" class="recommend-button">
+                <span class="loading-spinner"></span>
+                <i class="fas fa-search"></i>
+                추천 받기
+            </button>
+        </div>
     </div>
+
+    <div id="recent-result" class="result-section"></div>
 </div>
 
 <script>
     const baseUrl = '';
 
+    document.getElementById('btn-recent').addEventListener('click', async () => {
+      const button = document.getElementById('btn-recent');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const steamIdInput = document.getElementById('recent-id');
+
+      // 입력 검증
+      if (!steamIdInput.value.trim()) {
+        steamIdInput.focus();
+        steamIdInput.style.borderColor = 'var(--error)';
+        setTimeout(() => {
+          steamIdInput.style.borderColor = '';
+        }, 2000);
+        return;
+      }
+
+      // 로딩 상태 시작
+      button.classList.add('loading');
+      loadingOverlay.classList.add('show');
+
+      try {
+        const body = {
+          steamId: steamIdInput.value.trim(),
+          review: +document.getElementById('input-review').value,
+          korean_check: document.getElementById('input-korean').checked,
+          free_check: document.getElementById('input-free').checked
+        };
+
+        const res = await fetch(`${baseUrl}/api/recommend/RecentPlay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        // 결과 표시 전 잠시 대기 (UX 개선)
+        setTimeout(() => {
+          renderGameResult(data);
+
+          // 결과로 스크롤
+          document.getElementById('recent-result').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 500);
+
+      } catch (error) {
+        console.error('Error:', error);
+        renderErrorResult();
+      } finally {
+        // 로딩 상태 종료
+        setTimeout(() => {
+          button.classList.remove('loading');
+          loadingOverlay.classList.remove('show');
+        }, 1000);
+      }
+    });
+
+    // Enter 키로 검색
+    document.getElementById('recent-id').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btn-recent').click();
+      }
+    });
+
     function renderGameResult(data, containerId = 'recent-result') {
-        const container = document.getElementById(containerId);
+      const container = document.getElementById(containerId);
 
-        const usedTags = data.usedTags || [];
-        const games    = data.recommendedGame  || [];
+      let usedTags = [];
+      let games = [];
 
-        if (!Array.isArray(games) || games.length === 0) {
-          container.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #d00; font-weight: 500;">
-              게임을 찾지 못했습니다!
+      if (Array.isArray(data)) {
+        games = data;
+      } else {
+        usedTags = data.usedTags || [];
+        games = data.recommendedGame || data.recommendedGames || [];
+      }
+
+      if (!Array.isArray(games) || games.length === 0) {
+        container.innerHTML = `
+          <div class="no-results">
+            <i class="fas fa-clock"></i>
+            <h3>게임을 찾지 못했습니다</h3>
+            <p>Steam ID를 확인하거나 최근 플레이 기록을 확인해주세요!</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      if (usedTags.length > 0) {
+        html += `
+          <div class="used-tags">
+            <h4><i class="fas fa-tags"></i> 최근 플레이에서 분석된 태그</h4>
+            <div>
+              ${usedTags.map(tag => `<span class="tag">${tag}</span>`).join('')}
             </div>
-          `;
-          return;
-        }
+          </div>
+        `;
+      }
 
-        let html = '';
-
-        if (usedTags.length > 0) {
-          html += `
-            <div class="tags-list" style="margin-bottom: 15px;">
-              ${usedTags.map(tag => `<span>${tag}</span>`).join('')}
-            </div>
-          `;
-        }
-
-        games.forEach(game => {
-          html += `
-            <div class="game-card">
-              <img src="${game.headerImage}" alt="${game.name} header" />
+      games.forEach(game => {
+        html += `
+          <div class="game-card">
+            <div class="game-content">
+              <div class="game-image">
+                <img src="${game.headerImage}" alt="${game.name} header" />
+              </div>
               <div class="game-info">
-                <h3>${game.name} (AppID: ${game.appid})</h3>
-                <p>${game.shortDescription}</p>
-                <a href="${game.steamStore}" target="_blank">▶ Steam에서 보기</a>
+                <h3>${game.name}</h3>
+                <p class="app-id">AppID: ${game.appid}</p>
+                <p class="description">${game.shortDescription}</p>
+                <a href="${game.steamStore}" target="_blank" class="steam-link">
+                  <i class="fab fa-steam"></i>
+                  Steam에서 보기
+                </a>
               </div>
             </div>
-          `;
-        });
+          </div>
+        `;
+      });
 
-        container.innerHTML = html;
-  }
+      container.innerHTML = html;
 
-    async function callRecent() {
-        const steamId = document.getElementById('recent-id').value;
-        const body = {
-        steamId,
-        review: +document.getElementById('input-review').value,
-        korean_check: document.getElementById('input-korean').checked,
-        free_check:   document.getElementById('input-free').checked
-        };
-        const res = await fetch(`${baseUrl}/api/recommend/RecentPlay`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        renderGameResult(data);
+      // 카드 애니메이션
+      const cards = container.querySelectorAll('.game-card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.5s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 200);
+      });
     }
+
+    function renderErrorResult() {
+      const container = document.getElementById('recent-result');
+      container.innerHTML = `
+        <div class="no-results">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>오류가 발생했습니다</h3>
+          <p>Steam ID를 확인하거나 잠시 후 다시 시도해주세요.</p>
+        </div>
+      `;
+    }
+
+    // 페이지 로드 애니메이션
+    window.addEventListener('load', () => {
+      const elements = document.querySelectorAll('.section-card');
+      elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        setTimeout(() => {
+          el.style.transition = 'all 0.6s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, index * 200);
+      });
+    });
 </script>
 </body>
 </html>
