@@ -1,0 +1,48 @@
+{
+  "name": "steam-game-recommend",
+  "version": "1.0.0",
+  "description": "Steam Game Recommendation App",
+  "main": "main.js",
+  "author": "Your Name",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "dist": "electron-builder --publish=never"
+  },
+  "build": {
+    "appId": "com.steamgame.recommend",
+    "productName": "Steam Game Recommend",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "html/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/recommend-0.0.1-SNAPSHOT.jar",
+        "to": "recommend-0.0.1-SNAPSHOT.jar"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^latest",
+    "electron-builder": "^latest"
+  },
+  "dependencies": {
+    "dotenv": "^latest"
+  }
+}

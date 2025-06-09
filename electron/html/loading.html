@@ -1,0 +1,49 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Loading...</title>
+        <style>
+            body {
+                background: #f0f0f0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                font-family: Arial, sans-serif;
+                margin: 0;
+            }
+            .container {
+                text-align: center;
+            }
+            .spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3498db;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 2s linear infinite;
+                margin: 20px auto;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>🎮 Steam Game Recommend</h2>
+            <p id="status">서버를 시작하고 있습니다...</p>
+            <div class="spinner"></div>
+        </div>
+        <script>
+            let dots = 0;
+            setInterval(() => {
+                dots = (dots + 1) % 4;
+                document.getElementById('status').textContent = 
+                    '서버를 시작하고 있습니다' + '.'.repeat(dots);
+            }, 500);
+        </script>
+    </body>
+    </html>

@@ -1,3 +1,4 @@
+# 기존 내용 유지
 HELP.md
 .gradle
 build/
@@ -6,7 +7,17 @@ build/
 !**/src/test/**/build/
 .env
 
-### STS ###
+### 빌드 산출물 및 실행 파일 제외 ###
+*.jar
+*.exe
+
+# Electron 빌드 디렉토리 제외
+electron/dist/
+electron/out/
+electron/node_modules/
+!gradle/wrapper/gradle-wrapper.jar
+
+# OS/IDE 관련 디렉토리
 .apt_generated
 .classpath
 .factorypath
@@ -18,7 +29,6 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
@@ -26,15 +36,13 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-__pycache__/
-.env
 
-### NetBeans ###
+__pycache__/
+.vscode/
+
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-
-### VS Code ###
-.vscode/

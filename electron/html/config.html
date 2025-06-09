@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>API Key Configuration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        .config-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 500px;
+            max-width: 90%;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #fff;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        .help-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .help-link {
+            color: #add8e6;
+            text-decoration: none;
+        }
+        .help-link:hover {
+            text-decoration: underline;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-save:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        .btn-skip {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-skip:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+<div class="config-container">
+    <h2>🔑 API Key Configuration</h2>
+    <form id="apiForm">
+        <div class="form-group">
+            <label for="steamApiKey">Steam API Key:</label>
+            <input type="text" id="steamApiKey" placeholder="Enter your Steam API key">
+            <div class="help-text">
+                Get your Steam API key from:
+                <a href="#" class="help-link" onclick="openExternal('https://steamcommunity.com/dev/apikey')">
+                    https://steamcommunity.com/dev/apikey
+                </a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="geminiApiKey">Gemini API Key:</label>
+            <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key">
+            <div class="help-text">
+                Get your Gemini API key from:
+                <a href="#" class="help-link" onclick="openExternal('https://aistudio.google.com/app/apikey')">
+                    https://aistudio.google.com/app/apikey
+                </a>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="btn-skip" onclick="skipConfig()">Skip for Now</button>
+            <button type="submit" class="btn-save">Save & Continue</button>
+        </div>
+    </form>
+
+    <div id="status" class="status" style="display: none;"></div>
+</div>
+
+<script>
+    const { ipcRenderer, shell } = require('electron');
+
+    // 페이지 로드시 기존 설정 불러오기
+    window.addEventListener('DOMContentLoaded', () => {
+        ipcRenderer.invoke('get-api-keys').then(keys => {
+            if (keys.steamApiKey) {
+                document.getElementById('steamApiKey').value = keys.steamApiKey;
+            }
+            if (keys.geminiApiKey) {
+                document.getElementById('geminiApiKey').value = keys.geminiApiKey;
+            }
+        });
+    });
+
+    // 외부 링크 열기
+    function openExternal(url) {
+        shell.openExternal(url);
+    }
+
+    // 폼 제출
+    document.getElementById('apiForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const steamApiKey = document.getElementById('steamApiKey').value.trim();
+        const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+
+        const statusDiv = document.getElementById('status');
+
+        try {
+            await ipcRenderer.invoke('save-api-keys', {
+                steamApiKey,
+                geminiApiKey
+            });
+
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status success';
+            statusDiv.textContent = '✅ API keys saved successfully!';
+
+            setTimeout(() => {
+                ipcRenderer.invoke('start-main-app');
+            }, 1500);
+
+        } catch (error) {
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status error';
+            statusDiv.textContent = '❌ Failed to save API keys: ' + error.message;
+        }
+    });
+
+    // 설정 건너뛰기
+    function skipConfig() {
+        ipcRenderer.invoke('start-main-app');
+    }
+</script>
+</body>
+</html>

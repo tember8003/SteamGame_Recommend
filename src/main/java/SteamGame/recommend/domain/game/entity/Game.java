@@ -23,9 +23,6 @@ public class Game {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "review_count")
-    private int reviewCount;
-
     @Column(name = "korean_support")
     private boolean koreanSupport;
 
