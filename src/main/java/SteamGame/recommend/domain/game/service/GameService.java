@@ -90,7 +90,7 @@ public class GameService {
     }
 
     public List<String> getTags(){
-        return tagService.getFilteredTagNames();
+        return tagService.getTags();
     }
 
     public List<GameSearchResponseDTO> searchNames(String prefix) {

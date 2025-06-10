@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -47,5 +48,19 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     Optional<Game> findByAppid(long appid);
 
+    List<Game> getGamesByAppids(List<Long> appids);
+
     List<Game> findByNameStartingWithIgnoreCase(String prefix, Pageable pageable);
+
+    @Query("SELECT g FROM Game g WHERE g.appid IN :appIds")
+    List<Game> findByAppidIn(@Param("appIds") List<Long> appIds);
+
+    @Query("""
+    SELECT new map(g.appid as appId, COUNT(gt) as tagCount)
+    FROM Game g
+    JOIN GameTag gt ON g.id = gt.game.id
+    WHERE g.appid IN :appIds
+    GROUP BY g.appid""")
+    List<Map<String, Object>> findTagCountsByAppids(@Param("appIds") List<Long> appids);
+
 }

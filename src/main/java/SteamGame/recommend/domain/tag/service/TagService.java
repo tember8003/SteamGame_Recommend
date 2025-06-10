@@ -27,11 +27,10 @@ public class TagService {
     private final TagRepository tagRepository;
     private final GameRepository gameRepository;
 
-    private static final Set<String> ALLOWED_ENGLISH =
-            Set.of("2D","3D","RPG","FPS","MMO");
+    //private static final Set<String> ALLOWED_ENGLISH =Set.of("2D","3D","RPG","FPS","MMO");
 
-    // 한글이 하나라도 들어있는지 체크하는 정규식
-    private static final Pattern KOREAN_PATTERN = Pattern.compile(".*[\\uAC00-\\uD7A3].*");
+    // korean tag
+    //private static final Pattern KOREAN_PATTERN = Pattern.compile(".*[\\uAC00-\\uD7A3].*");
 
     public TagService(GameRepository gameRepository,
                       SteamApiService steamApiService,
@@ -76,6 +75,7 @@ public class TagService {
         return tag_list;
     }
 
+    /*
     public List<String> getFilteredTagNames() {
         return tagRepository.findAll().stream()
                 .map(Tag::getName)
@@ -83,6 +83,15 @@ public class TagService {
                         KOREAN_PATTERN.matcher(name).matches()
                                 || ALLOWED_ENGLISH.contains(name)
                 )
+                .distinct()
+                .sorted()
+                .toList();
+    }
+    */
+
+    public List<String> getTags(){
+        return tagRepository.findAll().stream()
+                .map(Tag::getName)
                 .distinct()
                 .sorted()
                 .toList();

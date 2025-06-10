@@ -28,6 +28,7 @@
             --shadow: rgba(0, 0, 0, 0.3);
             --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
             --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #f59e0b 100%);
+            --gradient-dashboard: linear-gradient(135deg, #10b981 0%, #00d4ff 100%);
             --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
         }
 
@@ -157,8 +158,13 @@
             box-shadow: 0 25px 50px var(--shadow);
         }
 
+        /* 🔧 다양한 카드 색상 */
         .feature-card:nth-child(2n)::before {
             background: var(--gradient-secondary);
+        }
+
+        .feature-card:nth-child(3n)::before {
+            background: var(--gradient-dashboard);
         }
 
         .feature-icon {
@@ -178,6 +184,11 @@
 
         .feature-card:nth-child(2n) .feature-icon {
             background: var(--gradient-secondary);
+        }
+
+        /* 🔧 대시보드 카드용 아이콘 스타일 */
+        .feature-card:nth-child(3n) .feature-icon {
+            background: var(--gradient-dashboard);
         }
 
         .feature-icon::before {
@@ -247,6 +258,25 @@
             border-color: var(--primary);
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        /* 🔧 특별한 대시보드 카드 스타일 */
+        .dashboard-card {
+            background: linear-gradient(135deg, #1e1e2e 0%, #2a3a2e 100%);
+            border: 2px solid var(--success);
+            position: relative;
+        }
+
+        .dashboard-card::before {
+            background: var(--gradient-dashboard) !important;
+        }
+
+        .dashboard-card .feature-link::before {
+            background: var(--gradient-dashboard);
+        }
+
+        .dashboard-card .feature-link:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
         }
 
         .stats-section {
@@ -437,6 +467,7 @@
         .fade-in:nth-child(3) { animation-delay: 0.3s; }
         .fade-in:nth-child(4) { animation-delay: 0.4s; }
         .fade-in:nth-child(5) { animation-delay: 0.5s; }
+        .fade-in:nth-child(6) { animation-delay: 0.6s; }
 
         @keyframes fadeInUp {
             to {
@@ -467,6 +498,22 @@
     </div>
 
     <div class="features-grid">
+        <!-- 🔧 NEW: 개인 대시보드 카드 (첫 번째 위치) -->
+        <div class="feature-card dashboard-card fade-in">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="feature-title">개인 게임 대시보드</h3>
+            <p class="feature-description">
+                Steam 프로필을 분석하여 개인 맞춤
+                게임 통계와 인사이트를 제공합니다
+            </p>
+            <a href="dashboard.html" class="feature-link">
+                <i class="fas fa-arrow-right"></i>
+                대시보드 보기
+            </a>
+        </div>
+
         <div class="feature-card fade-in">
             <div class="feature-icon">
                 <i class="fas fa-dice"></i>
@@ -553,6 +600,10 @@
                 <span class="stat-number">50+</span>
                 <span class="stat-label">게임 태그</span>
             </div>
+            <div class="stat-item">
+                <span class="stat-number">100K+</span>
+                <span class="stat-label">분석된 프로필</span>
+            </div>
         </div>
     </div>
 
@@ -561,9 +612,9 @@
         <p class="cta-description">
             몇 번의 클릭만으로 당신만의 완벽한 게임을 찾을 수 있습니다
         </p>
-        <a href="random.html" class="cta-button">
-            <i class="fas fa-rocket"></i>
-            게임 추천 받기
+        <a href="dashboard.html" class="cta-button">
+            <i class="fas fa-chart-line"></i>
+            내 대시보드 보기
         </a>
     </div>
 </div>
@@ -637,7 +688,7 @@
             const progress = Math.min(elapsed / duration, 1);
 
             const value = Math.floor(initial + (target - initial) * progress);
-            element.textContent = value.toLocaleString();
+            element.textContent = value.toLocaleString() + (element.textContent.includes('K') ? 'K+' : '+');
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
@@ -653,10 +704,12 @@
                 const numbers = entry.target.querySelectorAll('.stat-number');
                 numbers.forEach(num => {
                     const text = num.textContent;
-                    if (text.includes('K')) {
-                        animateCounter(num, parseInt(text) * 9600);
-                    } else if (!isNaN(parseInt(text))) {
-                        animateCounter(num, parseInt(text));
+                    if (text.includes('10K')) {
+                        animateCounter(num, 10);
+                    } else if (text.includes('50')) {
+                        animateCounter(num, 50);
+                    } else if (text.includes('100K')) {
+                        animateCounter(num, 100);
                     }
                 });
                 statsObserver.unobserve(entry.target);
