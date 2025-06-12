@@ -28,7 +28,7 @@ public class DashboardService {
     private final SteamApiService steamApiService;
     private final GameRepository gameRepository;
     private final TagRepository tagRepository;
-    private final DashboardCacheService cacheService; // 🔧 캐시 서비스 추가
+    private final DashboardCacheService cacheService; // Cache service added
 
     private static final String[] CHART_COLORS = {
             "#00d4ff", "#7c3aed", "#f59e0b", "#10b981", "#ef4444",
@@ -38,7 +38,7 @@ public class DashboardService {
     public DashboardService(SteamApiService steamApiService,
                             GameRepository gameRepository,
                             TagRepository tagRepository,
-                            DashboardCacheService cacheService) { // 🔧 의존성 주입
+                            DashboardCacheService cacheService) { // Dependency injection
         this.steamApiService = steamApiService;
         this.gameRepository = gameRepository;
         this.tagRepository = tagRepository;
@@ -47,17 +47,17 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardDTO generateDashboard(String steamId) {
-        // 1. 캐시 확인
+        // 1. Check cache
         Optional<DashboardDTO> cachedDashboard = cacheService.getCachedDashboard(steamId);
         if (cachedDashboard.isPresent()) {
-            log.info("캐시에서 대시보드 반환: steamId={}", steamId);
+            log.info("Dashboard returned from cache: steamId={}", steamId);
             return cachedDashboard.get();
         }
 
         try {
-            log.info("새로운 대시보드 생성 시작: steamId={}", steamId);
+            log.info("Starting new dashboard generation: steamId={}", steamId);
 
-            // 2. Steam API 데이터 조회
+            // 2. Steam API data retrieval
             List<Long> ownedGameIds = Collections.emptyList();
             List<Long> recentGameIds = Collections.emptyList();
             Map<Long, GamePlaytimeInfo> playtimeMap = Collections.emptyMap();
@@ -70,23 +70,23 @@ public class DashboardService {
                 playerStats = steamApiService.getPlayerStats(steamId);
 
             } catch (SteamApiException e) {
-                log.warn("Steam API 오류로 인한 부분 실패: steamId={}, type={}, message={}",
+                log.warn("Partial failure due to Steam API error: steamId={}, type={}, message={}",
                         steamId, e.getClass().getSimpleName(), e.getMessage());
 
-                // Steam API 오류 시에도 빈 대시보드 대신 가능한 데이터로 진행
+                // Continue with available data instead of empty dashboard on Steam API error
                 if (e.getStatusCode() == 403) {
-                    // 프로필 비공개 시 특별한 메시지
+                    // Special message for private profile
                     return createPrivateProfileDashboard(steamId);
                 } else if (e.getStatusCode() == 404) {
-                    // 존재하지 않는 사용자
+                    // User not found
                     return createNotFoundDashboard(steamId);
                 } else if (e.getStatusCode() == 429) {
-                    // 요청 한도 초과 시 1분 캐시
+                    // Rate limit exceeded - cache for 1 minute
                     DashboardDTO rateLimitDashboard = createRateLimitDashboard(steamId);
                     cacheService.cacheDashboardWithTTL(steamId, rateLimitDashboard, 60);
                     return rateLimitDashboard;
                 }
-                // 기타 Steam API 오류는 계속 진행
+                // Continue for other Steam API errors
             }
 
             if (ownedGameIds.isEmpty()) {
@@ -95,7 +95,7 @@ public class DashboardService {
                 return emptyDashboard;
             }
 
-            // 3. 데이터베이스 조회
+            // 3. Database query
             List<Game> ownedGames = Collections.emptyList();
             Map<Long, List<String>> gameTagsMap = Collections.emptyMap();
 
@@ -104,12 +104,12 @@ public class DashboardService {
                 gameTagsMap = getGameTagsMap(ownedGameIds);
 
             } catch (Exception e) {
-                log.error("데이터베이스 조회 실패: steamId={}", steamId, e);
-                throw new DashboardException("게임 데이터 조회 실패", steamId,
+                log.error("Database query failed: steamId={}", steamId, e);
+                throw new DashboardException("Failed to retrieve game data", steamId,
                         DashboardException.ErrorType.DATABASE_ERROR, e);
             }
 
-            // 4. 대시보드 생성
+            // 4. Dashboard generation
             try {
                 UserProfileSummary profileSummary = createProfileSummary(ownedGames, recentGameIds, playtimeMap, playerStats);
                 List<TagPreferenceDTO> topTags = createTagPreferences(gameTagsMap, ownedGames, playtimeMap);
@@ -128,38 +128,38 @@ public class DashboardService {
                         insights
                 );
 
-                // 5. 캐시 저장
+                // 5. Cache storage
                 try {
                     cacheService.cacheDashboard(steamId, dashboard);
-                    log.info("새 대시보드 생성 및 캐시 저장 완료: steamId={}", steamId);
+                    log.info("New dashboard generation and cache storage completed: steamId={}", steamId);
 
                 } catch (Exception e) {
-                    log.warn("대시보드 캐시 저장 실패 (데이터는 정상 반환): steamId={}", steamId, e);
-                    // 캐시 저장 실패해도 데이터는 반환
+                    log.warn("Dashboard cache storage failed (data returned normally): steamId={}", steamId, e);
+                    // Return data even if cache storage fails
                 }
 
                 return dashboard;
 
             } catch (Exception e) {
-                log.error("대시보드 데이터 처리 실패: steamId={}", steamId, e);
-                throw new DashboardException("대시보드 데이터 생성 실패", steamId,
+                log.error("Dashboard data processing failed: steamId={}", steamId, e);
+                throw new DashboardException("Failed to generate dashboard data", steamId,
                         DashboardException.ErrorType.DATA_PROCESSING_ERROR, e);
             }
 
         } catch (DashboardException e) {
-            // 이미 처리된 커스텀 예외는 재발생
+            // Re-throw already processed custom exceptions
             throw e;
 
         } catch (DataAccessException e) {
-            log.error("데이터베이스 접근 오류: steamId={}", steamId, e);
+            log.error("Database access error: steamId={}", steamId, e);
             DashboardDTO errorDashboard = createDatabaseErrorDashboard(steamId);
-            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 300); // 5분 캐시
+            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 300); // 5 minute cache
             return errorDashboard;
 
         } catch (Exception e) {
-            log.error("예상치 못한 대시보드 생성 오류: steamId={}", steamId, e);
+            log.error("Unexpected dashboard generation error: steamId={}", steamId, e);
             DashboardDTO errorDashboard = createUnknownErrorDashboard(steamId);
-            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 60); // 1분 캐시
+            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 60); // 1 minute cache
             return errorDashboard;
         }
     }
@@ -167,51 +167,51 @@ public class DashboardService {
     private DashboardDTO createPrivateProfileDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "비공개", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Private", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "PRIVATE_PROFILE",
-                        "프로필이 비공개입니다",
-                        "Steam 프로필을 공개로 설정하시면 개인화된 대시보드를 제공할 수 있습니다.",
-                        "프로필 설정 변경하기",
+                        "Profile is private",
+                        "If you set your Steam profile to public, we can provide personalized dashboard features.",
+                        "Change profile settings",
                         "https://steamcommunity.com/my/edit/settings"
                 ))
         );
     }
 
     /**
-     * 🔧 대시보드 캐시 무효화 (사용자가 새 게임 구매하거나 데이터 업데이트 시 호출)
+     * Dashboard cache invalidation (called when user purchases new games or data updates)
      */
     public void invalidateDashboard(String steamId) {
         cacheService.invalidateDashboard(steamId);
-        log.info("대시보드 캐시 무효화: steamId={}", steamId);
+        log.info("Dashboard cache invalidated: steamId={}", steamId);
     }
 
     /**
-     * 🔧 캐시 상태 확인
+     * Check cache status
      */
     public boolean isDashboardCached(String steamId) {
         return cacheService.isCacheValid(steamId);
     }
 
     /**
-     * 🔧 강제 새로고침 (캐시 무시하고 새로 생성)
+     * Force refresh (ignore cache and generate new)
      */
     @Transactional(readOnly = true)
     public DashboardDTO refreshDashboard(String steamId) {
-        log.info("대시보드 강제 새로고침: steamId={}", steamId);
+        log.info("Dashboard force refresh: steamId={}", steamId);
 
-        // 캐시 무효화
+        // Invalidate cache
         cacheService.invalidateDashboard(steamId);
 
-        // 새로 생성
+        // Generate new
         return generateDashboard(steamId);
     }
 
-    // 🔧 기존 메서드들은 그대로 유지...
+    // Existing methods maintained as is...
     private Map<Long, List<String>> getGameTagsMap(List<Long> appIds) {
         if (appIds.isEmpty()) {
             return new HashMap<>();
@@ -416,10 +416,10 @@ public class DashboardService {
         if (topTags.size() >= 3) {
             insights.add(new RecommendationInsightDTO(
                     "GENRE_EXPANSION",
-                    "새로운 장르 탐험",
-                    String.format("주로 %s 게임을 플레이하시네요. %s 장르도 시도해보세요!",
+                    "Explore new genres",
+                    String.format("You mainly play %s games. Try exploring %s genre too!",
                             topTags.get(0).getTagName(), getComplementaryGenre(topTags.get(0).getTagName())),
-                    "추천 받기",
+                    "Get recommendations",
                     "/api/recommend/input"
             ));
         }
@@ -427,9 +427,9 @@ public class DashboardService {
         if (summary.getAveragePlaytimePerGame().compareTo(BigDecimal.valueOf(10)) < 0) {
             insights.add(new RecommendationInsightDTO(
                     "PLAYTIME_ANALYSIS",
-                    "몰입도 높은 게임 추천",
-                    "평균 플레이 시간이 짧은 편이네요. 더 몰입할 수 있는 장편 게임을 추천드려요.",
-                    "장편 게임 찾기",
+                    "Immersive game recommendations",
+                    "Your average playtime is relatively short. We recommend longer, more immersive games.",
+                    "Find long games",
                     "/api/recommend/random"
             ));
         }
@@ -454,33 +454,33 @@ public class DashboardService {
         return genrePlaytime.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
-                .orElse("없음");
+                .orElse("None");
     }
 
     private String getComplementaryGenre(String currentGenre) {
         Map<String, String> complementary = Map.of(
-                "액션", "퍼즐",
-                "RPG", "전략",
-                "시뮬레이션", "액션",
-                "전략", "RPG",
-                "퍼즐", "어드벤처"
+                "Action", "Puzzle",
+                "RPG", "Strategy",
+                "Simulation", "Action",
+                "Strategy", "RPG",
+                "Puzzle", "Adventure"
         );
-        return complementary.getOrDefault(currentGenre, "인디");
+        return complementary.getOrDefault(currentGenre, "Indie");
     }
 
     private DashboardDTO createEmptyDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "없음", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "None", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "WELCOME",
-                        "게임을 추가해보세요",
-                        "아직 게임 데이터가 없습니다. Steam에서 게임을 플레이하고 다시 확인해보세요!",
-                        "게임 추천 받기",
+                        "Add some games",
+                        "No game data available yet. Play some games on Steam and check back!",
+                        "Get game recommendations",
                         "/api/recommend/random"
                 ))
         );
@@ -489,16 +489,16 @@ public class DashboardService {
     private DashboardDTO createNotFoundDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "없음", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "None", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "USER_NOT_FOUND",
-                        "사용자를 찾을 수 없습니다",
-                        "입력하신 Steam ID가 올바른지 확인해주세요.",
-                        "Steam ID 찾기",
+                        "User not found",
+                        "Please check if the Steam ID you entered is correct.",
+                        "Find Steam ID",
                         "https://steamidfinder.com/"
                 ))
         );
@@ -507,16 +507,16 @@ public class DashboardService {
     private DashboardDTO createRateLimitDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "일시정지", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Paused", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "RATE_LIMIT",
-                        "요청이 일시적으로 제한되었습니다",
-                        "Steam API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
-                        "잠시 후 새로고침",
+                        "Requests temporarily limited",
+                        "Steam API request limit exceeded. Please try again in a moment.",
+                        "Refresh later",
                         "#"
                 ))
         );
@@ -525,16 +525,16 @@ public class DashboardService {
     private DashboardDTO createDatabaseErrorDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "오류", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "DATABASE_ERROR",
-                        "일시적인 시스템 오류",
-                        "게임 데이터베이스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-                        "다시 시도",
+                        "Temporary system error",
+                        "There's a temporary issue with the game database. Please try again in a moment.",
+                        "Try again",
                         "#"
                 ))
         );
@@ -543,16 +543,16 @@ public class DashboardService {
     private DashboardDTO createUnknownErrorDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "오류", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
                 List.of(new RecommendationInsightDTO(
                         "UNKNOWN_ERROR",
-                        "예상치 못한 오류",
-                        "시스템에 예상치 못한 문제가 발생했습니다. 문제가 지속되면 관리자에게 문의해주세요.",
-                        "고객 지원",
+                        "Unexpected error",
+                        "An unexpected system error occurred. If the problem persists, please contact support.",
+                        "Customer support",
                         "/support"
                 ))
         );

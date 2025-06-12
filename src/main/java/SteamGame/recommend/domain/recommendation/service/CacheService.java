@@ -16,12 +16,12 @@ public class CacheService {
         this.redisTemplate = redisTemplate;
     }
 
-    //게임 중복 추천 방지
+    //Prevent recommending duplicate games.
     public boolean isAlreadyRecommended(long appid) {
         return "true".equals(redisTemplate.opsForValue().get(keyForRecommended(appid)));
     }
 
-    //게임 추천 설정
+    //Game recommendation setting
     public void setRecommended(long appid) {
         redisTemplate.opsForValue().set(keyForRecommended(appid), "true", RECOMMEND_TTL);
     }

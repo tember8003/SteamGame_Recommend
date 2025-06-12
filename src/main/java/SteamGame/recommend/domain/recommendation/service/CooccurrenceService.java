@@ -18,13 +18,13 @@ public class CooccurrenceService {
         this.repo = repo;
     }
 
-    //전체 엔티티 반환
+    //return all Entities
     public Optional<TagCooccurrence> findOptimalPairEntity(List<String> tags, int threshold) {
         for (int i = 0; i < tags.size(); i++) {
             for (int j = i + 1; j < tags.size(); j++) {
                 String t1 = tags.get(i), t2 = tags.get(j);
 
-                //단어순 정렬
+                //Sort in alphabetical order.
                 TagPairKey key = new TagPairKey(
                         t1.compareTo(t2) < 0 ? t1 : t2,
                         t1.compareTo(t2) < 0 ? t2 : t1

@@ -8,7 +8,9 @@
     "start": "electron .",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
-    "dist": "electron-builder --publish=never"
+    "dist": "electron-builder --publish=never",
+    "copy-jar": "copy ..\\build\\libs\\recommend-0.0.1-SNAPSHOT.jar resources\\",
+    "full-build": "npm run copy-jar && npm run dist"
   },
   "build": {
     "appId": "com.steamgame.recommend",
@@ -17,19 +19,29 @@
       "output": "dist"
     },
     "files": [
-      "main.js",
-      "html/**/*",
-      "package.json",
-      "node_modules/**/*"
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
     "extraResources": [
       {
-        "from": "resources/recommend-0.0.1-SNAPSHOT.jar",
-        "to": "recommend-0.0.1-SNAPSHOT.jar"
+        "from": "resources/",
+        "to": "./",
+        "filter": ["*.jar"]
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -39,10 +51,10 @@
     }
   },
   "devDependencies": {
-    "electron": "^latest",
-    "electron-builder": "^latest"
+    "electron": "28.2.0",
+    "electron-builder": "24.13.3"
   },
   "dependencies": {
-    "dotenv": "^latest"
+    "dotenv": "16.4.5"
   }
 }

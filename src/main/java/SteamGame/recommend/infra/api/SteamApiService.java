@@ -54,8 +54,8 @@ public class SteamApiService {
 
             return parseOwnedGamesResponse(response, steamId);
         } catch (Exception e) {
-            log.error("소유 게임 조회 중 예상치 못한 오류: steamId={}", steamId, e);
-            throw new SteamApiException("소유 게임 조회 실패", steamId, e);
+            log.error("Unexpected error while retrieving owned games: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to retrieve owned games", steamId, e);
         }
     }
 
@@ -81,8 +81,8 @@ public class SteamApiService {
 
             return parseRecentGamesResponse(response, steamId);
         } catch (Exception e) {
-            log.error("최근 플레이 게임 조회 중 예상치 못한 오류: steamId={}", steamId, e);
-            throw new SteamApiException("최근 플레이 게임 조회 실패", steamId, e);
+            log.error("Unexpected error while retrieving recently played games: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to retrieve recently played games", steamId, e);
         }
     }
 
@@ -110,8 +110,8 @@ public class SteamApiService {
 
             return parsePlaytimeResponse(response, steamId);
         } catch (Exception e) {
-            log.error("플레이시간 조회 중 예상치 못한 오류: steamId={}", steamId, e);
-            throw new SteamApiException("플레이시간 조회 실패", steamId, e);
+            log.error("Unexpected error while retrieving playtime data: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to retrieve playtime data", steamId, e);
         }
     }
 
@@ -136,23 +136,23 @@ public class SteamApiService {
 
             return parsePlayerStatsResponse(response, steamId);
         } catch (Exception e) {
-            log.error("플레이어 통계 조회 중 예상치 못한 오류: steamId={}", steamId, e);
-            throw new SteamApiException("플레이어 통계 조회 실패", steamId, e);
+            log.error("Unexpected error while retrieving player statistics: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to retrieve player statistics", steamId, e);
         }
     }
 
-    // 🔧 Steam ID 유효성 검증
+    // Steam ID validation
     private void validateSteamId(String steamId) {
         if (steamId == null || steamId.trim().isEmpty()) {
-            throw new SteamApiException("Steam ID가 없습니다", steamId);
+            throw new SteamApiException("Steam ID is missing", steamId);
         }
 
         if (!steamId.matches("\\d{17}")) {
-            throw new SteamApiException("유효하지 않은 Steam ID 형식입니다", steamId);
+            throw new SteamApiException("Invalid Steam ID format", steamId);
         }
     }
 
-    // 🔧 응답 파싱 메서드들
+    // Response parsing methods
     private List<Long> parseOwnedGamesResponse(String response, String steamId) {
         try {
             JsonNode games = objectMapper
@@ -161,7 +161,7 @@ public class SteamApiService {
                     .path("games");
 
             if (games.isMissingNode() || !games.isArray()) {
-                log.warn("소유 게임 목록이 비어있음: steamId={}", steamId);
+                log.warn("Owned games list is empty: steamId={}", steamId);
                 return Collections.emptyList();
             }
 
@@ -173,12 +173,12 @@ public class SteamApiService {
                 }
             }
 
-            log.info("소유 게임 {}개 조회 완료: steamId={}", appids.size(), steamId);
+            log.info("Retrieved {} owned games successfully: steamId={}", appids.size(), steamId);
             return appids;
 
         } catch (Exception e) {
-            log.error("소유 게임 응답 파싱 실패: steamId={}", steamId, e);
-            throw new SteamApiException("소유 게임 데이터 파싱 실패", steamId, e);
+            log.error("Failed to parse owned games response: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to parse owned games data", steamId, e);
         }
     }
 
@@ -189,7 +189,7 @@ public class SteamApiService {
                     .path("games");
 
             if (games.isMissingNode() || !games.isArray()) {
-                log.info("최근 플레이 게임이 없음: steamId={}", steamId);
+                log.info("No recently played games found: steamId={}", steamId);
                 return Collections.emptyList();
             }
 
@@ -201,12 +201,12 @@ public class SteamApiService {
                 }
             }
 
-            log.info("최근 플레이 게임 {}개 조회 완료: steamId={}", recentAppIds.size(), steamId);
+            log.info("Retrieved {} recently played games successfully: steamId={}", recentAppIds.size(), steamId);
             return recentAppIds;
 
         } catch (Exception e) {
-            log.error("최근 게임 응답 파싱 실패: steamId={}", steamId, e);
-            throw new SteamApiException("최근 게임 데이터 파싱 실패", steamId, e);
+            log.error("Failed to parse recent games response: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to parse recent games data", steamId, e);
         }
     }
 
@@ -218,7 +218,7 @@ public class SteamApiService {
                     .path("games");
 
             if (games.isMissingNode() || !games.isArray()) {
-                log.warn("플레이시간 데이터가 비어있음: steamId={}", steamId);
+                log.warn("Playtime data is empty: steamId={}", steamId);
                 return Collections.emptyMap();
             }
 
@@ -243,17 +243,17 @@ public class SteamApiService {
                     playtimeMap.put(appId, info);
 
                 } catch (Exception e) {
-                    log.warn("개별 게임 플레이시간 파싱 실패: steamId={}, game={}", steamId, game, e);
-                    // 개별 게임 오류는 무시하고 계속 진행
+                    log.warn("Failed to parse individual game playtime: steamId={}, game={}", steamId, game, e);
+                    // Continue processing despite individual game errors
                 }
             }
 
-            log.info("플레이시간 데이터 {}개 조회 완료: steamId={}", playtimeMap.size(), steamId);
+            log.info("Retrieved {} playtime data entries successfully: steamId={}", playtimeMap.size(), steamId);
             return playtimeMap;
 
         } catch (Exception e) {
-            log.error("플레이시간 응답 파싱 실패: steamId={}", steamId, e);
-            throw new SteamApiException("플레이시간 데이터 파싱 실패", steamId, e);
+            log.error("Failed to parse playtime response: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to parse playtime data", steamId, e);
         }
     }
 
@@ -265,7 +265,7 @@ public class SteamApiService {
                     .path("players");
 
             if (players.isMissingNode() || !players.isArray() || players.size() == 0) {
-                log.warn("플레이어 정보가 없음: steamId={}", steamId);
+                log.warn("No player information found: steamId={}", steamId);
                 return new PlayerStatsInfo("Unknown", 0L);
             }
 
@@ -273,33 +273,33 @@ public class SteamApiService {
             String playerName = player.path("personaname").asText("Unknown");
             Long accountCreated = player.path("timecreated").asLong(0L);
 
-            log.info("플레이어 정보 조회 완료: steamId={}, name={}", steamId, playerName);
+            log.info("Retrieved player information successfully: steamId={}, name={}", steamId, playerName);
             return new PlayerStatsInfo(playerName, accountCreated);
 
         } catch (Exception e) {
-            log.error("플레이어 통계 응답 파싱 실패: steamId={}", steamId, e);
-            throw new SteamApiException("플레이어 데이터 파싱 실패", steamId, e);
+            log.error("Failed to parse player statistics response: steamId={}", steamId, e);
+            throw new SteamApiException("Failed to parse player data", steamId, e);
         }
     }
 
-    // 🔧 Fallback 메서드들
+    // Fallback methods
     private List<Long> fallbackOwnedGames(String steamId, Throwable ex) {
-        log.error("소유 게임 조회 fallback 실행: steamId={}, reason={}", steamId, ex.getMessage());
+        log.error("Owned games retrieval fallback executed: steamId={}, reason={}", steamId, ex.getMessage());
         return Collections.emptyList();
     }
 
     private List<Long> fallbackRecentGames(String steamId, Throwable ex) {
-        log.error("최근 게임 조회 fallback 실행: steamId={}, reason={}", steamId, ex.getMessage());
+        log.error("Recent games retrieval fallback executed: steamId={}, reason={}", steamId, ex.getMessage());
         return Collections.emptyList();
     }
 
     private Map<Long, GamePlaytimeInfo> fallbackPlaytime(String steamId, Throwable ex) {
-        log.error("플레이시간 조회 fallback 실행: steamId={}, reason={}", steamId, ex.getMessage());
+        log.error("Playtime retrieval fallback executed: steamId={}, reason={}", steamId, ex.getMessage());
         return Collections.emptyMap();
     }
 
     private PlayerStatsInfo fallbackPlayerStats(String steamId, Throwable ex) {
-        log.error("플레이어 통계 조회 fallback 실행: steamId={}, reason={}", steamId, ex.getMessage());
+        log.error("Player statistics retrieval fallback executed: steamId={}, reason={}", steamId, ex.getMessage());
         return new PlayerStatsInfo("Unknown", 0L);
     }
 }

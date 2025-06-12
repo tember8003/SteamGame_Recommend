@@ -14,9 +14,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class GamePlaytimeInfo {
     private Long appId;
-    private BigDecimal totalHours;        // 총 플레이시간 (시간)
-    private BigDecimal recentHours;       // 최근 2주 플레이시간
-    private LocalDate lastPlayedDate;     // 마지막 플레이 날짜
+    private BigDecimal totalHours;        // Total Playtime
+    private BigDecimal recentHours;       // Playtime for the last two weeks
+    private LocalDate lastPlayedDate;     // Last Play Date
 
     public boolean isNeverPlayed() {
         return totalHours.compareTo(BigDecimal.ZERO) == 0;

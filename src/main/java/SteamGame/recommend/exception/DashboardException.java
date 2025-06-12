@@ -6,11 +6,11 @@ public class DashboardException extends RuntimeException {
   private final ErrorType errorType;
 
   public enum ErrorType {
-    STEAM_API_ERROR("Steam API 오류"),
-    DATABASE_ERROR("데이터베이스 오류"),
-    CACHE_ERROR("캐시 오류"),
-    DATA_PROCESSING_ERROR("데이터 처리 오류"),
-    UNKNOWN_ERROR("알 수 없는 오류");
+    STEAM_API_ERROR("Steam API Error"),
+    DATABASE_ERROR("Database Error"),
+    CACHE_ERROR("Cache Error"),
+    DATA_PROCESSING_ERROR("Data Processing Error"),
+    UNKNOWN_ERROR("Unknown Error");
 
     private final String description;
 

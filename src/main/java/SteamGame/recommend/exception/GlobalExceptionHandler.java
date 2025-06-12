@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(SteamApiException.class)
     public ResponseEntity<ErrorResponse> handleSteamApiException(SteamApiException e) {
-        log.error("Steam API 오류: steamId={}, statusCode={}, message={}",
+        log.error("Steam API Error: steamId={}, statusCode={}, message={}",
                 e.getSteamId(), e.getStatusCode(), e.getMessage(), e);
 
         HttpStatus httpStatus = mapSteamApiStatusToHttp(e.getStatusCode());
@@ -37,12 +37,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(httpStatus).body(errorResponse);
     }
 
-    /**
-     * 대시보드 관련 예외 처리
-     */
+    //Dashboard exception
     @ExceptionHandler(DashboardException.class)
     public ResponseEntity<ErrorResponse> handleDashboardException(DashboardException e) {
-        log.error("대시보드 오류: steamId={}, type={}, message={}",
+        log.error("Dashboard Error: steamId={}, type={}, message={}",
                 e.getSteamId(), e.getErrorType(), e.getMessage(), e);
 
         HttpStatus httpStatus = mapDashboardErrorToHttp(e.getErrorType());
@@ -61,12 +59,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(httpStatus).body(errorResponse);
     }
 
-    /**
-     * 게임 데이터 관련 예외 처리
-     */
+    //Game data exception
     @ExceptionHandler(GameDataException.class)
     public ResponseEntity<ErrorResponse> handleGameDataException(GameDataException e) {
-        log.error("게임 데이터 오류: appId={}, message={}", e.getAppId(), e.getMessage(), e);
+        log.error("Game data Error: appId={}, message={}", e.getAppId(), e.getMessage(), e);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .errorCode("GAME_DATA_ERROR")
@@ -78,16 +74,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * 일반적인 예외 처리
-     */
+    //normal exception
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
-        log.error("예상치 못한 시스템 오류", e);
+        log.error("unexpected Error: ", e);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .errorCode("INTERNAL_SERVER_ERROR")
-                .message("시스템에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                .message("There was a temporary problem with the system, please try again in a moment.")
                 .timestamp(LocalDateTime.now())
                 .details(Map.of("exceptionType", e.getClass().getSimpleName()))
                 .build();
@@ -95,9 +89,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    /**
-     * Steam API 상태 코드를 HTTP 상태로 매핑
-     */
+    //Mapping Steam API Status Code to HTTP Status
     private HttpStatus mapSteamApiStatusToHttp(int steamApiStatusCode) {
         return switch (steamApiStatusCode) {
             case 401 -> HttpStatus.UNAUTHORIZED;
@@ -109,9 +101,7 @@ public class GlobalExceptionHandler {
         };
     }
 
-    /**
-     * 대시보드 에러 타입을 HTTP 상태로 매핑
-     */
+    //Mapping Dashboard Error to HTTP Status
     private HttpStatus mapDashboardErrorToHttp(DashboardException.ErrorType errorType) {
         return switch (errorType) {
             case STEAM_API_ERROR -> HttpStatus.BAD_GATEWAY;
@@ -122,16 +112,14 @@ public class GlobalExceptionHandler {
         };
     }
 
-    /**
-     * 에러 응답 DTO
-     */
+    //Error response DTO
     public static class ErrorResponse {
         private String errorCode;
         private String message;
         private LocalDateTime timestamp;
         private Map<String, Object> details;
 
-        // 🔧 Builder 패턴 구현
+        // Builder
         public static ErrorResponseBuilder builder() {
             return new ErrorResponseBuilder();
         }

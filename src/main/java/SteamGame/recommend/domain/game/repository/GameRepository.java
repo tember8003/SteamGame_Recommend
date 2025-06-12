@@ -43,12 +43,10 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                                         @Param("excluded_check") Boolean excluded_check,
                                         @Param("excludedTag") List<String> excludedTag);
 
-    //대소문자 구분없이 게임 찾기
+    //Search for the game name case-insensitively
     Optional<Game> findByNameIgnoreCase(String name);
 
     Optional<Game> findByAppid(long appid);
-
-    List<Game> getGamesByAppids(List<Long> appids);
 
     List<Game> findByNameStartingWithIgnoreCase(String prefix, Pageable pageable);
 

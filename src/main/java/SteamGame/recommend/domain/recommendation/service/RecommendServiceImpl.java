@@ -3,7 +3,8 @@ package SteamGame.recommend.domain.recommendation.service;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.service.GameService;
-import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
+import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiApiService;
@@ -25,7 +26,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     private static final int CO_THRESHOLD = 5;
     private static final int DEFAULT_REVIEW = 1000;
-    private static final List<String> FALLBACK_TAGS = List.of("싱글 플레이어","멀티플레이어");
+    private static final List<String> FALLBACK_TAGS = List.of("Singleplayer","Multiplayer");
 
     private final SteamApiService steamApiService;
     private final GeminiApiService geminiApiService;
@@ -56,59 +57,59 @@ public class RecommendServiceImpl implements RecommendService {
         this.cooccurrenceService = cooccurrenceService;
     }
 
-    //태그, 리뷰, 한글화, 무료여부 등 조건으로 게임 찾기.
+    // Find games based on tags, reviews, Korean support, free status, etc.
     @Override
     @Transactional(readOnly=true)
-    public List<SteamDTO.SteamApp> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck,Boolean excluded_check,String[] excludedTag) {
+    public List<SteamAppDTO> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag) {
         return gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
     }
 
-    //Gemini API를 활용해 게임 태그 추출해 게임 찾기
+    // Extract game tags using Gemini API and find games
     @Override
-    public SteamDTO.RecommendationResult selectInfo(String input,int review, Boolean koreanCheck, Boolean freeCheck) {
+    public RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck) {
         if (input == null || input.length() < 3) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "입력 문장이 너무 짧습니다.");
+                    HttpStatus.BAD_REQUEST, "The input sentence is too short.");
         }
 
-        //캐시 검사
+        // Cache check
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamDTO.SteamApp> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
-            return new SteamDTO.RecommendationResult(cachingTags, game);
+            List<SteamAppDTO> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+            return new RecommendationResultDTO(cachingTags, game);
         }
 
         boolean hit = cachingTags != null && !cachingTags.isEmpty();
-        log.info("… 캐시 히트: {}", hit);
+        log.info("... Cache hit: {}", hit);
 
         List<String> tags = geminiApiService.getGeminiTags(input);
         if (tags.isEmpty()) {
-            log.warn("태그 추출 실패, 기본 태그로 대체");
+            log.warn("Failed to extract tags. Using default tags instead.");
             tags = new ArrayList<>(FALLBACK_TAGS);
         }
 
-        // 캐시에 저장
+        // Save to cache
         cacheService.cacheTags(shaInput,tags);
 
-        // 최종 추천
-        List<SteamDTO.SteamApp> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
-        return new SteamDTO.RecommendationResult(tags, game);
+        // Final recommendation
+        List<SteamAppDTO> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+        return new RecommendationResultDTO(tags, game);
     }
 
-    //스팀 사용자 프로필에 있는 게임들 리스트를 받아와 태그 뽑아내기
+    // Extract tags from Steam user profile games list
     @Override
-    public SteamDTO.RecommendationResult recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck){
+    public RecommendationResultDTO recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck){
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
         List<String> topTags = tagService.getTopTagsByProfile(steamId,8);
 
         if(topTags.isEmpty()){
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "플레이한 게임이 없거나 태그를 찾을 수 없습니다."
+                    HttpStatus.NOT_FOUND, "No played games found or no tags could be extracted."
             );
         }
 
-        /* 상위 태그 2개 - 랜덤 태그 2개 로직
+        /* Top 2 tags + 2 random tags logic applied.
         List<String> selectedTags = new ArrayList<>();
         selectedTags.add(topTags.get(0));
         if (topTags.size() > 1) {
@@ -125,13 +126,13 @@ public class RecommendServiceImpl implements RecommendService {
         }
          */
         List<String> tags = null;
-        List<SteamDTO.SteamApp> resultGames = null;
+        List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,5,7);
-            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
+            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
 
-            List<SteamDTO.SteamApp> filteredGames = games.stream()
+            List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
                     .collect(Collectors.toList());
 
@@ -143,16 +144,16 @@ public class RecommendServiceImpl implements RecommendService {
 
         if (resultGames == null || resultGames.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
+                    HttpStatus.NOT_FOUND, "You already own all games matching the recommended tags."
             );
         }
 
-        return new SteamDTO.RecommendationResult(tags,resultGames);
+        return new RecommendationResultDTO(tags,resultGames);
     }
 
-    //사용자 프로필에서 뽑아낸 태그들을 바탕으로 게임 찾기
+    // Find games based on tags extracted from user profile
     @Override
-    public List<SteamDTO.SteamApp> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck) {
+    public List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck) {
         Optional<TagPairKey> optKey = cooccurrenceService.findOptimalPairKey(topTags, CO_THRESHOLD);
 
         if (optKey.isPresent()) {
@@ -180,20 +181,20 @@ public class RecommendServiceImpl implements RecommendService {
         }
 
         throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "추천 가능한 게임이 없습니다."
+                HttpStatus.NOT_FOUND, "No games available for recommendation."
         );
     }
 
-    //최근 플레이(2주) 게임 태그들을 뽑아내 게임 찾기
+    // Extract tags from recently played (2 weeks) games and find games
     @Override
     @Transactional(readOnly = true)
-    public SteamDTO.RecommendationResult recommendByRecentPlay(String steamId,int review, Boolean koreanCheck, Boolean freeCheck) {
+    public RecommendationResultDTO recommendByRecentPlay(String steamId,int review, Boolean koreanCheck, Boolean freeCheck) {
         List<Long> recentAppIds = steamApiService.getRecentPlayedGameIds(steamId);
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
 
         if (recentAppIds.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "최근 플레이한 게임이 없습니다.");
+                    HttpStatus.NOT_FOUND, "No recently played games found.");
         }
 
         List<String> allTags = tagRepository.findTagNamesByAppIds(recentAppIds);
@@ -201,13 +202,13 @@ public class RecommendServiceImpl implements RecommendService {
         List<String> topTags = tagService.getTopTags(allTags,8);
 
         List<String> tags = null;
-        List<SteamDTO.SteamApp> resultGames = null;
+        List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,4,7);
-            List<SteamDTO.SteamApp> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
+            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
 
-            List<SteamDTO.SteamApp> filteredGames = games.stream()
+            List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
                     .collect(Collectors.toList());
 
@@ -219,15 +220,15 @@ public class RecommendServiceImpl implements RecommendService {
 
         if (resultGames == null || resultGames.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "추천된 태그 내 게임들을 모두 소유했습니다."
+                    HttpStatus.NOT_FOUND, "You already own all games matching the recommended tags."
             );
         }
 
-        return new SteamDTO.RecommendationResult(tags,resultGames);
+        return new RecommendationResultDTO(tags,resultGames);
     }
 
     @Override
-    public SteamDTO.RecommendationResult recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck){
+    public RecommendationResultDTO recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck){
         List<String> selectedTags = tagService.getTagsByGame(gameName);
         Optional<Game> selectedGame = gameRepository.findByNameIgnoreCase(gameName);
         long selectedAppId = selectedGame.orElseThrow().getAppid();
@@ -235,19 +236,19 @@ public class RecommendServiceImpl implements RecommendService {
 
         if (selectedTags.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "태그가 없는 게임이거나, 태그 정보를 찾을 수 없습니다."
+                    HttpStatus.NOT_FOUND, "The game has no tags or tag information could not be found."
             );
         }
 
         log.info(selectedTags.toString());
 
         List<String> topTags = tagService.getTopTags(selectedTags,8);
-        List<SteamDTO.SteamApp> resultGames = null;
+        List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
-             List<SteamDTO.SteamApp> games =recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck);
+            List<SteamAppDTO> games =recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck);
 
-            List<SteamDTO.SteamApp> filteredGames = games.stream()
+            List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !app.getAppid().equals(selectedAppId))
                     .collect(Collectors.toList());
 
@@ -259,11 +260,11 @@ public class RecommendServiceImpl implements RecommendService {
 
         if (resultGames == null || resultGames.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "게임과 비슷한 태그를 가지는 게임을 탐색하는데 실패했습니다."
+                    HttpStatus.NOT_FOUND, "Failed to find games with similar tags to the selected game."
             );
         }
 
-        return new SteamDTO.RecommendationResult(topTags, resultGames);
+        return new RecommendationResultDTO(topTags, resultGames);
     }
 
 }

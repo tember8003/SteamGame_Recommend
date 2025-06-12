@@ -1,360 +1,360 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-    <title>개인 게임 대시보드</title>
+    <title>Personal Game Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         :root {
-          --primary: #00d4ff;
-          --secondary: #7c3aed;
-          --accent: #f59e0b;
-          --bg-primary: #0a0a0f;
-          --bg-secondary: #1a1a2e;
-          --bg-card: #1e1e2e;
-          --border: #333344;
-          --text-primary: #ffffff;
-          --text-secondary: #b4b4c8;
-          --text-muted: #8b8ba3;
-          --success: #10b981;
-          --warning: #f59e0b;
-          --error: #ef4444;
-          --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
-          --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+            --primary: #00d4ff;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #1e1e2e;
+            --border: #333344;
+            --text-primary: #ffffff;
+            --text-secondary: #b4b4c8;
+            --text-muted: #8b8ba3;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+            --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
         }
 
         * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-          background: var(--bg-primary);
-          background-image:
-            radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
-          font-family: 'Inter', sans-serif;
-          color: var(--text-primary);
-          line-height: 1.6;
-          min-height: 100vh;
+            background: var(--bg-primary);
+            background-image:
+                    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
         .header {
-          text-align: center;
-          margin-bottom: 40px;
-          padding: 40px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
         }
 
         .header h1 {
-          font-size: 3rem;
-          font-weight: 700;
-          background: var(--gradient-primary);
-          background-clip: text;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          margin-bottom: 16px;
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
         }
 
         .search-section {
-          background: var(--gradient-card);
-          border-radius: 16px;
-          border: 1px solid var(--border);
-          padding: 30px;
-          margin-bottom: 40px;
-          backdrop-filter: blur(10px);
+            background: var(--gradient-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
         }
 
         .search-input {
-          width: 100%;
-          max-width: 500px;
-          margin: 0 auto;
-          display: flex;
-          gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
         }
 
         .search-input input {
-          flex: 1;
-          padding: 16px 20px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          color: var(--text-primary);
-          font-size: 1rem;
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
         }
 
         .search-input button {
-          background: var(--gradient-primary);
-          color: var(--bg-primary);
-          border: none;
-          border-radius: 12px;
-          padding: 16px 24px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .search-input button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
         }
 
         .dashboard-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
-          margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
         }
 
         .dashboard-card {
-          background: var(--gradient-card);
-          border-radius: 16px;
-          border: 1px solid var(--border);
-          padding: 30px;
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
+            background: var(--gradient-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
         .dashboard-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
         .card-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .card-header h3 {
-          font-size: 1.3rem;
-          font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 600;
         }
 
         .card-header i {
-          color: var(--primary);
-          font-size: 1.2rem;
+            color: var(--primary);
+            font-size: 1.2rem;
         }
 
         .stat-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
 
         .stat-item {
-          text-align: center;
+            text-align: center;
         }
 
         .stat-value {
-          font-size: 2rem;
-          font-weight: 700;
-          color: var(--primary);
-          margin-bottom: 5px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
         }
 
         .stat-label {
-          font-size: 0.9rem;
-          color: var(--text-secondary);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
         .chart-container {
-          position: relative;
-          height: 300px;
-          margin-top: 20px;
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
         }
 
         .tag-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
         }
 
         .tag {
-          background: var(--primary);
-          color: var(--bg-primary);
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 0.85rem;
-          font-weight: 500;
+            background: var(--primary);
+            color: var(--bg-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
         .game-list {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
         }
 
         .game-item {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 15px;
-          background: var(--bg-secondary);
-          border-radius: 12px;
-          border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
         }
 
         .game-image {
-          width: 60px;
-          height: 34px;
-          border-radius: 8px;
-          object-fit: cover;
+            width: 60px;
+            height: 34px;
+            border-radius: 8px;
+            object-fit: cover;
         }
 
         .game-info {
-          flex: 1;
+            flex: 1;
         }
 
         .game-name {
-          font-weight: 600;
-          color: var(--text-primary);
-          margin-bottom: 4px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
         }
 
         .game-playtime {
-          font-size: 0.9rem;
-          color: var(--text-secondary);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
         .insight-list {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
         }
 
         .insight-item {
-          padding: 20px;
-          background: var(--bg-secondary);
-          border-radius: 12px;
-          border: 1px solid var(--border);
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
         }
 
         .insight-title {
-          font-weight: 600;
-          color: var(--primary);
-          margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
         }
 
         .insight-description {
-          color: var(--text-secondary);
-          margin-bottom: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
         }
 
         .insight-action {
-          display: inline-block;
-          background: var(--primary);
-          color: var(--bg-primary);
-          padding: 8px 16px;
-          border-radius: 20px;
-          text-decoration: none;
-          font-size: 0.9rem;
-          font-weight: 500;
-          transition: all 0.3s ease;
+            display: inline-block;
+            background: var(--primary);
+            color: var(--bg-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .insight-action:hover {
-          background: var(--secondary);
-          transform: translateY(-2px);
+            background: var(--secondary);
+            transform: translateY(-2px);
         }
 
         .loading {
-          text-align: center;
-          padding: 60px 20px;
+            text-align: center;
+            padding: 60px 20px;
         }
 
         .loading .spinner {
-          width: 60px;
-          height: 60px;
-          border: 4px solid var(--border);
-          border-top: 4px solid var(--primary);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 20px;
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .error-message {
-          text-align: center;
-          padding: 60px 20px;
-          background: var(--gradient-card);
-          border-radius: 16px;
-          border: 1px solid var(--border);
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--gradient-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
         }
 
         .error-message i {
-          font-size: 3rem;
-          color: var(--error);
-          margin-bottom: 20px;
+            font-size: 3rem;
+            color: var(--error);
+            margin-bottom: 20px;
         }
 
         .wide-card {
-          grid-column: 1 / -1;
+            grid-column: 1 / -1;
         }
 
         .progress-bar {
-          width: 100%;
-          height: 8px;
-          background: var(--bg-secondary);
-          border-radius: 4px;
-          overflow: hidden;
-          margin-top: 10px;
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
         }
 
         .progress-fill {
-          height: 100%;
-          background: var(--gradient-primary);
-          border-radius: 4px;
-          transition: width 0.5s ease;
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.5s ease;
         }
 
         @media (max-width: 768px) {
-          .dashboard-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-          }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
 
-          .stat-grid {
-            grid-template-columns: 1fr;
-          }
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
 
-          .header h1 {
-            font-size: 2rem;
-          }
+            .header h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-chart-line"></i> 게임 대시보드</h1>
-        <p class="subtitle">당신의 게임 취향을 한눈에 분석해보세요</p>
+        <h1><i class="fas fa-chart-line"></i> Game Dashboard</h1>
+        <p class="subtitle">Analyze your gaming preferences at a glance</p>
     </div>
 
     <div class="search-section">
         <div class="search-input">
-            <input type="text" id="steamIdInput" placeholder="Steam ID를 입력하세요" value=""/>
+            <input type="text" id="steamIdInput" placeholder="Enter your Steam ID" value=""/>
             <button onclick="loadDashboard()">
                 <i class="fas fa-search"></i>
-                대시보드 조회
+                Load Dashboard
             </button>
         </div>
     </div>
@@ -362,8 +362,8 @@
     <div id="dashboard-content">
         <div class="loading">
             <div class="spinner"></div>
-            <h3>Steam ID를 입력해주세요</h3>
-            <p>개인 맞춤 대시보드를 생성해드립니다</p>
+            <h3>Please enter your Steam ID</h3>
+            <p>We'll create a personalized dashboard for you</p>
         </div>
     </div>
 </div>
@@ -376,7 +376,7 @@
         const steamId = document.getElementById('steamIdInput').value.trim();
 
         if (!steamId) {
-            alert('Steam ID를 입력해주세요');
+            alert('Please enter your Steam ID');
             return;
         }
 
@@ -387,7 +387,7 @@
             const response = await fetch(`${baseUrl}/api/dashboard/${steamId}`);
 
             if (!response.ok) {
-                throw new Error('대시보드 조회 실패');
+                throw new Error('Failed to load dashboard');
             }
 
             const data = await response.json();
@@ -403,8 +403,8 @@
         document.getElementById('dashboard-content').innerHTML = `
             <div class="loading">
                 <div class="spinner"></div>
-                <h3>대시보드를 생성하고 있습니다...</h3>
-                <p>잠시만 기다려주세요</p>
+                <h3>Creating your dashboard...</h3>
+                <p>Please wait a moment</p>
             </div>
         `;
     }
@@ -413,8 +413,8 @@
         document.getElementById('dashboard-content').innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
-                <h3>대시보드를 불러올 수 없습니다</h3>
-                <p>Steam ID를 확인하거나 잠시 후 다시 시도해주세요</p>
+                <h3>Unable to load dashboard</h3>
+                <p>Please check your Steam ID or try again later</p>
             </div>
         `;
     }
@@ -424,37 +424,37 @@
 
         content.innerHTML = `
             <div class="dashboard-grid">
-                <!-- 프로필 요약 -->
+                <!-- Profile Summary -->
                 <div class="dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-user"></i>
-                        <h3>프로필 요약</h3>
+                        <h3>Profile Summary</h3>
                     </div>
                     <div class="stat-grid">
                         <div class="stat-item">
                             <div class="stat-value">${data.profileSummary.totalGames}</div>
-                            <div class="stat-label">보유 게임</div>
+                            <div class="stat-label">Total Games</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.profileSummary.totalPlaytime.toFixed(1)}h</div>
-                            <div class="stat-label">총 플레이 시간</div>
+                            <div class="stat-label">Total Playtime</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.profileSummary.gamesPlayedRecently}</div>
-                            <div class="stat-label">최근 플레이</div>
+                            <div class="stat-label">Recently Played</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.profileSummary.averagePlaytimePerGame.toFixed(1)}h</div>
-                            <div class="stat-label">평균 플레이 시간</div>
+                            <div class="stat-label">Average Playtime</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 선호 태그 -->
+                <!-- Preferred Tags -->
                 <div class="dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-tags"></i>
-                        <h3>선호 태그</h3>
+                        <h3>Preferred Tags</h3>
                     </div>
                     <div class="tag-list">
                         ${data.topTags.slice(0, 8).map(tag => `
@@ -463,7 +463,7 @@
                     </div>
                     <div style="margin-top: 20px;">
                         <div style="margin-bottom: 10px;">
-                            <strong>최고 선호: ${data.topTags[0]?.tagName || '없음'}</strong>
+                            <strong>Top Preference: ${data.topTags[0]?.tagName || 'None'}</strong>
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: ${data.topTags[0]?.preferenceScore || 0}%"></div>
                             </div>
@@ -471,59 +471,59 @@
                     </div>
                 </div>
 
-                <!-- 장르 분포 차트 -->
+                <!-- Genre Distribution Chart -->
                 <div class="dashboard-card wide-card">
                     <div class="card-header">
                         <i class="fas fa-chart-pie"></i>
-                        <h3>장르 분포</h3>
+                        <h3>Genre Distribution</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="genreChart"></canvas>
                     </div>
                 </div>
 
-                <!-- 월별 활동 -->
+                <!-- Monthly Activity -->
                 <div class="dashboard-card wide-card">
                     <div class="card-header">
                         <i class="fas fa-chart-bar"></i>
-                        <h3>월별 활동</h3>
+                        <h3>Monthly Activity</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="activityChart"></canvas>
                     </div>
                 </div>
 
-                <!-- 라이브러리 통계 -->
+                <!-- Library Statistics -->
                 <div class="dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-gamepad"></i>
-                        <h3>라이브러리 분석</h3>
+                        <h3>Library Analysis</h3>
                     </div>
                     <div class="stat-grid">
                         <div class="stat-item">
                             <div class="stat-value">${data.libraryStats.neverPlayed}</div>
-                            <div class="stat-label">미플레이</div>
+                            <div class="stat-label">Never Played</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.libraryStats.shortPlayed}</div>
-                            <div class="stat-label">짧게 플레이</div>
+                            <div class="stat-label">Short Play</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.libraryStats.mediumPlayed}</div>
-                            <div class="stat-label">보통 플레이</div>
+                            <div class="stat-label">Medium Play</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">${data.libraryStats.longPlayed}</div>
-                            <div class="stat-label">장시간 플레이</div>
+                            <div class="stat-label">Long Play</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 최고 플레이 게임 -->
+                <!-- Top Played Games -->
                 <div class="dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-trophy"></i>
-                        <h3>최고 플레이 게임</h3>
+                        <h3>Most Played Games</h3>
                     </div>
                     <div class="game-list">
                         ${data.libraryStats.topPlayedGames.map(game => `
@@ -531,18 +531,18 @@
                                 <img src="${game.headerImage}" alt="${game.name}" class="game-image">
                                 <div class="game-info">
                                     <div class="game-name">${game.name}</div>
-                                    <div class="game-playtime">${game.playtimeHours.toFixed(1)}시간 플레이</div>
+                                    <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours played</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
-                <!-- 인사이트 및 추천 -->
+                <!-- Insights & Recommendations -->
                 <div class="dashboard-card wide-card">
                     <div class="card-header">
                         <i class="fas fa-lightbulb"></i>
-                        <h3>맞춤 인사이트</h3>
+                        <h3>Personalized Insights</h3>
                     </div>
                     <div class="insight-list">
                         ${data.insights.map(insight => `
@@ -557,7 +557,7 @@
             </div>
         `;
 
-        // 차트 렌더링
+        // Render charts
         setTimeout(() => {
             renderGenreChart(data.genreDistribution);
             renderActivityChart(data.monthlyActivity);
@@ -606,7 +606,7 @@
                 labels: activityData.map(item => item.month),
                 datasets: [
                     {
-                        label: '플레이 시간 (시간)',
+                        label: 'Playtime (Hours)',
                         data: activityData.map(item => item.totalPlaytime),
                         borderColor: '#00d4ff',
                         backgroundColor: 'rgba(0, 212, 255, 0.1)',
@@ -614,7 +614,7 @@
                         fill: true
                     },
                     {
-                        label: '플레이한 게임 수',
+                        label: 'Games Played',
                         data: activityData.map(item => item.gamesPlayed),
                         borderColor: '#7c3aed',
                         backgroundColor: 'rgba(124, 58, 237, 0.1)',
@@ -657,14 +657,14 @@
         });
     }
 
-    // Enter 키로 검색
+    // Search with Enter key
     document.getElementById('steamIdInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             loadDashboard();
         }
     });
 
-    // 페이지 로드 시 애니메이션
+    // Page load animation
     window.addEventListener('load', () => {
         const elements = document.querySelectorAll('.dashboard-card');
         elements.forEach((el, index) => {

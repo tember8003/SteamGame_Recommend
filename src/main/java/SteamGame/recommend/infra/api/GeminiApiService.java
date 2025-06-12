@@ -75,7 +75,7 @@ public class GeminiApiService {
                 return tags.stream().limit(5).toList();
             }
         } catch (Exception e) {
-            log.error("Gemini 태그 파싱 실패", e);
+            log.error("Gemini Tag parsing failed", e);
         }
 
         return Collections.emptyList();
@@ -83,39 +83,40 @@ public class GeminiApiService {
 
     private String buildPrompt(String input) {
         return """
-        다음 문장을 보고 아래 태그 중 관련된 태그를 최대 5개 추출해 JSON 배열 형태로 출력해.
+        Analyze the following sentence and extract up to 5 related tags from the tag list below. Output them in JSON array format.
         
-        태그 목록:
-        ["2D", "3D", "RPG", "액션", "무슬", "어드벤처", "캐주얼", "인디", "전략", "시뮬레이션", "멀티플레이어", "싱글 플레이어", "협동", "앞서 해보기", "오픈 월드", "풍부한 스토리", "퍼즐", "플랫폼", "슈팅", "FPS", "3인칭", "VR", "판타지", "SF", "공포", "생존", "애니메이션", "비주얼 노벨", "픽셀 그래픽", "턴제", "카드 게임", "샌드박스", "건설", "크래프팅", "미스터리", "코미디", "어두운", "고어", "폭력", "귀여운", "심리적 공포", "수사", "좀비", "온라인 협동", "핵 앤 슬래시", "격투", "비뎀업", "탄막 슈팅", "횡스크롤", "로그라이크", "로그라이트", "액션 RPG", "액션 어드벤처", "MMO", "JRPG", "던전 크롤러", "매치 3", "스포츠", "레이싱", "1인칭", "3인칭 슈팅", "리듬", "음악", "경영", "클리커", "전술", "잠입", "탐험"]
+        Tag list:
+        ["2D", "3D", "RPG", "Action", "Roguelike", "Adventure", "Casual", "Indie", "Strategy", "Simulation", "Multiplayer", "Singleplayer", "Co-op", "Early Access", "Open World", "Story Rich", "Puzzle", "Platformer", "Shooter", "FPS", "Third Person", "VR", "Fantasy", "Sci-fi", "Horror", "Survival", "Anime", "Visual Novel", "Pixel Graphics", "Turn-Based", "Card Game", "Sandbox", "Building", "Crafting", "Mystery", "Comedy", "Dark", "Gore", "Violent", "Cute", "Psychological Horror", "Detective", "Zombies", "Online Co-Op", "Hack and Slash", "Fighting", "Beat 'em up", "Bullet Hell", "Side Scroller", "Roguelike", "Roguelite", "Action RPG", "Action-Adventure", "MMO", "JRPG", "Dungeon Crawler", "Match 3", "Sports", "Racing", "First-Person", "Third-Person Shooter", "Rhythm", "Music", "Management", "Clicker", "Tactical", "Stealth", "Exploration"]
         
-        예시 1:
-        입력 문장: 롤 같은 게임
-        출력: ["MOBA", "멀티플레이어", "실시간"]
+        Example 1:
+        Input sentence: Games like League of Legends
+        Output: ["MOBA", "Multiplayer", "Real-Time"]
         
-        예시 2:
-        입력 문장: 친구와 같이 즐길 수 있는 로그라이크 게임 추천해줘
-        출력: ["로그라이크", "멀티플레이어", "협동"]
+        Example 2:
+        Input sentence: Recommend roguelike games that I can enjoy with friends
+        Output: ["Roguelike", "Multiplayer", "Co-op"]
         
-        예시 3:
-        입력 문장: 혼자 조용히 몰입해서 할 수 있는 감성적인 스토리 게임
-        출력: ["싱글 플레이어", "풍부한 스토리", "어드벤처"]
-        예시 4:
-        입력 문장: 스팀덱으로 하기 좋은 픽셀 그래픽 로그라이크
-        출력: ["픽셀 그래픽", "로그라이크", "싱글 플레이어"]
+        Example 3:
+        Input sentence: Emotional story games I can play alone quietly and immersively
+        Output: ["Singleplayer", "Story Rich", "Adventure"]
         
-        예시 5:
-        입력 문장: 친구랑 밤새도록 할 수 있는 도전적인 게임
-        출력: ["협동", "로그라이크", "고난이도"]
+        Example 4:
+        Input sentence: Pixel graphics roguelike games good for Steam Deck
+        Output: ["Pixel Graphics", "Roguelike", "Singleplayer"]
+        
+        Example 5:
+        Input sentence: Challenging games I can play all night with friends
+        Output: ["Co-op", "Roguelike", "Difficult"]
        
-        이런 식으로 스팀 태그 목록에서 뽑아내서 출력해줘.
+        Extract tags from the Steam tag list in this manner and output them.
         
-        입력 문장: %s
-        출력:
+        Input sentence: %s
+        Output:
         """.formatted(input);
     }
 
     public List<String> fallbackGEMINI(String input,Throwable ex){
-        log.info("GEMINI API 동기화 실패 (input={}): {}", input, ex.getMessage());
+        log.info("GEMINI API Synchronization failure (input={}): {}", input, ex.getMessage());
 
         return Collections.emptyList();
     }

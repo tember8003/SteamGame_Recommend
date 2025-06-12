@@ -28,73 +28,73 @@ public class DashboardController {
     }
 
     /**
-     * 사용자 대시보드 조회
+     * Retrieve user dashboard
      */
     @GetMapping("/{steamId}")
     public ResponseEntity<DashboardDTO> getDashboard(
             @PathVariable
-            @Pattern(regexp = "\\d{17}", message = "유효하지 않은 Steam ID 형식입니다")
+            @Pattern(regexp = "\\d{17}", message = "Invalid Steam ID format")
             String steamId) {
 
         try {
-            log.info("대시보드 조회 요청: steamId={}", steamId);
+            log.info("Dashboard retrieval request: steamId={}", steamId);
 
-            // 🔧 Steam ID 추가 검증
+            // Additional Steam ID validation
             validateSteamIdFormat(steamId);
 
             DashboardDTO dashboard = dashboardService.generateDashboard(steamId);
 
-            log.info("대시보드 조회 성공: steamId={}", steamId);
+            log.info("Dashboard retrieval successful: steamId={}", steamId);
             return ResponseEntity.ok(dashboard);
 
         } catch (SteamApiException e) {
-            log.warn("Steam API 오류로 인한 대시보드 조회 실패: steamId={}, message={}",
+            log.warn("Dashboard retrieval failed due to Steam API error: steamId={}, message={}",
                     steamId, e.getMessage());
 
-            // Steam API 오류 시에도 기본 대시보드는 반환
+            // Return basic dashboard even on Steam API errors
             DashboardDTO errorDashboard = createErrorDashboardForSteamApi(steamId, e);
             return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
 
         } catch (DashboardException e) {
-            log.error("대시보드 생성 오류: steamId={}, type={}, message={}",
+            log.error("Dashboard generation error: steamId={}, type={}, message={}",
                     steamId, e.getErrorType(), e.getMessage());
 
-            // 대시보드 생성 오류도 기본 대시보드 반환
+            // Return basic dashboard for dashboard generation errors too
             DashboardDTO errorDashboard = createErrorDashboardForDashboard(steamId, e);
             return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
 
         } catch (Exception e) {
-            log.error("예상치 못한 대시보드 조회 오류: steamId={}", steamId, e);
+            log.error("Unexpected dashboard retrieval error: steamId={}", steamId, e);
 
-            // 예상치 못한 오류도 기본 대시보드 반환
+            // Return basic dashboard for unexpected errors too
             DashboardDTO errorDashboard = createGenericErrorDashboard(steamId);
             return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
         }
     }
 
     /**
-     * 대시보드 강제 새로고침
+     * Force refresh dashboard
      */
     @PostMapping("/{steamId}/refresh")
     public ResponseEntity<DashboardDTO> refreshDashboard(
             @PathVariable
-            @Pattern(regexp = "\\d{17}", message = "유효하지 않은 Steam ID 형식입니다")
+            @Pattern(regexp = "\\d{17}", message = "Invalid Steam ID format")
             String steamId) {
 
         try {
-            log.info("대시보드 강제 새로고침 요청: steamId={}", steamId);
+            log.info("Dashboard force refresh request: steamId={}", steamId);
 
             validateSteamIdFormat(steamId);
 
             DashboardDTO dashboard = dashboardService.refreshDashboard(steamId);
 
-            log.info("대시보드 강제 새로고침 성공: steamId={}", steamId);
+            log.info("Dashboard force refresh successful: steamId={}", steamId);
             return ResponseEntity.ok(dashboard);
 
         } catch (Exception e) {
-            log.error("대시보드 강제 새로고침 오류: steamId={}", steamId, e);
+            log.error("Dashboard force refresh error: steamId={}", steamId, e);
 
-            // 새로고침 실패 시 기존 캐시된 데이터라도 반환 시도
+            // Try to return existing cached data if refresh fails
             try {
                 DashboardDTO fallbackDashboard = dashboardService.generateDashboard(steamId);
                 return ResponseEntity.ok(fallbackDashboard);
@@ -106,37 +106,37 @@ public class DashboardController {
     }
 
     /**
-     * 대시보드 캐시 무효화
+     * Invalidate dashboard cache
      */
     @DeleteMapping("/{steamId}/cache")
     public ResponseEntity<Void> invalidateCache(
             @PathVariable
-            @Pattern(regexp = "\\d{17}", message = "유효하지 않은 Steam ID 형식입니다")
+            @Pattern(regexp = "\\d{17}", message = "Invalid Steam ID format")
             String steamId) {
 
         try {
-            log.info("대시보드 캐시 무효화 요청: steamId={}", steamId);
+            log.info("Dashboard cache invalidation request: steamId={}", steamId);
 
             validateSteamIdFormat(steamId);
 
             dashboardService.invalidateDashboard(steamId);
 
-            log.info("대시보드 캐시 무효화 성공: steamId={}", steamId);
+            log.info("Dashboard cache invalidation successful: steamId={}", steamId);
             return ResponseEntity.ok().build();
 
         } catch (Exception e) {
-            log.error("대시보드 캐시 무효화 오류: steamId={}", steamId, e);
+            log.error("Dashboard cache invalidation error: steamId={}", steamId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
-     * 캐시 상태 확인
+     * Check cache status
      */
     @GetMapping("/{steamId}/cache/status")
     public ResponseEntity<CacheStatusResponse> getCacheStatus(
             @PathVariable
-            @Pattern(regexp = "\\d{17}", message = "유효하지 않은 Steam ID 형식입니다")
+            @Pattern(regexp = "\\d{17}", message = "Invalid Steam ID format")
             String steamId) {
 
         try {
@@ -145,78 +145,78 @@ public class DashboardController {
             boolean isCached = dashboardService.isDashboardCached(steamId);
 
             CacheStatusResponse response = new CacheStatusResponse(
-                    steamId, isCached, isCached ? "캐시됨" : "캐시 없음"
+                    steamId, isCached, isCached ? "Cached" : "Not cached"
             );
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("캐시 상태 확인 오류: steamId={}", steamId, e);
+            log.error("Cache status check error: steamId={}", steamId, e);
 
             CacheStatusResponse errorResponse = new CacheStatusResponse(
-                    steamId, false, "상태 확인 실패"
+                    steamId, false, "Status check failed"
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    // 🔧 Steam ID 형식 검증
+    // Steam ID format validation
     private void validateSteamIdFormat(String steamId) {
         if (steamId == null || steamId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Steam ID가 필요합니다");
+            throw new IllegalArgumentException("Steam ID is required");
         }
 
         if (!steamId.matches("\\d{17}")) {
-            throw new IllegalArgumentException("Steam ID는 17자리 숫자여야 합니다");
+            throw new IllegalArgumentException("Steam ID must be 17 digits");
         }
 
-        // Steam ID 범위 검증 (최소값 체크)
+        // Steam ID range validation (minimum value check)
         try {
             long steamIdLong = Long.parseLong(steamId);
-            if (steamIdLong < 76561197960265728L) { // Steam ID 최소값
-                throw new IllegalArgumentException("유효하지 않은 Steam ID 범위입니다");
+            if (steamIdLong < 76561197960265728L) { // Steam ID minimum value
+                throw new IllegalArgumentException("Invalid Steam ID range");
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Steam ID는 숫자여야 합니다");
+            throw new IllegalArgumentException("Steam ID must be numeric");
         }
     }
 
-    // 🔧 에러별 대시보드 생성 메서드들
+    // Error-specific dashboard creation methods
     private DashboardDTO createErrorDashboardForSteamApi(String steamId, SteamApiException e) {
         String errorMessage = switch (e.getStatusCode()) {
-            case 403 -> "Steam 프로필이 비공개로 설정되어 있습니다";
-            case 404 -> "존재하지 않는 Steam 사용자입니다";
-            case 429 -> "너무 많은 요청으로 일시적으로 제한되었습니다";
-            default -> "Steam API 연결에 문제가 발생했습니다";
+            case 403 -> "Steam profile is set to private";
+            case 404 -> "Steam user does not exist";
+            case 429 -> "Temporarily limited due to too many requests";
+            default -> "Problem occurred with Steam API connection";
         };
 
         return createBasicErrorDashboard(steamId, "STEAM_API_ERROR",
-                "Steam 연결 오류", errorMessage);
+                "Steam Connection Error", errorMessage);
     }
 
     private DashboardDTO createErrorDashboardForDashboard(String steamId, DashboardException e) {
         String errorMessage = switch (e.getErrorType()) {
-            case STEAM_API_ERROR -> "Steam API 연결에 문제가 발생했습니다";
-            case DATABASE_ERROR -> "게임 데이터 조회에 문제가 발생했습니다";
-            case CACHE_ERROR -> "캐시 시스템에 문제가 발생했습니다";
-            case DATA_PROCESSING_ERROR -> "데이터 처리 중 문제가 발생했습니다";
-            default -> "시스템에 일시적인 문제가 발생했습니다";
+            case STEAM_API_ERROR -> "Problem occurred with Steam API connection";
+            case DATABASE_ERROR -> "Problem occurred while retrieving game data";
+            case CACHE_ERROR -> "Problem occurred with cache system";
+            case DATA_PROCESSING_ERROR -> "Problem occurred during data processing";
+            default -> "Temporary system problem occurred";
         };
 
         return createBasicErrorDashboard(steamId, "DASHBOARD_ERROR",
-                "대시보드 생성 오류", errorMessage);
+                "Dashboard Generation Error", errorMessage);
     }
 
     private DashboardDTO createGenericErrorDashboard(String steamId) {
         return createBasicErrorDashboard(steamId, "UNKNOWN_ERROR",
-                "예상치 못한 오류", "시스템에 예상치 못한 문제가 발생했습니다");
+                "Unexpected Error", "An unexpected system problem occurred");
     }
 
     private DashboardDTO createBasicErrorDashboard(String steamId, String errorType,
                                                    String title, String description) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "오류", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
                 List.of(),
@@ -225,13 +225,13 @@ public class DashboardController {
                         errorType,
                         title,
                         description,
-                        "다시 시도",
+                        "Try Again",
                         "#"
                 ))
         );
     }
 
-    // 🔧 캐시 상태 응답 DTO
+    // Cache status response DTO
     public static class CacheStatusResponse {
         private String steamId;
         private boolean cached;

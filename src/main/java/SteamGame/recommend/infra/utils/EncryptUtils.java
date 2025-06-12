@@ -22,7 +22,7 @@ public class EncryptUtils {
 
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 실패", e);
+            throw new RuntimeException("SHA-256 failed", e);
         }
     }
 }

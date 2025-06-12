@@ -52,7 +52,7 @@ public class TagService {
         return getTopTags(allTags,topN);
     }
 
-    //게임 랜덤 추천 셔플용
+    // For shuffling random game recommendations
     public List<String> shuffleTag(List<String> topTags, int min, int max){
         List<String> shuffled = new ArrayList<>(topTags);
 
@@ -101,7 +101,7 @@ public class TagService {
     public List<String> getTagsByGame(String gameName){
         Game optionalGame = gameRepository.findByNameIgnoreCase(gameName).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
-                "해당 이름의 게임을 찾을 수 없습니다: " + gameName
+                "Game with the specified name could not be found: " + gameName
         ));
 
         List<Long> appid = List.of(optionalGame.getAppid());

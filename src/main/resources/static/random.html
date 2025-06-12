@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -39,8 +39,8 @@
     body {
       background: var(--bg-primary);
       background-image:
-        radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+              radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
       font-family: 'Inter', sans-serif;
       color: var(--text-primary);
       line-height: 1.6;
@@ -555,18 +555,18 @@
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-content">
     <div class="spinner"></div>
-    <h3>게임을 찾고 있습니다...</h3>
-    <p>잠시만 기다려주세요</p>
+    <h3>Finding games...</h3>
+    <p>Please wait a moment</p>
   </div>
 </div>
 
 <div class="container">
   <div class="header">
     <h1><i class="fas fa-gamepad"></i> Game Recommend</h1>
-    <p class="subtitle">원하는 태그를 선택하고 완벽한 게임을 찾아보세요!</p>
+    <p class="subtitle">Select your desired tags and find the perfect games!</p>
     <a href="index.html" class="back-button">
       <i class="fas fa-arrow-left"></i>
-      홈으로 돌아가기
+      Back to Home
     </a>
   </div>
 
@@ -574,7 +574,7 @@
     <div class="section-card">
       <h2 class="section-title">
         <i class="fas fa-star"></i>
-        선택한 태그
+        Selected Tags
       </h2>
       <div class="tag-grid" id="random-tags-container"></div>
     </div>
@@ -582,7 +582,7 @@
     <div class="section-card">
       <h2 class="section-title">
         <i class="fas fa-ban"></i>
-        제외한 태그
+        Excluded Tags
       </h2>
       <div class="tag-grid excluded-tags" id="excluded-tags-container"></div>
     </div>
@@ -591,22 +591,22 @@
   <div class="controls">
     <div class="controls-grid">
       <div class="control-item">
-        <label for="random-review">리뷰 수</label>
+        <label for="random-review">Review Count</label>
         <input type="number" id="random-review" value="0" min="0" max="1000000" />
       </div>
       <div class="control-item">
-        <label for="random-korean">한국어 지원만</label>
+        <label for="random-korean">Korean Support Only</label>
         <input type="checkbox" id="random-korean" />
       </div>
       <div class="control-item">
-        <label for="random-free">무료 게임만</label>
+        <label for="random-free">Free Games Only</label>
         <input type="checkbox" id="random-free" />
       </div>
     </div>
     <button id="btn-random" class="recommend-button">
       <span class="loading-spinner"></span>
       <i class="fas fa-magic"></i>
-      게임 추천 받기
+      Get Game Recommendations
     </button>
   </div>
 
@@ -615,15 +615,15 @@
 
 <script>
   const tagsList = [
-    "2D","3D","RPG","액션","어드벤처","캐주얼","인디","전략","시뮬레이션",
-    "멀티플레이어","싱글 플레이어","협동","앞서 해보기","오픈 월드","풍부한 스토리",
-    "퍼즐","플랫폼","슈팅","FPS","3인칭","VR","판타지","SF","공포","생존",
-    "애니메이션","비주얼 노벨","픽셀 그래픽","턴제","카드 게임","샌드박스",
-    "건설","크래프팅","미스터리","코미디","어두운","고어","폭력","귀여운",
-    "심리적 공포","수사","좀비","온라인 협동","핵 앤 슬래시","격투","비뎀업",
-    "탄막 슈팅","횡스크롤","로그라이크","로그라이트","액션 RPG","액션 어드벤처",
-    "MMO","JRPG","던전 크롤러","매치 3","스포츠","레이싱","1인칭","3인칭 슈팅",
-    "리듬","음악","경영","클리커","전술","잠입","탐험"
+    "2D","3D","RPG","Action","Adventure","Casual","Indie","Strategy","Simulation",
+    "Multiplayer","Singleplayer","Co-op","Early Access","Open World","Rich Story",
+    "Puzzle","Platformer","Shooter","FPS","Third Person","VR","Fantasy","Sci-fi","Horror","Survival",
+    "Anime","Visual Novel","Pixel Graphics","Turn-Based","Card Game","Sandbox",
+    "Building","Crafting","Mystery","Comedy","Dark","Gore","Violent","Cute",
+    "Psychological Horror","Detective","Zombie","Online Co-Op","Hack and Slash","Fighting","Beat 'em up",
+    "Bullet Hell","Side Scroller","Roguelike","Roguelite","Action RPG","Action-Adventure",
+    "MMO","JRPG","Dungeon Crawler","Match 3","Sports","Racing","First-Person","Third-Person Shooter",
+    "Rhythm","Music","Management","Clicker","Tactical","Stealth","Exploration"
   ];
 
   const baseUrl = '';
@@ -633,7 +633,7 @@
     const excludedContainer = document.getElementById('excluded-tags-container');
 
     tagsList.forEach(tag => {
-      // 선택 태그
+      // Selected tags
       const tagItem1 = document.createElement('div');
       tagItem1.className = 'tag-item';
       tagItem1.innerHTML = `
@@ -642,7 +642,7 @@
       `;
       container.append(tagItem1);
 
-      // 제외 태그
+      // Excluded tags
       const tagItem2 = document.createElement('div');
       tagItem2.className = 'tag-item excluded-tag';
       tagItem2.innerHTML = `
@@ -652,7 +652,7 @@
       excludedContainer.append(tagItem2);
     });
 
-    // 태그 선택 시 애니메이션 효과
+    // Tag selection animation effect
     document.addEventListener('change', (e) => {
       if (e.target.type === 'checkbox' && (e.target.name === 'tags' || e.target.name === 'excludedTags')) {
         const label = e.target.nextElementSibling;
@@ -670,18 +670,18 @@
     const button = document.getElementById('btn-random');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // 로딩 상태 시작
+    // Start loading state
     button.classList.add('loading');
     loadingOverlay.classList.add('show');
 
     try {
       const tags = Array
-        .from(document.querySelectorAll('#random-tags-container input[name="tags"]:checked'))
-        .map(cb => cb.value);
+              .from(document.querySelectorAll('#random-tags-container input[name="tags"]:checked'))
+              .map(cb => cb.value);
 
       const excludedTags = Array
-        .from(document.querySelectorAll('#excluded-tags-container input[name="excludedTags"]:checked'))
-        .map(cb => cb.value);
+              .from(document.querySelectorAll('#excluded-tags-container input[name="excludedTags"]:checked'))
+              .map(cb => cb.value);
 
       const body = {
         tags,
@@ -699,11 +699,11 @@
 
       const data = await res.json();
 
-      // 결과 표시 전 잠시 대기 (UX 개선)
+      // Wait briefly before showing results (UX improvement)
       setTimeout(() => {
         renderGameResult(data);
 
-        // 결과로 스크롤
+        // Scroll to results
         document.getElementById('random-result').scrollIntoView({
           behavior: 'smooth',
           block: 'start'
@@ -714,7 +714,7 @@
       console.error('Error:', error);
       renderErrorResult();
     } finally {
-      // 로딩 상태 종료
+      // End loading state
       setTimeout(() => {
         button.classList.remove('loading');
         loadingOverlay.classList.remove('show');
@@ -739,8 +739,8 @@
       container.innerHTML = `
         <div class="no-results">
           <i class="fas fa-search"></i>
-          <h3>게임을 찾지 못했습니다</h3>
-          <p>다른 태그 조합을 시도해보세요!</p>
+          <h3>No games found</h3>
+          <p>Try different tag combinations!</p>
         </div>
       `;
       return;
@@ -751,7 +751,7 @@
     if (usedTags.length > 0) {
       html += `
         <div class="used-tags">
-          <h4><i class="fas fa-tags"></i> 사용된 태그</h4>
+          <h4><i class="fas fa-tags"></i> Used Tags</h4>
           <div>
             ${usedTags.map(tag => `<span class="tag">${tag}</span>`).join('')}
           </div>
@@ -772,7 +772,7 @@
               <p class="description">${game.shortDescription}</p>
               <a href="${game.steamStore}" target="_blank" class="steam-link">
                 <i class="fab fa-steam"></i>
-                Steam에서 보기
+                View on Steam
               </a>
             </div>
           </div>
@@ -799,8 +799,8 @@
     container.innerHTML = `
       <div class="no-results">
         <i class="fas fa-exclamation-triangle"></i>
-        <h3>오류가 발생했습니다</h3>
-        <p>잠시 후 다시 시도해주세요.</p>
+        <h3>An error occurred</h3>
+        <p>Please try again later.</p>
       </div>
     `;
   }

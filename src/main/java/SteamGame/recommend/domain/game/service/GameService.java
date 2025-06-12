@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.game.service;
 
 import SteamGame.recommend.domain.game.dto.GameSearchResponseDTO;
-import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
+import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
@@ -29,13 +29,13 @@ public class GameService {
     }
 
     @Transactional(readOnly = true)
-    public List<SteamDTO.SteamApp> findNonDuplicate(String[] tags,
+    public List<SteamAppDTO> findNonDuplicate(String[] tags,
                                                     int review,
                                                     Boolean korean_check,
                                                     Boolean free_check,
                                                     Boolean excluded_check,
                                                     String[] excludedTag) {
-        List<SteamDTO.SteamApp> appList= new ArrayList<>();
+        List<SteamAppDTO> appList= new ArrayList<>();
         List<String> tagList = Arrays.asList(tags);
 
         List<String> excludedList = (excludedTag != null)
@@ -65,21 +65,21 @@ public class GameService {
         }
 
         if(appList.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"조건에 맞는 새로운 게임을 찾을 수 없습니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"No new games match your preferences");
         }
         else{
             return appList;
         }
     }
 
-    public SteamDTO.SteamApp findGameByAppid(long appid){
+    public SteamAppDTO findGameByAppid(long appid){
         Game game = gameRepository.findByAppid(appid).orElseThrow();
 
         if(game==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게임이 존재하지 않습니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
         }
 
-        SteamDTO.SteamApp steamApp = new SteamDTO.SteamApp();
+        SteamAppDTO steamApp = new SteamAppDTO();
         steamApp.setAppid(game.getAppid());
         steamApp.setName(game.getName());
         steamApp.setShortDescription(game.getDescription());

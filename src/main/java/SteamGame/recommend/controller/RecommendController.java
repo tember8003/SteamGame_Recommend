@@ -4,17 +4,21 @@ import SteamGame.recommend.domain.game.dto.GameNameRequestDTO;
 import SteamGame.recommend.domain.game.dto.GameRequestDTO;
 import SteamGame.recommend.domain.game.dto.SteamIdRequestDTO;
 import SteamGame.recommend.domain.game.dto.TextRequestDTO;
-import SteamGame.recommend.domain.recommendation.dto.SteamDTO;
-
+import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name="recommend", description="게임 추천 API")
+@Slf4j
+@Tag(name = "recommend", description = "Game Recommendation API")
 @RestController
 @RequestMapping("/api/recommend")
 public class RecommendController {
@@ -25,49 +29,131 @@ public class RecommendController {
         this.recommendService = recommendService;
     }
 
-    @Operation(summary="태그 기반 랜덤 추천")
-    @ApiResponse(responseCode="200", description="성공")
+    @Operation(summary = "Tag-based random recommendation")
+    @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/random")
-    public List<SteamDTO.SteamApp> randomGame(@RequestBody GameRequestDTO request) {
-        Boolean excluded_check;
+    public ResponseEntity<List<SteamAppDTO>> randomGame(@Valid @RequestBody GameRequestDTO request) {
+        try {
+            log.info("Tag-based random recommendation request: tags={}, review={}, korean={}, free={}",
+                    request.getTags(), request.getReview(), request.getKorean_check(), request.getFree_check());
 
-        if(request.getExcludedTag()==null){
-            excluded_check=false;
+            Boolean excludedCheck = request.getExcludedTag() != null;
+
+            List<SteamAppDTO> games = recommendService.findGame(
+                    request.getTags(),
+                    request.getReview(),
+                    request.getKorean_check(),
+                    request.getFree_check(),
+                    excludedCheck,
+                    request.getExcludedTag()
+            );
+
+            log.info("Tag-based random recommendation successful: found {} games", games.size());
+            return ResponseEntity.ok(games);
+
+        } catch (Exception e) {
+            log.error("Tag-based random recommendation error", e);
+            throw e;
         }
-        else{
-            excluded_check=true;
-        }
-
-        return recommendService.findGame(request.getTags(),request.getReview(),request.getKorean_check(),request.getFree_check(),excluded_check,request.getExcludedTag());
-
     }
 
-    @Operation(summary="직접 입력 태그 추천")
-    @ApiResponse(responseCode="200", description="성공")
+    @Operation(summary = "Text input-based recommendation")
+    @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/input")
-    public SteamDTO.RecommendationResult inputRandomGame(
-            @RequestBody TextRequestDTO dto) {
-        return recommendService.selectInfo(dto.getText(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
+    public ResponseEntity<RecommendationResultDTO> inputRandomGame(@Valid @RequestBody TextRequestDTO dto) {
+        try {
+            log.info("Text input-based recommendation request: text={}, review={}, korean={}, free={}",
+                    dto.getText(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
+
+            RecommendationResultDTO result = recommendService.selectInfo(
+                    dto.getText(),
+                    dto.getReview(),
+                    dto.getKorean_check(),
+                    dto.getFree_check()
+            );
+
+            log.info("Text input-based recommendation successful: extracted tags={}, found {} games",
+                    result.getUsedTags(), result.getRecommendedGame().size());
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Text input-based recommendation error: text={}", dto.getText(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary="내 프로필 게임 기반 추천")
-    @ApiResponse(responseCode="200", description="성공")
+    @Operation(summary = "Profile-based game recommendation")
+    @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/profile")
-    public SteamDTO.RecommendationResult randomGameByProfile(@RequestBody SteamIdRequestDTO dto) {
-        return recommendService.recommendByProfile(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
+    public ResponseEntity<RecommendationResultDTO> randomGameByProfile(@Valid @RequestBody SteamIdRequestDTO dto) {
+        try {
+            log.info("Profile-based recommendation request: steamId={}, review={}, korean={}, free={}",
+                    dto.getSteamId(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
+
+            RecommendationResultDTO result = recommendService.recommendByProfile(
+                    dto.getSteamId(),
+                    dto.getReview(),
+                    dto.getKorean_check(),
+                    dto.getFree_check()
+            );
+
+            log.info("Profile-based recommendation successful: steamId={}, extracted tags={}, found {} games",
+                    dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Profile-based recommendation error: steamId={}", dto.getSteamId(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary="최근 2주간 플레이 기준 추천")
-    @ApiResponse(responseCode="200", description="성공")
-    @PostMapping("/RecentPlay")
-    public SteamDTO.RecommendationResult randomGameByRecentPlay(@RequestBody SteamIdRequestDTO dto){
-        return recommendService.recommendByRecentPlay(dto.getSteamId(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
+    @Operation(summary = "Recent 2-week playtime-based recommendation")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @PostMapping("/recent-play")
+    public ResponseEntity<RecommendationResultDTO> randomGameByRecentPlay(@Valid @RequestBody SteamIdRequestDTO dto) {
+        try {
+            log.info("Recent play-based recommendation request: steamId={}, review={}, korean={}, free={}",
+                    dto.getSteamId(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
+
+            RecommendationResultDTO result = recommendService.recommendByRecentPlay(
+                    dto.getSteamId(),
+                    dto.getReview(),
+                    dto.getKorean_check(),
+                    dto.getFree_check()
+            );
+
+            log.info("Recent play-based recommendation successful: steamId={}, extracted tags={}, found {} games",
+                    dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Recent play-based recommendation error: steamId={}", dto.getSteamId(), e);
+            throw e;
+        }
     }
 
-    @Operation(summary="게임 하나 고르면 비슷한 태그의 게임들 추천")
-    @ApiResponse(responseCode="200", description="성공")
+    @Operation(summary = "Similar game recommendation based on selected game")
+    @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/similar")
-    public SteamDTO.RecommendationResult randomGameBySimilarGame(@RequestBody GameNameRequestDTO dto){
-        return recommendService.recommendBySimilarGame(dto.getGameName(),dto.getReview(),dto.getKorean_check(),dto.getFree_check());
+    public ResponseEntity<RecommendationResultDTO> randomGameBySimilarGame(@Valid @RequestBody GameNameRequestDTO dto) {
+        try {
+            log.info("Similar game recommendation request: gameName={}, review={}, korean={}, free={}",
+                    dto.getGameName(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
+
+            RecommendationResultDTO result = recommendService.recommendBySimilarGame(
+                    dto.getGameName(),
+                    dto.getReview(),
+                    dto.getKorean_check(),
+                    dto.getFree_check()
+            );
+
+            log.info("Similar game recommendation successful: gameName={}, extracted tags={}, found {} games\"",
+                    dto.getGameName(), result.getUsedTags(), result.getRecommendedGame().size());
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Similar game recommendation error: gameName={}", dto.getGameName(), e);
+            throw e;
+        }
     }
 }

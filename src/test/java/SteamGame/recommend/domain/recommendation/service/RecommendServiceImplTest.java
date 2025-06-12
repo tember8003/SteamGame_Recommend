@@ -22,13 +22,13 @@ class RecommendServiceImplTest {
         when(cooccurrenceService.findOptimalPairKey(anyList(), anyInt()))
                 .thenReturn(Optional.of(pairKey));
 
-        SteamDTO.SteamApp fakeApp = new SteamDTO.SteamApp();
+        SteamAppDTO fakeApp = new SteamAppDTO();
         when(gameFinderService.findNonDuplicate(
                 eq(new String[]{"A","B"}), anyInt(), anyBoolean(), any()))
                 .thenReturn(fakeApp);
 
         // when
-        SteamDTO.SteamApp result = recommendService.recommendWithCooccurrence(List.of("A","B","C"));
+        SteamAppDTO result = recommendService.recommendWithCooccurrence(List.of("A","B","C"));
 
         // then
         assertSame(fakeApp, result);
@@ -50,13 +50,13 @@ class RecommendServiceImplTest {
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "테스트용 예외"));
 
         // 두 번째 태그 성공
-        SteamDTO.SteamApp secondApp = new SteamDTO.SteamApp();
+        SteamAppDTO secondApp = new SteamAppDTO();
         when(gameFinderService.findNonDuplicate(
                 eq(new String[]{"Y"}), anyInt(), anyBoolean(), any()))
                 .thenReturn(secondApp);
 
         // when
-        SteamDTO.SteamApp result = recommendService.recommendWithCooccurrence(List.of("X","Y"));
+        SteamAppDTO result = recommendService.recommendWithCooccurrence(List.of("X","Y"));
 
         // then
         assertSame(secondApp, result);
