@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class UserProfileSummary {
     private int totalGames;
-    private BigDecimal totalPlaytime; // 시간 단위
-    private int gamesPlayedRecently; // 최근 2주
+    private BigDecimal totalPlaytime;
+    private int gamesPlayedRecently; // recent 2 weeks
     private String favoriteGenre;
     private BigDecimal averagePlaytimePerGame;
 }

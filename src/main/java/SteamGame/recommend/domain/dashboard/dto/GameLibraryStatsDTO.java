@@ -12,10 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GameLibraryStatsDTO {
-    private int neverPlayed; // 0시간 게임
-    private int shortPlayed; // 1-5시간
-    private int mediumPlayed; // 5-50시간
-    private int longPlayed; // 50시간+
+    private int neverPlayed;
+    private int shortPlayed; // 1-5 hour
+    private int mediumPlayed; // 5-50 hour
+    private int longPlayed; // 50 hour +
     private List<GameStatsDTO> topPlayedGames;
     private List<GameStatsDTO> recentlyPlayed;
 }

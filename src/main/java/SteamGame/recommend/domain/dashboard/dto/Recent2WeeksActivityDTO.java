@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MonthlyActivityDTO {
-    private String month; // "2024-01"
-    private int gamesPlayed;
+public class Recent2WeeksActivityDTO {
     private BigDecimal totalPlaytime;
-    private int newGamesPurchased;
+    private int activeGamesCount;
+    private BigDecimal averageSessionTime;
+    private GameStatsDTO mostPlayedGame;
 }

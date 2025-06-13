@@ -1,9 +1,6 @@
 package SteamGame.recommend.controller;
 
-import SteamGame.recommend.domain.dashboard.dto.DashboardDTO;
-import SteamGame.recommend.domain.dashboard.dto.GameLibraryStatsDTO;
-import SteamGame.recommend.domain.dashboard.dto.RecommendationInsightDTO;
-import SteamGame.recommend.domain.dashboard.dto.UserProfileSummary;
+import SteamGame.recommend.domain.dashboard.dto.*;
 import SteamGame.recommend.domain.dashboard.service.DashboardService;
 import SteamGame.recommend.exception.DashboardException;
 import SteamGame.recommend.exception.SteamApiException;
@@ -48,27 +45,25 @@ public class DashboardController {
             return ResponseEntity.ok(dashboard);
 
         } catch (SteamApiException e) {
-            log.warn("Dashboard retrieval failed due to Steam API error: steamId={}, message={}",
-                    steamId, e.getMessage());
+            log.warn("Dashboard retrieval failed due to Steam API error: steamId={}, statusCode={}, message={}",
+                    steamId, e.getStatusCode(), e.getMessage());
 
-            // Return basic dashboard even on Steam API errors
+            // Service에서 이미 에러 처리가 되므로 이 부분은 실행되지 않을 수 있음
             DashboardDTO errorDashboard = createErrorDashboardForSteamApi(steamId, e);
-            return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
+            return ResponseEntity.ok(errorDashboard);
 
         } catch (DashboardException e) {
             log.error("Dashboard generation error: steamId={}, type={}, message={}",
                     steamId, e.getErrorType(), e.getMessage());
 
-            // Return basic dashboard for dashboard generation errors too
             DashboardDTO errorDashboard = createErrorDashboardForDashboard(steamId, e);
-            return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
+            return ResponseEntity.ok(errorDashboard);
 
         } catch (Exception e) {
             log.error("Unexpected dashboard retrieval error: steamId={}", steamId, e);
 
-            // Return basic dashboard for unexpected errors too
             DashboardDTO errorDashboard = createGenericErrorDashboard(steamId);
-            return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
+            return ResponseEntity.ok(errorDashboard);
         }
     }
 
@@ -100,7 +95,7 @@ public class DashboardController {
                 return ResponseEntity.ok(fallbackDashboard);
             } catch (Exception fallbackException) {
                 DashboardDTO errorDashboard = createGenericErrorDashboard(steamId);
-                return ResponseEntity.status(HttpStatus.OK).body(errorDashboard);
+                return ResponseEntity.ok(errorDashboard);
             }
         }
     }
@@ -181,7 +176,8 @@ public class DashboardController {
         }
     }
 
-    // Error-specific dashboard creation methods
+    // ===== 에러 대시보드 생성 메서드들 (새로운 구조에 맞춤) =====
+
     private DashboardDTO createErrorDashboardForSteamApi(String steamId, SteamApiException e) {
         String errorMessage = switch (e.getStatusCode()) {
             case 403 -> "Steam profile is set to private";
@@ -190,7 +186,14 @@ public class DashboardController {
             default -> "Problem occurred with Steam API connection";
         };
 
-        return createBasicErrorDashboard(steamId, "STEAM_API_ERROR",
+        String favoriteGenre = switch (e.getStatusCode()) {
+            case 403 -> "Private";
+            case 404 -> "Not Found";
+            case 429 -> "Rate Limited";
+            default -> "Error";
+        };
+
+        return createBasicErrorDashboard(steamId, favoriteGenre, "STEAM_API_ERROR",
                 "Steam Connection Error", errorMessage);
     }
 
@@ -203,48 +206,34 @@ public class DashboardController {
             default -> "Temporary system problem occurred";
         };
 
-        return createBasicErrorDashboard(steamId, "DASHBOARD_ERROR",
+        String favoriteGenre = switch (e.getErrorType()) {
+            case DATABASE_ERROR -> "DB Error";
+            case CACHE_ERROR -> "Cache Error";
+            case DATA_PROCESSING_ERROR -> "Processing Error";
+            default -> "System Error";
+        };
+
+        return createBasicErrorDashboard(steamId, favoriteGenre, "DASHBOARD_ERROR",
                 "Dashboard Generation Error", errorMessage);
     }
 
     private DashboardDTO createGenericErrorDashboard(String steamId) {
-        return createBasicErrorDashboard(steamId, "UNKNOWN_ERROR",
+        return createBasicErrorDashboard(steamId, "Error", "UNKNOWN_ERROR",
                 "Unexpected Error", "An unexpected system problem occurred");
     }
 
-    private DashboardDTO createBasicErrorDashboard(String steamId, String errorType,
-                                                   String title, String description) {
+    private DashboardDTO createBasicErrorDashboard(String steamId, String favoriteGenre,
+                                                   String errorType, String title, String description) {
+
+        // steamId, profileSummary, topTags, genreDistribution, recentActivity, libraryStats
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
-                List.of(),
-                List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        errorType,
-                        title,
-                        description,
-                        "Try Again",
-                        "#"
-                ))
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, favoriteGenre, BigDecimal.ZERO),
+                List.of(),  // topTags
+                List.of(),  // genreDistribution
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null), // recentActivity
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()) // libraryStats
+                // insights와 monthlyActivity 제거됨
         );
-    }
-
-    // Cache status response DTO
-    public static class CacheStatusResponse {
-        private String steamId;
-        private boolean cached;
-        private String status;
-
-        public CacheStatusResponse(String steamId, boolean cached, String status) {
-            this.steamId = steamId;
-            this.cached = cached;
-            this.status = status;
-        }
-
-        public String getSteamId() { return steamId; }
-        public boolean isCached() { return cached; }
-        public String getStatus() { return status; }
     }
 }

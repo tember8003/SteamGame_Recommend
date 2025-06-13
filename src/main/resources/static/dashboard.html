@@ -93,6 +93,10 @@
             font-size: 1rem;
         }
 
+        .search-input input::placeholder {
+            color: var(--text-muted);
+        }
+
         .search-input button {
             background: var(--gradient-primary);
             color: var(--bg-primary);
@@ -196,6 +200,8 @@
             flex-direction: column;
             gap: 15px;
             margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         .game-item {
@@ -213,6 +219,7 @@
             height: 34px;
             border-radius: 8px;
             object-fit: cover;
+            background: var(--border);
         }
 
         .game-info {
@@ -223,53 +230,12 @@
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 4px;
+            font-size: 0.95rem;
         }
 
         .game-playtime {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-        }
-
-        .insight-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .insight-item {
-            padding: 20px;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .insight-title {
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .insight-description {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-        }
-
-        .insight-action {
-            display: inline-block;
-            background: var(--primary);
-            color: var(--bg-primary);
-            padding: 8px 16px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .insight-action:hover {
-            background: var(--secondary);
-            transform: translateY(-2px);
         }
 
         .loading {
@@ -326,6 +292,42 @@
             transition: width 0.5s ease;
         }
 
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-private {
+            background: rgba(139, 139, 163, 0.2);
+            color: var(--text-muted);
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -339,23 +341,30 @@
             .header h1 {
                 font-size: 2rem;
             }
+
+            .search-input {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-chart-line"></i> Game Dashboard</h1>
+        <h1><i class="fas fa-chart-line"></i> Steam Game Dashboard</h1>
         <p class="subtitle">Analyze your gaming preferences at a glance</p>
     </div>
 
     <div class="search-section">
         <div class="search-input">
-            <input type="text" id="steamIdInput" placeholder="Enter your Steam ID" value=""/>
+            <input type="text" id="steamIdInput" placeholder="Enter your Steam ID (17 digits)" value=""/>
             <button onclick="loadDashboard()">
                 <i class="fas fa-search"></i>
                 Load Dashboard
             </button>
+        </div>
+        <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);">
+            Example: 76561198364007282
         </div>
     </div>
 
@@ -380,6 +389,11 @@
             return;
         }
 
+        if (!/^\d{17}$/.test(steamId)) {
+            alert('Steam ID must be exactly 17 digits');
+            return;
+        }
+
         currentSteamId = steamId;
         showLoading();
 
@@ -387,15 +401,16 @@
             const response = await fetch(`${baseUrl}/api/dashboard/${steamId}`);
 
             if (!response.ok) {
-                throw new Error('Failed to load dashboard');
+                throw new Error(`HTTP ${response.status}: Failed to load dashboard`);
             }
 
             const data = await response.json();
+            console.log('Dashboard data received:', data);
             renderDashboard(data);
 
         } catch (error) {
-            console.error('Error:', error);
-            showError();
+            console.error('Dashboard load error:', error);
+            showError(error.message);
         }
     }
 
@@ -404,23 +419,36 @@
             <div class="loading">
                 <div class="spinner"></div>
                 <h3>Creating your dashboard...</h3>
-                <p>Please wait a moment</p>
+                <p>Fetching your Steam data, please wait...</p>
             </div>
         `;
     }
 
-    function showError() {
+    function showError(message = 'Unknown error occurred') {
         document.getElementById('dashboard-content').innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Unable to load dashboard</h3>
-                <p>Please check your Steam ID or try again later</p>
+                <p style="margin-bottom: 15px;">${message}</p>
+                <p>Please check your Steam ID and try again later</p>
+                <button onclick="loadDashboard()" style="margin-top: 20px; padding: 10px 20px; background: var(--primary); border: none; border-radius: 8px; color: var(--bg-primary); cursor: pointer;">
+                    Retry
+                </button>
             </div>
         `;
     }
 
     function renderDashboard(data) {
         const content = document.getElementById('dashboard-content');
+
+        if (!data || !data.profileSummary) {
+            showError('Invalid dashboard data received from server');
+            return;
+        }
+
+        // 상태 확인
+        const favoriteGenre = data.profileSummary.favoriteGenre || 'None';
+        const isError = ['Error', 'Private', 'Not Found', 'Rate Limited', 'DB Error', 'Cache Error'].includes(favoriteGenre);
 
         content.innerHTML = `
             <div class="dashboard-grid">
@@ -429,25 +457,38 @@
                     <div class="card-header">
                         <i class="fas fa-user"></i>
                         <h3>Profile Summary</h3>
+                        ${getStatusBadge(favoriteGenre)}
                     </div>
                     <div class="stat-grid">
                         <div class="stat-item">
-                            <div class="stat-value">${data.profileSummary.totalGames}</div>
+                            <div class="stat-value">${data.profileSummary.totalGames || 0}</div>
                             <div class="stat-label">Total Games</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">${data.profileSummary.totalPlaytime.toFixed(1)}h</div>
+                            <div class="stat-value">${(data.profileSummary.totalPlaytime || 0).toFixed(1)}h</div>
                             <div class="stat-label">Total Playtime</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">${data.profileSummary.gamesPlayedRecently}</div>
+                            <div class="stat-value">${data.profileSummary.gamesPlayedRecently || 0}</div>
                             <div class="stat-label">Recently Played</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">${data.profileSummary.averagePlaytimePerGame.toFixed(1)}h</div>
+                            <div class="stat-value">${(data.profileSummary.averagePlaytimePerGame || 0).toFixed(1)}h</div>
                             <div class="stat-label">Average Playtime</div>
                         </div>
                     </div>
+                    <div style="margin-top: 20px; text-align: center; color: var(--text-secondary);">
+                        <strong>Favorite Genre: ${favoriteGenre}</strong>
+                    </div>
+                </div>
+
+                <!-- Recent 2 Weeks Activity -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-clock"></i>
+                        <h3>Recent Activity (2 weeks)</h3>
+                    </div>
+                    ${renderRecentActivity(data.recentActivity)}
                 </div>
 
                 <!-- Preferred Tags -->
@@ -456,41 +497,16 @@
                         <i class="fas fa-tags"></i>
                         <h3>Preferred Tags</h3>
                     </div>
-                    <div class="tag-list">
-                        ${data.topTags.slice(0, 8).map(tag => `
-                            <span class="tag">${tag.tagName} (${tag.gameCount})</span>
-                        `).join('')}
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <div style="margin-bottom: 10px;">
-                            <strong>Top Preference: ${data.topTags[0]?.tagName || 'None'}</strong>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${data.topTags[0]?.preferenceScore || 0}%"></div>
-                            </div>
-                        </div>
-                    </div>
+                    ${renderTagPreferences(data.topTags)}
                 </div>
 
-                <!-- Genre Distribution Chart -->
+                <!-- Genre Distribution -->
                 <div class="dashboard-card wide-card">
                     <div class="card-header">
                         <i class="fas fa-chart-pie"></i>
                         <h3>Genre Distribution</h3>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="genreChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Monthly Activity -->
-                <div class="dashboard-card wide-card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-bar"></i>
-                        <h3>Monthly Activity</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="activityChart"></canvas>
-                    </div>
+                    ${renderGenreDistribution(data.genreDistribution)}
                 </div>
 
                 <!-- Library Statistics -->
@@ -499,69 +515,191 @@
                         <i class="fas fa-gamepad"></i>
                         <h3>Library Analysis</h3>
                     </div>
-                    <div class="stat-grid">
-                        <div class="stat-item">
-                            <div class="stat-value">${data.libraryStats.neverPlayed}</div>
-                            <div class="stat-label">Never Played</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${data.libraryStats.shortPlayed}</div>
-                            <div class="stat-label">Short Play</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${data.libraryStats.mediumPlayed}</div>
-                            <div class="stat-label">Medium Play</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${data.libraryStats.longPlayed}</div>
-                            <div class="stat-label">Long Play</div>
-                        </div>
-                    </div>
+                    ${renderLibraryStats(data.libraryStats)}
                 </div>
 
-                <!-- Top Played Games -->
+                <!-- Most Played Games -->
                 <div class="dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-trophy"></i>
                         <h3>Most Played Games</h3>
                     </div>
-                    <div class="game-list">
-                        ${data.libraryStats.topPlayedGames.map(game => `
-                            <div class="game-item">
-                                <img src="${game.headerImage}" alt="${game.name}" class="game-image">
-                                <div class="game-info">
-                                    <div class="game-name">${game.name}</div>
-                                    <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours played</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                    ${renderTopGames(data.libraryStats?.topPlayedGames)}
                 </div>
 
-                <!-- Insights & Recommendations -->
-                <div class="dashboard-card wide-card">
+                <!-- Recently Played Games -->
+                <div class="dashboard-card">
                     <div class="card-header">
-                        <i class="fas fa-lightbulb"></i>
-                        <h3>Personalized Insights</h3>
+                        <i class="fas fa-history"></i>
+                        <h3>Recently Played</h3>
                     </div>
-                    <div class="insight-list">
-                        ${data.insights.map(insight => `
-                            <div class="insight-item">
-                                <div class="insight-title">${insight.title}</div>
-                                <div class="insight-description">${insight.description}</div>
-                                <a href="${insight.actionUrl}" class="insight-action">${insight.actionText}</a>
-                            </div>
-                        `).join('')}
-                    </div>
+                    ${renderRecentGames(data.libraryStats?.recentlyPlayedGames)}
                 </div>
             </div>
         `;
 
-        // Render charts
+        // 차트 렌더링
         setTimeout(() => {
-            renderGenreChart(data.genreDistribution);
-            renderActivityChart(data.monthlyActivity);
+            if (data.genreDistribution && data.genreDistribution.length > 0) {
+                renderGenreChart(data.genreDistribution);
+            }
         }, 100);
+    }
+
+    function getStatusBadge(favoriteGenre) {
+        switch (favoriteGenre) {
+            case 'Private':
+                return '<span class="status-badge status-private">Private Profile</span>';
+            case 'Rate Limited':
+                return '<span class="status-badge status-warning">Rate Limited</span>';
+            case 'Error':
+            case 'DB Error':
+            case 'Cache Error':
+                return '<span class="status-badge status-error">Error</span>';
+            case 'Not Found':
+                return '<span class="status-badge status-error">User Not Found</span>';
+            default:
+                return '';
+        }
+    }
+
+    function renderRecentActivity(recentActivity) {
+        if (!recentActivity) {
+            return '<div class="empty-state"><i class="fas fa-clock"></i><p>No recent activity data</p></div>';
+        }
+
+        return `
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${(recentActivity.totalRecentPlaytime || 0).toFixed(1)}h</div>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${recentActivity.activeGamesCount || 0}</div>
+                    <div class="stat-label">Active Games</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${(recentActivity.averageSessionTime || 0).toFixed(1)}h</div>
+                    <div class="stat-label">Avg Session</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${recentActivity.mostPlayedGame ? '🎮' : '❌'}</div>
+                    <div class="stat-label">Most Played</div>
+                </div>
+            </div>
+            ${recentActivity.mostPlayedGame ? `
+                <div style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
+                    <div class="game-name">${recentActivity.mostPlayedGame.name}</div>
+                    <div class="game-playtime">${recentActivity.mostPlayedGame.playtimeHours.toFixed(1)} hours recently</div>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    function renderTagPreferences(topTags) {
+        if (!topTags || topTags.length === 0) {
+            return '<div class="empty-state"><i class="fas fa-tags"></i><p>No gaming preferences detected yet.<br>Play some games to see your preferences!</p></div>';
+        }
+
+        return `
+            <div class="tag-list">
+                ${topTags.slice(0, 8).map(tag => `
+                    <span class="tag">${tag.tagName} (${tag.gameCount})</span>
+                `).join('')}
+            </div>
+            <div style="margin-top: 20px;">
+                <div style="margin-bottom: 10px;">
+                    <strong>Top Preference: ${topTags[0].tagName}</strong>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, topTags[0].preferenceScore || 0)}%"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                        ${topTags[0].gameCount} games, ${topTags[0].totalPlaytime.toFixed(1)} hours
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderGenreDistribution(genreDistribution) {
+        if (!genreDistribution || genreDistribution.length === 0) {
+            return '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>No genre distribution data available</p></div>';
+        }
+
+        return '<div class="chart-container"><canvas id="genreChart"></canvas></div>';
+    }
+
+    function renderLibraryStats(libraryStats) {
+        if (!libraryStats) {
+            return '<div class="empty-state"><i class="fas fa-gamepad"></i><p>No library statistics available</p></div>';
+        }
+
+        return `
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${libraryStats.neverPlayed || 0}</div>
+                    <div class="stat-label">Never Played</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${libraryStats.shortPlayed || 0}</div>
+                    <div class="stat-label">Short Play (&lt;2h)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${libraryStats.mediumPlayed || 0}</div>
+                    <div class="stat-label">Medium Play (2-10h)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${libraryStats.longPlayed || 0}</div>
+                    <div class="stat-label">Long Play (&gt;10h)</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTopGames(topGames) {
+        if (!topGames || topGames.length === 0) {
+            return '<div class="empty-state"><i class="fas fa-trophy"></i><p>No played games found</p></div>';
+        }
+
+        return `
+            <div class="game-list">
+                ${topGames.slice(0, 5).map((game, index) => `
+                    <div class="game-item">
+                        <div style="width: 20px; text-align: center; color: var(--primary); font-weight: bold;">
+                            ${index + 1}
+                        </div>
+                        <img src="${game.headerImage || ''}" alt="${game.name}" class="game-image"
+                             onerror="this.style.display='none'">
+                        <div class="game-info">
+                            <div class="game-name">${game.name}</div>
+                            <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours total</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderRecentGames(recentGames) {
+        if (!recentGames || recentGames.length === 0) {
+            return '<div class="empty-state"><i class="fas fa-history"></i><p>No recently played games found</p></div>';
+        }
+
+        return `
+            <div class="game-list">
+                ${recentGames.slice(0, 5).map(game => `
+                    <div class="game-item">
+                        <img src="${game.headerImage || ''}" alt="${game.name}" class="game-image"
+                             onerror="this.style.display='none'">
+                        <div class="game-info">
+                            <div class="game-name">${game.name}</div>
+                            <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours total</div>
+                            ${game.lastPlayedDate ? `<div style="font-size: 0.8rem; color: var(--text-muted);">Last played: ${game.lastPlayedDate}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     }
 
     function renderGenreChart(genreData) {
@@ -571,7 +709,7 @@
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: genreData.map(item => item.genre),
+                labels: genreData.map(item => item.tagName || item.genre),
                 datasets: [{
                     data: genreData.map(item => item.percentage),
                     backgroundColor: genreData.map(item => item.color),
@@ -588,7 +726,28 @@
                         labels: {
                             color: '#b4b4c8',
                             padding: 20,
-                            usePointStyle: true
+                            usePointStyle: true,
+                            generateLabels: function(chart) {
+                                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                const labels = original.call(this, chart);
+
+                                labels.forEach((label, index) => {
+                                    const data = genreData[index];
+                                    if (data) {
+                                        label.text = `${data.tagName} (${data.gameCount} games)`;
+                                    }
+                                });
+
+                                return labels;
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const data = genreData[context.dataIndex];
+                                return `${data.tagName}: ${data.percentage.toFixed(1)}% (${data.gameCount} games)`;
+                            }
                         }
                     }
                 }
@@ -596,68 +755,7 @@
         });
     }
 
-    function renderActivityChart(activityData) {
-        const ctx = document.getElementById('activityChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: activityData.map(item => item.month),
-                datasets: [
-                    {
-                        label: 'Playtime (Hours)',
-                        data: activityData.map(item => item.totalPlaytime),
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Games Played',
-                        data: activityData.map(item => item.gamesPlayed),
-                        borderColor: '#7c3aed',
-                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#b4b4c8'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#8b8ba3' },
-                        grid: { color: '#333344' }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        ticks: { color: '#8b8ba3' },
-                        grid: { color: '#333344' }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        ticks: { color: '#8b8ba3' },
-                        grid: { drawOnChartArea: false }
-                    }
-                }
-            }
-        });
-    }
-
-    // Search with Enter key
+    // Enter key support
     document.getElementById('steamIdInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             loadDashboard();
@@ -666,16 +764,18 @@
 
     // Page load animation
     window.addEventListener('load', () => {
-        const elements = document.querySelectorAll('.dashboard-card');
-        elements.forEach((el, index) => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            setTimeout(() => {
-                el.style.transition = 'all 0.6s ease';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
+        setTimeout(() => {
+            const elements = document.querySelectorAll('.dashboard-card');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    el.style.transition = 'all 0.6s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }, 100);
     });
 </script>
 </body>

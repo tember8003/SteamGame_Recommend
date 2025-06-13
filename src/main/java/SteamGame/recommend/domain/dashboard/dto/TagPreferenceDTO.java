@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class TagPreferenceDTO {
     private String tagName;
-    private int gameCount; // 이 태그를 가진 게임 수
+    private int gameCount;
     private BigDecimal totalPlaytime;
-    private double preferenceScore; // 0-100 점수
+    private double preferenceScore; // 0-100
 }

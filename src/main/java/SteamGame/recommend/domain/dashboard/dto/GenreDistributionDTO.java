@@ -16,5 +16,5 @@ public class GenreDistributionDTO {
     private int gameCount;
     private BigDecimal playtimeHours;
     private double percentage;
-    private String color; // 차트용 색상
+    private String color; // for chart
 }

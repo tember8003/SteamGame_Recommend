@@ -14,9 +14,8 @@ public class DashboardDTO {
     private UserProfileSummary profileSummary;
     private List<TagPreferenceDTO> topTags;
     private List<GenreDistributionDTO> genreDistribution;
-    private List<MonthlyActivityDTO> monthlyActivity;
+    private Recent2WeeksActivityDTO recentActivity;
     private GameLibraryStatsDTO libraryStats;
-    private List<RecommendationInsightDTO> insights;
 }
 
 

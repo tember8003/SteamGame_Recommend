@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -14,9 +15,22 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Steam API 관련 예외 처리
-     */
+    //favicon exception
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
+        // favicon
+        if (ex.getResourcePath().contains("favicon") ||
+                ex.getResourcePath().contains(".ico") ||
+                ex.getResourcePath().contains(".png") ||
+                ex.getResourcePath().contains(".jpg")) {
+            return ResponseEntity.notFound().build();
+        }
+
+        log.warn("API resource not found: {}", ex.getResourcePath());
+        return ResponseEntity.notFound().build();
+    }
+
+    //Steam API exception
     @ExceptionHandler(SteamApiException.class)
     public ResponseEntity<ErrorResponse> handleSteamApiException(SteamApiException e) {
         log.error("Steam API Error: steamId={}, statusCode={}, message={}",

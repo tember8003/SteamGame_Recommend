@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,7 @@ public class DashboardService {
     private final SteamApiService steamApiService;
     private final GameRepository gameRepository;
     private final TagRepository tagRepository;
-    private final DashboardCacheService cacheService; // Cache service added
+    private final DashboardCacheService cacheService;
 
     private static final String[] CHART_COLORS = {
             "#00d4ff", "#7c3aed", "#f59e0b", "#10b981", "#ef4444",
@@ -38,7 +37,7 @@ public class DashboardService {
     public DashboardService(SteamApiService steamApiService,
                             GameRepository gameRepository,
                             TagRepository tagRepository,
-                            DashboardCacheService cacheService) { // Dependency injection
+                            DashboardCacheService cacheService) {
         this.steamApiService = steamApiService;
         this.gameRepository = gameRepository;
         this.tagRepository = tagRepository;
@@ -47,7 +46,7 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardDTO generateDashboard(String steamId) {
-        // 1. Check cache
+        // check Cache
         Optional<DashboardDTO> cachedDashboard = cacheService.getCachedDashboard(steamId);
         if (cachedDashboard.isPresent()) {
             log.info("Dashboard returned from cache: steamId={}", steamId);
@@ -57,45 +56,83 @@ public class DashboardService {
         try {
             log.info("Starting new dashboard generation: steamId={}", steamId);
 
-            // 2. Steam API data retrieval
+            // Steam api data
             List<Long> ownedGameIds = Collections.emptyList();
             List<Long> recentGameIds = Collections.emptyList();
             Map<Long, GamePlaytimeInfo> playtimeMap = Collections.emptyMap();
             PlayerStatsInfo playerStats = new PlayerStatsInfo("Unknown", 0L);
 
+            // get Game list
             try {
                 ownedGameIds = steamApiService.getOwnedGameIds(steamId);
-                recentGameIds = steamApiService.getRecentPlayedGameIds(steamId);
-                playtimeMap = steamApiService.getDetailedPlaytimes(steamId);
-                playerStats = steamApiService.getPlayerStats(steamId);
-
             } catch (SteamApiException e) {
-                log.warn("Partial failure due to Steam API error: steamId={}, type={}, message={}",
-                        steamId, e.getClass().getSimpleName(), e.getMessage());
+                log.warn("Failed to get owned games: steamId={}, statusCode={}, message={}",
+                        steamId, e.getStatusCode(), e.getMessage());
 
-                // Continue with available data instead of empty dashboard on Steam API error
                 if (e.getStatusCode() == 403) {
-                    // Special message for private profile
                     return createPrivateProfileDashboard(steamId);
                 } else if (e.getStatusCode() == 404) {
-                    // User not found
                     return createNotFoundDashboard(steamId);
                 } else if (e.getStatusCode() == 429) {
-                    // Rate limit exceeded - cache for 1 minute
                     DashboardDTO rateLimitDashboard = createRateLimitDashboard(steamId);
                     cacheService.cacheDashboardWithTTL(steamId, rateLimitDashboard, 60);
                     return rateLimitDashboard;
                 }
-                // Continue for other Steam API errors
+
             }
 
+            // Recent Played Games
+            try {
+                recentGameIds = steamApiService.getRecentPlayedGameIds(steamId);
+            } catch (SteamApiException e) {
+                log.warn("Failed to get recent games (continuing with empty): steamId={}, message={}",
+                        steamId, e.getMessage());
+                recentGameIds = Collections.emptyList();
+            } catch (Exception e) {
+                log.warn("Unexpected error getting recent games: steamId={}", steamId, e);
+                recentGameIds = Collections.emptyList();
+            }
+
+            // Playtime Info
+            try {
+                playtimeMap = steamApiService.getDetailedPlaytimes(steamId);
+            } catch (SteamApiException e) {
+                log.warn("Failed to get playtime data (continuing with empty): steamId={}, message={}",
+                        steamId, e.getMessage());
+                playtimeMap = Collections.emptyMap();
+            } catch (Exception e) {
+                log.warn("Unexpected error getting playtime data: steamId={}", steamId, e);
+                playtimeMap = Collections.emptyMap();
+            }
+
+            // Player stats
+            try {
+                playerStats = steamApiService.getPlayerStats(steamId);
+            } catch (SteamApiException e) {
+                log.warn("Failed to get player stats (continuing with default): steamId={}, statusCode={}, message={}",
+                        steamId, e.getStatusCode(), e.getMessage());
+
+                // when 429 error
+                if (e.getStatusCode() == 429) {
+                    DashboardDTO rateLimitDashboard = createRateLimitDashboard(steamId);
+                    cacheService.cacheDashboardWithTTL(steamId, rateLimitDashboard, 300); // 5분 TTL
+                    return rateLimitDashboard;
+                }
+
+                playerStats = new PlayerStatsInfo("Unknown", 0L);
+            } catch (Exception e) {
+                log.warn("Unexpected error getting player stats: steamId={}", steamId, e);
+                playerStats = new PlayerStatsInfo("Unknown", 0L);
+            }
+
+            // Empty dashboard (if User data is empty)
             if (ownedGameIds.isEmpty()) {
                 DashboardDTO emptyDashboard = createEmptyDashboard(steamId);
                 cacheService.cacheDashboard(steamId, emptyDashboard);
                 return emptyDashboard;
             }
 
-            // 3. Database query
+            // Database query
             List<Game> ownedGames = Collections.emptyList();
             Map<Long, List<String>> gameTagsMap = Collections.emptyMap();
 
@@ -109,33 +146,30 @@ public class DashboardService {
                         DashboardException.ErrorType.DATABASE_ERROR, e);
             }
 
-            // 4. Dashboard generation
+            // create Data
             try {
                 UserProfileSummary profileSummary = createProfileSummary(ownedGames, recentGameIds, playtimeMap, playerStats);
+                Recent2WeeksActivityDTO recentActivity = createRecent2WeeksActivity(playtimeMap, ownedGames, gameTagsMap);
                 List<TagPreferenceDTO> topTags = createTagPreferences(gameTagsMap, ownedGames, playtimeMap);
                 List<GenreDistributionDTO> genreDistribution = createGenreDistribution(topTags);
-                List<MonthlyActivityDTO> monthlyActivity = createMonthlyActivity(playtimeMap);
                 GameLibraryStatsDTO libraryStats = createLibraryStats(ownedGames, gameTagsMap, playtimeMap);
-                List<RecommendationInsightDTO> insights = createInsights(topTags, profileSummary);
 
                 DashboardDTO dashboard = new DashboardDTO(
                         steamId,
                         profileSummary,
                         topTags,
                         genreDistribution,
-                        monthlyActivity,
-                        libraryStats,
-                        insights
+                        recentActivity,
+                        libraryStats
                 );
 
-                // 5. Cache storage
+                // Cache
                 try {
                     cacheService.cacheDashboard(steamId, dashboard);
-                    log.info("New dashboard generation and cache storage completed: steamId={}", steamId);
+                    log.info("Dashboard generation and cache storage completed: steamId={}", steamId);
 
                 } catch (Exception e) {
-                    log.warn("Dashboard cache storage failed (data returned normally): steamId={}", steamId, e);
-                    // Return data even if cache storage fails
+                    log.warn("Cache storage failed (returning data normally): steamId={}", steamId, e);
                 }
 
                 return dashboard;
@@ -147,71 +181,206 @@ public class DashboardService {
             }
 
         } catch (DashboardException e) {
-            // Re-throw already processed custom exceptions
             throw e;
 
         } catch (DataAccessException e) {
             log.error("Database access error: steamId={}", steamId, e);
             DashboardDTO errorDashboard = createDatabaseErrorDashboard(steamId);
-            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 300); // 5 minute cache
+            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 300);
             return errorDashboard;
 
         } catch (Exception e) {
             log.error("Unexpected dashboard generation error: steamId={}", steamId, e);
             DashboardDTO errorDashboard = createUnknownErrorDashboard(steamId);
-            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 60); // 1 minute cache
+            cacheService.cacheDashboardWithTTL(steamId, errorDashboard, 60);
             return errorDashboard;
         }
     }
 
-    private DashboardDTO createPrivateProfileDashboard(String steamId) {
-        return new DashboardDTO(
-                steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Private", BigDecimal.ZERO),
-                List.of(),
-                List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "PRIVATE_PROFILE",
-                        "Profile is private",
-                        "If you set your Steam profile to public, we can provide personalized dashboard features.",
-                        "Change profile settings",
-                        "https://steamcommunity.com/my/edit/settings"
-                ))
+    private Recent2WeeksActivityDTO createRecent2WeeksActivity(Map<Long, GamePlaytimeInfo> playtimeMap,
+                                                               List<Game> ownedGames,
+                                                               Map<Long, List<String>> gameTagsMap) {
+
+        // recent 2 weeks
+        List<GamePlaytimeInfo> recentlyPlayedGames = playtimeMap.values().stream()
+                .filter(info -> info.getRecentHours().compareTo(BigDecimal.ZERO) > 0)
+                .collect(Collectors.toList());
+
+        if (recentlyPlayedGames.isEmpty()) {
+            return new Recent2WeeksActivityDTO(
+                    BigDecimal.ZERO, 0, BigDecimal.ZERO, null
+            );
+        }
+
+        // All playtime for 2 weeks
+        BigDecimal totalRecentPlaytime = recentlyPlayedGames.stream()
+                .map(GamePlaytimeInfo::getRecentHours)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int activeGamesCount = recentlyPlayedGames.size();
+
+        //Average Game counts
+        BigDecimal averageSessionTime = activeGamesCount > 0 ?
+                totalRecentPlaytime.divide(BigDecimal.valueOf(activeGamesCount), 2, RoundingMode.HALF_UP) :
+                BigDecimal.ZERO;
+
+        // Most played Game in 2 weeks
+        GameStatsDTO mostPlayedGame = recentlyPlayedGames.stream()
+                .max(Comparator.comparing(GamePlaytimeInfo::getRecentHours))
+                .map(info -> {
+                    Game game = ownedGames.stream()
+                            .filter(g -> g.getAppid().equals(info.getAppId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (game != null) {
+                        return new GameStatsDTO(
+                                game.getAppid(),
+                                game.getName(),
+                                game.getImageUrl(),
+                                info.getRecentHours(),//Recent 2 weeks
+                                info.getLastPlayedDate(),
+                                gameTagsMap.getOrDefault(game.getAppid(), List.of())
+                        );
+                    }
+                    return null;
+                })
+                .orElse(null);
+
+        return new Recent2WeeksActivityDTO(
+                totalRecentPlaytime,
+                activeGamesCount,
+                averageSessionTime,
+                mostPlayedGame
         );
     }
 
-    /**
-     * Dashboard cache invalidation (called when user purchases new games or data updates)
-     */
-    public void invalidateDashboard(String steamId) {
-        cacheService.invalidateDashboard(steamId);
-        log.info("Dashboard cache invalidated: steamId={}", steamId);
+    private List<TagPreferenceDTO> createTagPreferences(Map<Long, List<String>> gameTagsMap,
+                                                        List<Game> ownedGames,
+                                                        Map<Long, GamePlaytimeInfo> playtimeMap) {
+        Map<String, Integer> tagCounts = new HashMap<>();
+        Map<String, BigDecimal> tagPlaytimes = new HashMap<>();
+
+        // Only played games
+        for (Map.Entry<Long, List<String>> entry : gameTagsMap.entrySet()) {
+            Long appId = entry.getKey();
+            GamePlaytimeInfo playtimeInfo = playtimeMap.get(appId);
+
+            //Except for games that have not been played
+            if (playtimeInfo == null || playtimeInfo.getTotalHours().compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+
+            BigDecimal gamePlaytime = playtimeInfo.getTotalHours();
+
+            for (String tag : entry.getValue()) {
+                tagCounts.put(tag, tagCounts.getOrDefault(tag, 0) + 1);
+                tagPlaytimes.put(tag, tagPlaytimes.getOrDefault(tag, BigDecimal.ZERO).add(gamePlaytime));
+            }
+        }
+
+        return tagCounts.entrySet().stream()
+                .filter(entry -> entry.getValue() >= 2)  // 최소 2개 게임 이상
+                .sorted((e1, e2) -> {
+                    // 플레이타임 우선, 게임 수 보조
+                    BigDecimal playtime1 = tagPlaytimes.get(e1.getKey());
+                    BigDecimal playtime2 = tagPlaytimes.get(e2.getKey());
+                    int playtimeCompare = playtime2.compareTo(playtime1);
+                    if (playtimeCompare != 0) return playtimeCompare;
+                    return e2.getValue().compareTo(e1.getValue());
+                })
+                .limit(12)
+                .map(entry -> {
+                    String tag = entry.getKey();
+                    int count = entry.getValue();
+                    BigDecimal playtime = tagPlaytimes.getOrDefault(tag, BigDecimal.ZERO);
+
+                    // Preference Score (Based on Playtime + Number of Games)
+                    double score = Math.min(100,
+                            (playtime.doubleValue() * 2) + (count * 5));
+
+                    return new TagPreferenceDTO(tag, count, playtime, score);
+                })
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Check cache status
-     */
-    public boolean isDashboardCached(String steamId) {
-        return cacheService.isCacheValid(steamId);
+    private GameLibraryStatsDTO createLibraryStats(List<Game> ownedGames,
+                                                   Map<Long, List<String>> gameTagsMap,
+                                                   Map<Long, GamePlaytimeInfo> playtimeMap) {
+
+        // Statistics based on Playtime
+        int neverPlayed = 0, shortPlayed = 0, mediumPlayed = 0, longPlayed = 0;
+
+        for (Game game : ownedGames) {
+            GamePlaytimeInfo playtimeInfo = playtimeMap.get(game.getAppid());
+            if (playtimeInfo == null || playtimeInfo.isNeverPlayed()) {
+                neverPlayed++;
+            } else if (playtimeInfo.isShortPlayed()) {
+                shortPlayed++;
+            } else if (playtimeInfo.isMediumPlayed()) {
+                mediumPlayed++;
+            } else {
+                longPlayed++;
+            }
+        }
+
+        // Top Played Games
+        List<GameStatsDTO> topPlayed = ownedGames.stream()
+                .filter(game -> playtimeMap.containsKey(game.getAppid()))
+                .filter(game -> playtimeMap.get(game.getAppid()).getTotalHours().compareTo(BigDecimal.ZERO) > 0)
+                .sorted((g1, g2) -> {
+                    BigDecimal time1 = playtimeMap.get(g1.getAppid()).getTotalHours();
+                    BigDecimal time2 = playtimeMap.get(g2.getAppid()).getTotalHours();
+                    return time2.compareTo(time1);
+                })
+                .limit(10)  // Top 10
+                .map(game -> {
+                    GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
+                    return new GameStatsDTO(
+                            game.getAppid(),
+                            game.getName(),
+                            game.getImageUrl(),
+                            info.getTotalHours(),
+                            info.getLastPlayedDate(),
+                            gameTagsMap.getOrDefault(game.getAppid(), List.of())
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // Recently Played Games
+        List<GameStatsDTO> recentlyPlayed = ownedGames.stream()
+                .filter(game -> playtimeMap.containsKey(game.getAppid()))
+                .filter(game -> {
+                    GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
+                    return info.getLastPlayedDate() != null &&
+                            info.getRecentHours().compareTo(BigDecimal.ZERO) > 0;
+                })
+                .sorted((g1, g2) -> {
+                    LocalDate date1 = playtimeMap.get(g1.getAppid()).getLastPlayedDate();
+                    LocalDate date2 = playtimeMap.get(g2.getAppid()).getLastPlayedDate();
+                    return date2.compareTo(date1);
+                })
+                .limit(8)  // Recent 8 games
+                .map(game -> {
+                    GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
+                    return new GameStatsDTO(
+                            game.getAppid(),
+                            game.getName(),
+                            game.getImageUrl(),
+                            info.getTotalHours(),
+                            info.getLastPlayedDate(),
+                            gameTagsMap.getOrDefault(game.getAppid(), List.of())
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new GameLibraryStatsDTO(
+                neverPlayed, shortPlayed, mediumPlayed, longPlayed,
+                topPlayed, recentlyPlayed
+        );
     }
 
-    /**
-     * Force refresh (ignore cache and generate new)
-     */
-    @Transactional(readOnly = true)
-    public DashboardDTO refreshDashboard(String steamId) {
-        log.info("Dashboard force refresh: steamId={}", steamId);
 
-        // Invalidate cache
-        cacheService.invalidateDashboard(steamId);
-
-        // Generate new
-        return generateDashboard(steamId);
-    }
-
-    // Existing methods maintained as is...
     private Map<Long, List<String>> getGameTagsMap(List<Long> appIds) {
         if (appIds.isEmpty()) {
             return new HashMap<>();
@@ -260,37 +429,6 @@ public class DashboardService {
         );
     }
 
-    private List<TagPreferenceDTO> createTagPreferences(Map<Long, List<String>> gameTagsMap,
-                                                        List<Game> ownedGames,
-                                                        Map<Long, GamePlaytimeInfo> playtimeMap) {
-        Map<String, Integer> tagCounts = new HashMap<>();
-        Map<String, BigDecimal> tagPlaytimes = new HashMap<>();
-
-        for (Map.Entry<Long, List<String>> entry : gameTagsMap.entrySet()) {
-            Long appId = entry.getKey();
-            GamePlaytimeInfo playtimeInfo = playtimeMap.get(appId);
-            BigDecimal gamePlaytime = playtimeInfo != null ? playtimeInfo.getTotalHours() : BigDecimal.ZERO;
-
-            for (String tag : entry.getValue()) {
-                tagCounts.put(tag, tagCounts.getOrDefault(tag, 0) + 1);
-                tagPlaytimes.put(tag, tagPlaytimes.getOrDefault(tag, BigDecimal.ZERO).add(gamePlaytime));
-            }
-        }
-
-        return tagCounts.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(15)
-                .map(entry -> {
-                    String tag = entry.getKey();
-                    int count = entry.getValue();
-                    BigDecimal playtime = tagPlaytimes.getOrDefault(tag, BigDecimal.ZERO);
-                    double score = Math.min(100, (count * 8) + playtime.doubleValue() / 5);
-
-                    return new TagPreferenceDTO(tag, count, playtime, score);
-                })
-                .collect(Collectors.toList());
-    }
-
     private List<GenreDistributionDTO> createGenreDistribution(List<TagPreferenceDTO> topTags) {
         List<GenreDistributionDTO> distribution = new ArrayList<>();
         int totalGames = topTags.stream().mapToInt(TagPreferenceDTO::getGameCount).sum();
@@ -310,131 +448,6 @@ public class DashboardService {
         }
 
         return distribution;
-    }
-
-    private List<MonthlyActivityDTO> createMonthlyActivity(Map<Long, GamePlaytimeInfo> playtimeMap) {
-        List<MonthlyActivityDTO> activity = new ArrayList<>();
-        LocalDate now = LocalDate.now();
-
-        BigDecimal recentTotalHours = playtimeMap.values().stream()
-                .map(GamePlaytimeInfo::getRecentHours)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        long recentActiveGames = playtimeMap.values().stream()
-                .filter(info -> info.getRecentHours().compareTo(BigDecimal.ZERO) > 0)
-                .count();
-
-        for (int i = 5; i >= 0; i--) {
-            LocalDate month = now.minusMonths(i);
-            String monthStr = month.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            double monthlyFactor = i == 0 ? 2.0 : (1.0 - i * 0.1);
-
-            int estimatedGamesPlayed = (int) Math.max(1, recentActiveGames * monthlyFactor);
-            BigDecimal estimatedPlaytime = recentTotalHours.multiply(BigDecimal.valueOf(monthlyFactor));
-            int estimatedNewGames = Math.max(0, (int)(Math.random() * 3));
-
-            activity.add(new MonthlyActivityDTO(monthStr, estimatedGamesPlayed, estimatedPlaytime, estimatedNewGames));
-        }
-
-        return activity;
-    }
-
-    private GameLibraryStatsDTO createLibraryStats(List<Game> ownedGames,
-                                                   Map<Long, List<String>> gameTagsMap,
-                                                   Map<Long, GamePlaytimeInfo> playtimeMap) {
-        int neverPlayed = 0;
-        int shortPlayed = 0;
-        int mediumPlayed = 0;
-        int longPlayed = 0;
-
-        for (Game game : ownedGames) {
-            GamePlaytimeInfo playtimeInfo = playtimeMap.get(game.getAppid());
-            if (playtimeInfo == null || playtimeInfo.isNeverPlayed()) {
-                neverPlayed++;
-            } else if (playtimeInfo.isShortPlayed()) {
-                shortPlayed++;
-            } else if (playtimeInfo.isMediumPlayed()) {
-                mediumPlayed++;
-            } else {
-                longPlayed++;
-            }
-        }
-
-        List<GameStatsDTO> topPlayed = ownedGames.stream()
-                .filter(game -> playtimeMap.containsKey(game.getAppid()))
-                .sorted((g1, g2) -> {
-                    BigDecimal time1 = playtimeMap.get(g1.getAppid()).getTotalHours();
-                    BigDecimal time2 = playtimeMap.get(g2.getAppid()).getTotalHours();
-                    return time2.compareTo(time1);
-                })
-                .limit(5)
-                .map(game -> {
-                    GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
-                    return new GameStatsDTO(
-                            game.getAppid(),
-                            game.getName(),
-                            game.getImageUrl(),
-                            info.getTotalHours(),
-                            info.getLastPlayedDate(),
-                            gameTagsMap.getOrDefault(game.getAppid(), List.of())
-                    );
-                })
-                .collect(Collectors.toList());
-
-        List<GameStatsDTO> recentlyPlayed = ownedGames.stream()
-                .filter(game -> playtimeMap.containsKey(game.getAppid()))
-                .filter(game -> playtimeMap.get(game.getAppid()).getLastPlayedDate() != null)
-                .sorted((g1, g2) -> {
-                    LocalDate date1 = playtimeMap.get(g1.getAppid()).getLastPlayedDate();
-                    LocalDate date2 = playtimeMap.get(g2.getAppid()).getLastPlayedDate();
-                    return date2.compareTo(date1);
-                })
-                .limit(5)
-                .map(game -> {
-                    GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
-                    return new GameStatsDTO(
-                            game.getAppid(),
-                            game.getName(),
-                            game.getImageUrl(),
-                            info.getTotalHours(),
-                            info.getLastPlayedDate(),
-                            gameTagsMap.getOrDefault(game.getAppid(), List.of())
-                    );
-                })
-                .collect(Collectors.toList());
-
-        return new GameLibraryStatsDTO(
-                neverPlayed, shortPlayed, mediumPlayed, longPlayed,
-                topPlayed, recentlyPlayed
-        );
-    }
-
-    private List<RecommendationInsightDTO> createInsights(List<TagPreferenceDTO> topTags,
-                                                          UserProfileSummary summary) {
-        List<RecommendationInsightDTO> insights = new ArrayList<>();
-
-        if (topTags.size() >= 3) {
-            insights.add(new RecommendationInsightDTO(
-                    "GENRE_EXPANSION",
-                    "Explore new genres",
-                    String.format("You mainly play %s games. Try exploring %s genre too!",
-                            topTags.get(0).getTagName(), getComplementaryGenre(topTags.get(0).getTagName())),
-                    "Get recommendations",
-                    "/api/recommend/input"
-            ));
-        }
-
-        if (summary.getAveragePlaytimePerGame().compareTo(BigDecimal.valueOf(10)) < 0) {
-            insights.add(new RecommendationInsightDTO(
-                    "PLAYTIME_ANALYSIS",
-                    "Immersive game recommendations",
-                    "Your average playtime is relatively short. We recommend longer, more immersive games.",
-                    "Find long games",
-                    "/api/recommend/random"
-            ));
-        }
-
-        return insights;
     }
 
     private String calculateFavoriteGenreFromPlaytime(Map<Long, GamePlaytimeInfo> playtimeMap,
@@ -457,16 +470,7 @@ public class DashboardService {
                 .orElse("None");
     }
 
-    private String getComplementaryGenre(String currentGenre) {
-        Map<String, String> complementary = Map.of(
-                "Action", "Puzzle",
-                "RPG", "Strategy",
-                "Simulation", "Action",
-                "Strategy", "RPG",
-                "Puzzle", "Adventure"
-        );
-        return complementary.getOrDefault(currentGenre, "Indie");
-    }
+    //==== Error Dashboard ====
 
     private DashboardDTO createEmptyDashboard(String steamId) {
         return new DashboardDTO(
@@ -474,15 +478,19 @@ public class DashboardService {
                 new UserProfileSummary(0, BigDecimal.ZERO, 0, "None", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
+        );
+    }
+
+    private DashboardDTO createPrivateProfileDashboard(String steamId) {
+        return new DashboardDTO(
+                steamId,
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Private", BigDecimal.ZERO),
                 List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "WELCOME",
-                        "Add some games",
-                        "No game data available yet. Play some games on Steam and check back!",
-                        "Get game recommendations",
-                        "/api/recommend/random"
-                ))
+                List.of(),
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
         );
     }
 
@@ -492,51 +500,30 @@ public class DashboardService {
                 new UserProfileSummary(0, BigDecimal.ZERO, 0, "None", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "USER_NOT_FOUND",
-                        "User not found",
-                        "Please check if the Steam ID you entered is correct.",
-                        "Find Steam ID",
-                        "https://steamidfinder.com/"
-                ))
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
         );
     }
 
     private DashboardDTO createRateLimitDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Paused", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Rate Limited", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "RATE_LIMIT",
-                        "Requests temporarily limited",
-                        "Steam API request limit exceeded. Please try again in a moment.",
-                        "Refresh later",
-                        "#"
-                ))
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
         );
     }
 
     private DashboardDTO createDatabaseErrorDashboard(String steamId) {
         return new DashboardDTO(
                 steamId,
-                new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
+                new UserProfileSummary(0, BigDecimal.ZERO, 0, "DB Error", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "DATABASE_ERROR",
-                        "Temporary system error",
-                        "There's a temporary issue with the game database. Please try again in a moment.",
-                        "Try again",
-                        "#"
-                ))
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
         );
     }
 
@@ -546,15 +533,26 @@ public class DashboardService {
                 new UserProfileSummary(0, BigDecimal.ZERO, 0, "Error", BigDecimal.ZERO),
                 List.of(),
                 List.of(),
-                List.of(),
-                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()),
-                List.of(new RecommendationInsightDTO(
-                        "UNKNOWN_ERROR",
-                        "Unexpected error",
-                        "An unexpected system error occurred. If the problem persists, please contact support.",
-                        "Customer support",
-                        "/support"
-                ))
+                new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null),
+                new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of())
         );
+    }
+
+    // === cache Methods ===
+
+    public void invalidateDashboard(String steamId) {
+        cacheService.invalidateDashboard(steamId);
+        log.info("Dashboard cache invalidated: steamId={}", steamId);
+    }
+
+    public boolean isDashboardCached(String steamId) {
+        return cacheService.isCacheValid(steamId);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardDTO refreshDashboard(String steamId) {
+        log.info("Dashboard force refresh: steamId={}", steamId);
+        cacheService.invalidateDashboard(steamId);
+        return generateDashboard(steamId);
     }
 }
