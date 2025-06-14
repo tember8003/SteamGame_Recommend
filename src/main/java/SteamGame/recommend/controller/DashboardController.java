@@ -5,6 +5,7 @@ import SteamGame.recommend.domain.dashboard.service.DashboardService;
 import SteamGame.recommend.exception.DashboardException;
 import SteamGame.recommend.exception.SteamApiException;
 
+import SteamGame.recommend.infra.utils.SteamIdValidator;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class DashboardController {
             log.info("Dashboard retrieval request: steamId={}", steamId);
 
             // Additional Steam ID validation
-            validateSteamIdFormat(steamId);
+            SteamIdValidator.isValidSteamId(steamId);
 
             DashboardDTO dashboard = dashboardService.generateDashboard(steamId);
 
@@ -79,7 +80,7 @@ public class DashboardController {
         try {
             log.info("Dashboard force refresh request: steamId={}", steamId);
 
-            validateSteamIdFormat(steamId);
+            SteamIdValidator.isValidSteamId(steamId);
 
             DashboardDTO dashboard = dashboardService.refreshDashboard(steamId);
 
@@ -112,7 +113,7 @@ public class DashboardController {
         try {
             log.info("Dashboard cache invalidation request: steamId={}", steamId);
 
-            validateSteamIdFormat(steamId);
+            SteamIdValidator.isValidSteamId(steamId);
 
             dashboardService.invalidateDashboard(steamId);
 
@@ -135,7 +136,7 @@ public class DashboardController {
             String steamId) {
 
         try {
-            validateSteamIdFormat(steamId);
+            SteamIdValidator.isValidSteamId(steamId);
 
             boolean isCached = dashboardService.isDashboardCached(steamId);
 
@@ -155,29 +156,7 @@ public class DashboardController {
         }
     }
 
-    // Steam ID format validation
-    private void validateSteamIdFormat(String steamId) {
-        if (steamId == null || steamId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Steam ID is required");
-        }
-
-        if (!steamId.matches("\\d{17}")) {
-            throw new IllegalArgumentException("Steam ID must be 17 digits");
-        }
-
-        // Steam ID range validation (minimum value check)
-        try {
-            long steamIdLong = Long.parseLong(steamId);
-            if (steamIdLong < 76561197960265728L) { // Steam ID minimum value
-                throw new IllegalArgumentException("Invalid Steam ID range");
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Steam ID must be numeric");
-        }
-    }
-
-    // ===== 에러 대시보드 생성 메서드들 (새로운 구조에 맞춤) =====
-
+    // Error dashboard
     private DashboardDTO createErrorDashboardForSteamApi(String steamId, SteamApiException e) {
         String errorMessage = switch (e.getStatusCode()) {
             case 403 -> "Steam profile is set to private";
@@ -233,7 +212,6 @@ public class DashboardController {
                 List.of(),  // genreDistribution
                 new Recent2WeeksActivityDTO(BigDecimal.ZERO, 0, BigDecimal.ZERO, null), // recentActivity
                 new GameLibraryStatsDTO(0, 0, 0, 0, List.of(), List.of()) // libraryStats
-                // insights와 monthlyActivity 제거됨
         );
     }
 }

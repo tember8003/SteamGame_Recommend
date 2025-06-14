@@ -1,4 +1,3 @@
-# 기존 내용 유지
 HELP.md
 .gradle
 build/
@@ -7,17 +6,17 @@ build/
 !**/src/test/**/build/
 .env
 
-### 빌드 산출물 및 실행 파일 제외 ###
+### Exclude build deliverables and executables ###
 *.jar
 *.exe
 
-# Electron 빌드 디렉토리 제외
+# exclude building electron
 electron/dist/
 electron/out/
 electron/node_modules/
 !gradle/wrapper/gradle-wrapper.jar
 
-# OS/IDE 관련 디렉토리
+# OS/IDE directory
 .apt_generated
 .classpath
 .factorypath
