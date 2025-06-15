@@ -14,28 +14,29 @@ import java.util.Optional;
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
     @Query(value = """
-        SELECT g.* FROM games g
-        JOIN game_tags gt ON g.id = gt.game_id
-        JOIN tags t ON t.id = gt.tag_id
-        WHERE (:tagCount = 0 OR t.name IN :tagNames)
-            AND g.review_count >= :review
-            AND (:korean_check IS NULL OR g.korean_support = :korean_check)
-            AND (:free IS NULL OR g.is_free = :free)
-            AND (
-                :excluded_check = false
-                OR NOT EXISTS (
-                    SELECT 1
-                    FROM game_tags gt2
-                    JOIN tags t2 ON t2.id = gt2.tag_id
-                    WHERE gt2.game_id = g.id
-                      AND t2.name IN (:excludedTag)
-                )
+    SELECT g.* FROM games g
+    JOIN game_tags gt ON g.id = gt.game_id
+    JOIN tags t ON t.id = gt.tag_id
+    INNER JOIN reviews r ON g.appid = r.appid 
+    WHERE (:tagCount = 0 OR t.name IN :tagNames)
+        AND r.total_reviews >= :review
+        AND (:korean_check IS NULL OR g.korean_support = :korean_check)
+        AND (:free IS NULL OR g.is_free = :free)
+        AND (
+            :excluded_check = false
+            OR NOT EXISTS (
+                SELECT 1
+                FROM game_tags gt2
+                JOIN tags t2 ON t2.id = gt2.tag_id
+                WHERE gt2.game_id = g.id
+                  AND t2.name IN (:excludedTag)
             )
-        GROUP BY g.id
-        HAVING (:tagCount = 0 OR COUNT(DISTINCT t.name) = :tagCount)
-        ORDER BY RAND()
-        LIMIT 10
-    """, nativeQuery = true)
+        )
+    GROUP BY g.id
+    HAVING (:tagCount = 0 OR COUNT(DISTINCT t.name) = :tagCount)
+    ORDER BY RAND()
+    LIMIT 10
+""", nativeQuery = true)
     List<Game> findRandomGameByTags(@Param("tagNames") List<String> tagNames,
                                         @Param("tagCount") long tagCount, @Param("review") int review,
                                         @Param("korean_check") Boolean korean_check,
