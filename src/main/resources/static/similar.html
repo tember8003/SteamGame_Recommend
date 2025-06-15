@@ -509,8 +509,6 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
             line-height: 1.5;
-            max-height: 120px;
-            overflow-y: auto;
         }
 
         .rating-bar {
@@ -628,6 +626,39 @@
             margin: 0 auto 20px;
         }
 
+        /* 리뷰 텍스트 더보기 기능 스타일 */
+        .review-text-content {
+            position: relative;
+        }
+
+        .review-text-content.collapsed .full-text {
+            display: none;
+        }
+
+        .review-text-content.expanded .short-text {
+            display: none;
+        }
+
+        .show-more-btn, .show-less-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            padding: 4px 0;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .show-more-btn:hover, .show-less-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        .ellipsis {
+            color: var(--text-muted);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -659,6 +690,21 @@
             .review-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
+        }
+
+        .rating-bar {
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .rating-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+            border-radius: 20px;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -864,7 +910,7 @@
         } else {
             usedTags = data.usedTags || [];
             games = data.recommendedGame || data.recommendedGames || [];
-            reviews = data.review || []; // 수정된 부분
+            reviews = data.review || [];
         }
 
         if (!Array.isArray(games) || games.length === 0) {
@@ -935,16 +981,16 @@
     function renderReviewSection(review) {
         if (!review || Object.keys(review).length === 0) {
             return `
-            <div class="review-section">
-                <div class="review-header">
-                    <i class="fas fa-star"></i>
-                    <h4>Review Information</h4>
-                </div>
-                <p style="color: var(--text-muted); text-align: center; padding: 20px;">
-                    No review data available
-                </p>
+        <div class="review-section">
+            <div class="review-header">
+                <i class="fas fa-star"></i>
+                <h4>Review Information</h4>
             </div>
-            `;
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                No review data available
+            </p>
+        </div>
+        `;
         }
 
         const positiveRating = review.positiveRating || 0;
@@ -953,48 +999,105 @@
         const negativeHours = review.negativeHours || 0;
 
         return `
-        <div class="review-section">
-            <div class="review-header">
-                <i class="fas fa-star"></i>
-                <h4>Review Information</h4>
-            </div>
+    <div class="review-section">
+        <div class="review-header">
+            <i class="fas fa-star"></i>
+            <h4>Review Information</h4>
+        </div>
 
-            <div class="review-stats">
-                <div class="stat-item">
-                    <span class="stat-value">${positiveHours}h</span>
-                    <div class="stat-label">Avg Positive Hours</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${negativeHours}h</span>
-                    <div class="stat-label">Avg Negative Hours</div>
+        <div class="review-stats">
+            <div class="stat-item">
+                <span class="stat-value">${positiveRating}%</span>
+                <div class="stat-label">Positive Rating</div>
+                <div class="rating-bar">
+                    <div class="rating-fill" style="width: ${positiveRating}%"></div>
                 </div>
             </div>
+            <div class="stat-item">
+                <span class="stat-value">${reviewSummary}</span>
+                <div class="stat-label">Overall Rating</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${positiveHours}h</span>
+                <div class="stat-label">Positive Hours</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${negativeHours}h</span>
+                <div class="stat-label">Negative Hours</div>
+            </div>
+        </div>
 
-            ${(review.positiveReview || review.negativeReview) ? `
-            <div class="review-texts">
-                ${review.positiveReview ? `
-                <div class="review-text-card positive">
-                    <h5>
-                        <i class="fas fa-thumbs-up"></i>
-                        Positive Review
-                    </h5>
-                    <p>${review.positiveReview}</p>
-                </div>
-                ` : ''}
+        ${(review.positiveReview || review.negativeReview) ? `
+        <div class="review-texts">
+            ${review.positiveReview ? `
+            <div class="review-text-card positive">
+                <h5>
+                    <i class="fas fa-thumbs-up"></i>
+                    Positive Review
+                </h5>
+                ${renderReviewText(review.positiveReview, 'positive')}
+            </div>
+            ` : ''}
 
-                ${review.negativeReview ? `
-                <div class="review-text-card negative">
-                    <h5>
-                        <i class="fas fa-thumbs-down"></i>
-                        Negative Review
-                    </h5>
-                    <p>${review.negativeReview}</p>
-                </div>
-                ` : ''}
+            ${review.negativeReview ? `
+            <div class="review-text-card negative">
+                <h5>
+                    <i class="fas fa-thumbs-down"></i>
+                    Negative Review
+                </h5>
+                ${renderReviewText(review.negativeReview, 'negative')}
             </div>
             ` : ''}
         </div>
+        ` : ''}
+    </div>
+    `;
+    }
+
+    function renderReviewText(text, type) {
+        if (!text) return '';
+
+        const maxLength = 150; // 글자 수 제한
+        const isLong = text.length > maxLength;
+        const shortText = text.substring(0, maxLength);
+        const uniqueId = `review-${type}-${Math.random().toString(36).substr(2, 9)}`;
+
+        if (!isLong) {
+            return `<p>${text}</p>`;
+        }
+
+        return `
+          <div class="review-text-content collapsed" id="${uniqueId}">
+            <p>
+              <span class="short-text">${shortText}<span class="ellipsis">...</span></span>
+              <span class="full-text">${text}</span>
+            </p>
+            <button class="show-more-btn" onclick="toggleReviewText('${uniqueId}')">
+              <i class="fas fa-chevron-down"></i> Show more
+            </button>
+            <button class="show-less-btn" onclick="toggleReviewText('${uniqueId}')" style="display: none;">
+              <i class="fas fa-chevron-up"></i> Show less
+            </button>
+          </div>
         `;
+    }
+
+    function toggleReviewText(id) {
+        const container = document.getElementById(id);
+        const showMoreBtn = container.querySelector('.show-more-btn');
+        const showLessBtn = container.querySelector('.show-less-btn');
+
+        if (container.classList.contains('collapsed')) {
+            container.classList.remove('collapsed');
+            container.classList.add('expanded');
+            showMoreBtn.style.display = 'none';
+            showLessBtn.style.display = 'inline-block';
+        } else {
+            container.classList.remove('expanded');
+            container.classList.add('collapsed');
+            showMoreBtn.style.display = 'inline-block';
+            showLessBtn.style.display = 'none';
+        }
     }
 
     function renderErrorResult() {

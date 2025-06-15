@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-    <title>Similar Game Recommendation</title>
+    <title>Recent Play-Based Game Recommendation</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -164,7 +164,6 @@
 
         .input-group {
             margin-bottom: 20px;
-            position: relative;
         }
 
         .input-text {
@@ -187,53 +186,6 @@
 
         .input-text::placeholder {
             color: var(--text-muted);
-        }
-
-        .autocomplete-items {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px var(--shadow);
-        }
-
-        .autocomplete-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-
-        .autocomplete-item img {
-            width: 40px;
-            height: 22px;
-            object-fit: cover;
-            margin-right: 12px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .autocomplete-item:hover {
-            background: var(--bg-tertiary);
-        }
-
-        .autocomplete-item span {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
         }
 
         .controls {
@@ -509,23 +461,39 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
             line-height: 1.5;
-            max-height: 120px;
-            overflow-y: auto;
         }
 
-        .rating-bar {
-            background: var(--bg-tertiary);
-            border-radius: 20px;
-            height: 8px;
-            overflow: hidden;
-            margin: 8px 0;
+        /* 리뷰 텍스트 더보기 기능 스타일 */
+        .review-text-content {
+            position: relative;
         }
 
-        .rating-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
-            border-radius: 20px;
-            transition: width 0.3s ease;
+        .review-text-content.collapsed .full-text {
+            display: none;
+        }
+
+        .review-text-content.expanded .short-text {
+            display: none;
+        }
+
+        .show-more-btn, .show-less-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            padding: 4px 0;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .show-more-btn:hover, .show-less-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        .ellipsis {
+            color: var(--text-muted);
         }
 
         .steam-link {
@@ -660,21 +628,36 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .rating-bar {
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .rating-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
 <div class="loading-overlay" id="loading-overlay">
     <div class="loading-content">
         <div class="spinner"></div>
-        <h3>Finding similar games...</h3>
+        <h3>Analyzing recent play history...</h3>
         <p>Please wait a moment</p>
     </div>
 </div>
 
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-puzzle-piece"></i> Similar Game Recommendation</h1>
-        <p class="subtitle">Get recommendations for games with similar tags to your favorite games!</p>
+        <h1><i class="fas fa-clock"></i> Recent Play-Based Recommendation</h1>
+        <p class="subtitle">Analyze your last 2 weeks of gaming activity to get personalized recommendations!</p>
         <a href="index.html" class="back-button">
             <i class="fas fa-arrow-left"></i>
             Back to Home
@@ -683,24 +666,22 @@
 
     <div class="section-card">
         <h2 class="section-title">
-            <i class="fas fa-search"></i>
-            Game Search & Recommendation
+            <i class="fas fa-gamepad"></i>
+            Recent Play Analysis
         </h2>
 
         <div class="warning-text">
             <i class="fas fa-info-circle"></i>
-            Enter a game name and an autocomplete list will appear. Please select the exact game.
+            Please enter your Steam ID accurately. We will analyze your gaming activity from the last 2 weeks.
         </div>
 
         <div class="input-group">
             <input
                     type="text"
-                    id="similar-name"
+                    id="recent-id"
                     class="input-text"
-                    placeholder="Enter the name of the game you want recommendations for"
-                    autocomplete="off"
+                    placeholder="Enter your Steam ID"
             />
-            <div id="autocomplete-items" class="autocomplete-items"></div>
         </div>
 
         <div class="controls">
@@ -718,7 +699,7 @@
                     <input type="checkbox" id="input-free" />
                 </div>
             </div>
-            <button id="btn-similar" class="recommend-button">
+            <button id="btn-recent" class="recommend-button">
                 <span class="loading-spinner"></span>
                 <i class="fas fa-search"></i>
                 Get Recommendations
@@ -726,69 +707,18 @@
         </div>
     </div>
 
-    <div id="similar-result" class="result-section"></div>
+    <div id="recent-result" class="result-section"></div>
 </div>
 
 <script>
     const baseUrl = '';
 
-    const inputEl = document.getElementById('similar-name');
-    const listContainer = document.getElementById('autocomplete-items');
-    const button = document.getElementById('btn-similar');
+    const button = document.getElementById('btn-recent');
     const loadingOverlay = document.getElementById('loading-overlay');
-    let debounceTimer = null;
-
-    // Autocomplete functionality
-    inputEl.addEventListener('input', function() {
-        const query = this.value.trim();
-        clearTimeout(debounceTimer);
-
-        if (query.length < 2) {
-            listContainer.innerHTML = '';
-            return;
-        }
-
-        debounceTimer = setTimeout(async () => {
-            try {
-                const res = await fetch(`${baseUrl}/api/games/search?query=${encodeURIComponent(query)}`);
-                if (!res.ok) throw new Error('Search failed');
-                const list = await res.json();
-                renderAutocomplete(list);
-            } catch (err) {
-                console.error(err);
-                listContainer.innerHTML = '';
-            }
-        }, 300);
-    });
-
-    function renderAutocomplete(items) {
-        listContainer.innerHTML = '';
-        if (!Array.isArray(items) || items.length === 0) return;
-
-        items.forEach(item => {
-            const div = document.createElement('div');
-            div.classList.add('autocomplete-item');
-            div.innerHTML = `
-                <img src="${item.headerImage}" alt="Thumbnail" />
-                <span>${item.gameName}</span>
-            `;
-            div.addEventListener('click', () => {
-                inputEl.value = item.gameName;
-                listContainer.innerHTML = '';
-            });
-            listContainer.appendChild(div);
-        });
-    }
-
-    // Close autocomplete on outside click
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.input-group')) {
-            listContainer.innerHTML = '';
-        }
-    });
+    const steamIdInput = document.getElementById('recent-id');
 
     // Search with Enter key
-    inputEl.addEventListener('keypress', (e) => {
+    steamIdInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             button.click();
         }
@@ -796,14 +726,12 @@
 
     // Recommendation button click
     button.addEventListener('click', async () => {
-        const gameName = inputEl.value.trim();
-
         // Input validation
-        if (!gameName) {
-            inputEl.focus();
-            inputEl.style.borderColor = 'var(--error)';
+        if (!steamIdInput.value.trim()) {
+            steamIdInput.focus();
+            steamIdInput.style.borderColor = 'var(--error)';
             setTimeout(() => {
-                inputEl.style.borderColor = '';
+                steamIdInput.style.borderColor = '';
             }, 2000);
             return;
         }
@@ -814,13 +742,13 @@
 
         try {
             const body = {
-                gameName,
+                steamId: steamIdInput.value.trim(),
                 review: +document.getElementById('input-review').value,
                 korean_check: document.getElementById('input-korean').checked,
                 free_check: document.getElementById('input-free').checked
             };
 
-            const res = await fetch(`${baseUrl}/api/recommend/similar`, {
+            const res = await fetch(`${baseUrl}/api/recommend/recent-play`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -834,7 +762,7 @@
                 renderGameResult(data);
 
                 // Scroll to results
-                document.getElementById('similar-result').scrollIntoView({
+                document.getElementById('recent-result').scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
@@ -852,7 +780,7 @@
         }
     });
 
-    function renderGameResult(data, containerId = 'similar-result') {
+    function renderGameResult(data, containerId = 'recent-result') {
         const container = document.getElementById(containerId);
 
         let usedTags = [];
@@ -870,9 +798,9 @@
         if (!Array.isArray(games) || games.length === 0) {
             container.innerHTML = `
                 <div class="no-results">
-                    <i class="fas fa-puzzle-piece"></i>
+                    <i class="fas fa-clock"></i>
                     <h3>No games found</h3>
-                    <p>Please check the game name or try a different game!</p>
+                    <p>Please check your Steam ID or recent play history!</p>
                 </div>
             `;
             return;
@@ -883,7 +811,7 @@
         if (usedTags.length > 0) {
             html += `
                 <div class="used-tags">
-                    <h4><i class="fas fa-tags"></i> Analyzed Tags</h4>
+                    <h4><i class="fas fa-tags"></i> Tags Analyzed from Recent Play</h4>
                     <div>
                         ${usedTags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                     </div>
@@ -905,7 +833,7 @@
                             <p class="app-id">AppID: ${game.appid}</p>
                             <p class="description">${game.shortDescription}</p>
 
-                            ${createReviewSection(review)}
+                            ${renderReviewSection(review)}
 
                             <a href="${game.steamStore}" target="_blank" class="steam-link">
                                 <i class="fab fa-steam"></i>
@@ -932,19 +860,19 @@
         });
     }
 
-    function createReviewSection(review) {
+    function renderReviewSection(review) {
         if (!review || Object.keys(review).length === 0) {
             return `
-            <div class="review-section">
-                <div class="review-header">
-                    <i class="fas fa-star"></i>
-                    <h4>Review Information</h4>
-                </div>
-                <p style="color: var(--text-muted); text-align: center; padding: 20px;">
-                    No review data available
-                </p>
+        <div class="review-section">
+            <div class="review-header">
+                <i class="fas fa-star"></i>
+                <h4>Review Information</h4>
             </div>
-            `;
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                No review data available
+            </p>
+        </div>
+        `;
         }
 
         const positiveRating = review.positiveRating || 0;
@@ -952,74 +880,115 @@
         const positiveHours = review.positiveHours || 0;
         const negativeHours = review.negativeHours || 0;
 
-        let reviewTextsSection = '';
-        if (review.positiveReview || review.negativeReview) {
-            reviewTextsSection = `
-            <div class="review-texts">
-                ${review.positiveReview ? `
-                <div class="review-text-card positive">
-                    <h5>
-                        <i class="fas fa-thumbs-up"></i>
-                        Positive Review
-                    </h5>
-                    <p>${review.positiveReview}</p>
-                </div>
-                ` : ''}
+        return `
+    <div class="review-section">
+        <div class="review-header">
+            <i class="fas fa-star"></i>
+            <h4>Review Information</h4>
+        </div>
 
-                ${review.negativeReview ? `
-                <div class="review-text-card negative">
-                    <h5>
-                        <i class="fas fa-thumbs-down"></i>
-                        Negative Review
-                    </h5>
-                    <p>${review.negativeReview}</p>
+        <div class="review-stats">
+            <div class="stat-item">
+                <span class="stat-value">${positiveRating}%</span>
+                <div class="stat-label">Positive Rating</div>
+                <div class="rating-bar">
+                    <div class="rating-fill" style="width: ${positiveRating}%"></div>
                 </div>
-                ` : ''}
             </div>
-            `;
+            <div class="stat-item">
+                <span class="stat-value">${reviewSummary}</span>
+                <div class="stat-label">Overall Rating</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${positiveHours}h</span>
+                <div class="stat-label">Positive Hours</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${negativeHours}h</span>
+                <div class="stat-label">Negative Hours</div>
+            </div>
+        </div>
+
+        ${(review.positiveReview || review.negativeReview) ? `
+        <div class="review-texts">
+            ${review.positiveReview ? `
+            <div class="review-text-card positive">
+                <h5>
+                    <i class="fas fa-thumbs-up"></i>
+                    Positive Review
+                </h5>
+                ${renderReviewText(review.positiveReview, 'positive')}
+            </div>
+            ` : ''}
+
+            ${review.negativeReview ? `
+            <div class="review-text-card negative">
+                <h5>
+                    <i class="fas fa-thumbs-down"></i>
+                    Negative Review
+                </h5>
+                ${renderReviewText(review.negativeReview, 'negative')}
+            </div>
+            ` : ''}
+        </div>
+        ` : ''}
+    </div>
+    `;
+    }
+
+    function renderReviewText(text, type) {
+        if (!text) return '';
+
+        const maxLength = 150; // 글자 수 제한
+        const isLong = text.length > maxLength;
+        const shortText = text.substring(0, maxLength);
+        const uniqueId = `review-${type}-${Math.random().toString(36).substr(2, 9)}`;
+
+        if (!isLong) {
+            return `<p>${text}</p>`;
         }
 
         return `
-        <div class="review-section">
-            <div class="review-header">
-                <i class="fas fa-star"></i>
-                <h4>Review Information</h4>
-            </div>
-
-            <div class="review-stats">
-                <div class="stat-item">
-                    <span class="stat-value">${positiveRating}%</span>
-                    <div class="stat-label">Positive Rating</div>
-                    <div class="rating-bar">
-                        <div class="rating-fill" style="width: ${positiveRating}%"></div>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${reviewSummary}</span>
-                    <div class="stat-label">Overall Rating</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${positiveHours}h</span>
-                    <div class="stat-label">Avg Positive Hours</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${negativeHours}h</span>
-                    <div class="stat-label">Avg Negative Hours</div>
-                </div>
-            </div>
-
-            ${reviewTextsSection}
-        </div>
+          <div class="review-text-content collapsed" id="${uniqueId}">
+            <p>
+              <span class="short-text">${shortText}<span class="ellipsis">...</span></span>
+              <span class="full-text">${text}</span>
+            </p>
+            <button class="show-more-btn" onclick="toggleReviewText('${uniqueId}')">
+              <i class="fas fa-chevron-down"></i> Show more
+            </button>
+            <button class="show-less-btn" onclick="toggleReviewText('${uniqueId}')" style="display: none;">
+              <i class="fas fa-chevron-up"></i> Show less
+            </button>
+          </div>
         `;
     }
 
+    function toggleReviewText(id) {
+        const container = document.getElementById(id);
+        const showMoreBtn = container.querySelector('.show-more-btn');
+        const showLessBtn = container.querySelector('.show-less-btn');
+
+        if (container.classList.contains('collapsed')) {
+            container.classList.remove('collapsed');
+            container.classList.add('expanded');
+            showMoreBtn.style.display = 'none';
+            showLessBtn.style.display = 'inline-block';
+        } else {
+            container.classList.remove('expanded');
+            container.classList.add('collapsed');
+            showMoreBtn.style.display = 'inline-block';
+            showLessBtn.style.display = 'none';
+        }
+    }
+
     function renderErrorResult() {
-        const container = document.getElementById('similar-result');
+        const container = document.getElementById('recent-result');
         container.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>An error occurred</h3>
-                <p>Please check the game name or try again later.</p>
+                <p>Please check your Steam ID or try again later.</p>
             </div>
         `;
     }
