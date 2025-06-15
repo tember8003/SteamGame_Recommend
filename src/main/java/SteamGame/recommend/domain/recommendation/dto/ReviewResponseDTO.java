@@ -11,10 +11,10 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Getter @Setter
 public class ReviewResponseDTO {
-    private String PositiveReview;
-    private String NegativeReview;
-    private BigDecimal NegativeHours;
-    private BigDecimal PositiveHours;
-    private String ReviewSummary;
-    private BigDecimal PositiveRating;
+    private String positiveReview;
+    private String negativeReview;
+    private BigDecimal negativeHours;
+    private BigDecimal positiveHours;
+    private String reviewSummary;
+    private BigDecimal positiveRating;
 }

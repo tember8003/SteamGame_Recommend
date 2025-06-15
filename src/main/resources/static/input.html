@@ -759,7 +759,7 @@
         } else {
             usedTags = data.usedTags || [];
             games = data.recommendedGame || data.recommendedGames || [];
-            reviews = data.reviewResponseDTOS || [];
+            reviews = data.review || [];
         }
 
         if (!Array.isArray(games) || games.length === 0) {

@@ -64,8 +64,16 @@ public class RecommendServiceImpl implements RecommendService {
     // Find games based on tags, reviews, Korean support, free status, etc.
     @Override
     @Transactional(readOnly=true)
-    public List<SteamAppDTO> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag) {
-        return gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
+    public RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag) {
+        List<SteamAppDTO> steamAppDTOS= gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
+        if(steamAppDTOS.isEmpty()){
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "No games found matching the specified tags."
+            );
+        }
+
+        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(steamAppDTOS);
+        return new RecommendationResultDTO(Arrays.asList(tags), steamAppDTOS,reviewResponseDTOS);
     }
 
     // Extract game tags using Gemini API and find games
@@ -80,7 +88,7 @@ public class RecommendServiceImpl implements RecommendService {
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamAppDTO> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+            List<SteamAppDTO> game = gameService.findNonDuplicate(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
             List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
             return new RecommendationResultDTO(cachingTags, game,reviewResponseDTOS);
         }
@@ -98,7 +106,7 @@ public class RecommendServiceImpl implements RecommendService {
         cacheService.cacheTags(shaInput,tags);
 
         // Final recommendation
-        List<SteamAppDTO> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+        List<SteamAppDTO> game = gameService.findNonDuplicate(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
 
         List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
         return new RecommendationResultDTO(tags, game,reviewResponseDTOS);
@@ -166,7 +174,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         if (optKey.isPresent()) {
             TagPairKey key = optKey.get();
-            return findGame(
+            return gameService.findNonDuplicate(
                     new String[]{ key.getFirstTag(), key.getSecondTag() },
                     review,
                     koreanCheck,
@@ -178,7 +186,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (String tag : topTags) {
             try {
-                return findGame(
+                return gameService.findNonDuplicate(
                         new String[]{tag},
                         review,
                         koreanCheck,

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -420,7 +421,6 @@
       margin-bottom: 20px;
     }
 
-    /* 리뷰 정보 스타일 추가 */
     .review-section {
       background: var(--bg-secondary);
       border-radius: 12px;
@@ -497,14 +497,6 @@
 
     .review-text-card.negative h5 {
       color: var(--error);
-    }
-
-    .review-text-card p {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      max-height: 120px;
-      overflow-y: auto;
     }
 
     .rating-bar {
@@ -620,6 +612,44 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
+    }
+
+    .review-text-content {
+      position: relative;
+    }
+
+    .review-text-content.collapsed .full-text {
+      display: none;
+    }
+
+    .review-text-content.expanded .short-text {
+      display: none;
+    }
+
+    .show-more-btn, .show-less-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      padding: 4px 0;
+      text-decoration: underline;
+      transition: color 0.3s ease;
+    }
+
+    .show-more-btn:hover, .show-less-btn:hover {
+      color: var(--primary-dark);
+    }
+
+    .ellipsis {
+      color: var(--text-muted);
+    }
+
+    .review-text-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
     @media (max-width: 768px) {
@@ -844,7 +874,7 @@
     } else {
       usedTags = data.usedTags || [];
       games = data.recommendedGames || data.recommendedGame || [];
-      reviews = data.reviewResponseDTOS || [];
+      reviews = data.review || [];
     }
 
     if (!Array.isArray(games) || games.length === 0) {
@@ -968,7 +998,7 @@
                     <i class="fas fa-thumbs-up"></i>
                     Positive Review
                 </h5>
-                <p>${review.positiveReview}</p>
+                ${renderReviewText(review.positiveReview, 'positive')}
             </div>
             ` : ''}
 
@@ -978,12 +1008,69 @@
                     <i class="fas fa-thumbs-down"></i>
                     Negative Review
                 </h5>
-                <p>${review.negativeReview}</p>
+                ${renderReviewText(review.negativeReview, 'negative')}
             </div>
             ` : ''}
         </div>
         ` : ''}
     </div>
+    `;
+  }
+
+  function renderReviewText(text, type) {
+    if (!text) return '';
+
+    const maxLength = 150; // 글자 수 제한
+    const isLong = text.length > maxLength;
+    const shortText = text.substring(0, maxLength);
+    const uniqueId = `review-${type}-${Math.random().toString(36).substr(2, 9)}`;
+
+    if (!isLong) {
+      return `<p>${text}</p>`;
+    }
+
+    return `
+      <div class="review-text-content collapsed" id="${uniqueId}">
+        <p>
+          <span class="short-text">${shortText}<span class="ellipsis">...</span></span>
+          <span class="full-text">${text}</span>
+        </p>
+        <button class="show-more-btn" onclick="toggleReviewText('${uniqueId}')">
+          <i class="fas fa-chevron-down"></i> Show more
+        </button>
+        <button class="show-less-btn" onclick="toggleReviewText('${uniqueId}')" style="display: none;">
+          <i class="fas fa-chevron-up"></i> Show less
+        </button>
+      </div>
+    `;
+  }
+
+  function toggleReviewText(id) {
+    const container = document.getElementById(id);
+    const showMoreBtn = container.querySelector('.show-more-btn');
+    const showLessBtn = container.querySelector('.show-less-btn');
+
+    if (container.classList.contains('collapsed')) {
+      container.classList.remove('collapsed');
+      container.classList.add('expanded');
+      showMoreBtn.style.display = 'none';
+      showLessBtn.style.display = 'inline-block';
+    } else {
+      container.classList.remove('expanded');
+      container.classList.add('collapsed');
+      showMoreBtn.style.display = 'inline-block';
+      showLessBtn.style.display = 'none';
+    }
+  }
+
+  function renderErrorResult() {
+    const container = document.getElementById('random-result');
+    container.innerHTML = `
+      <div class="no-results">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>An error occurred</h3>
+        <p>Please try again later.</p>
+      </div>
     `;
   }
 </script>

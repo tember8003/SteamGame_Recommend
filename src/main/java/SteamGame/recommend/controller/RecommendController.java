@@ -32,14 +32,14 @@ public class RecommendController {
     @Operation(summary = "Tag-based random recommendation")
     @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/random")
-    public ResponseEntity<List<SteamAppDTO>> randomGame(@Valid @RequestBody GameRequestDTO request) {
+    public ResponseEntity<RecommendationResultDTO> randomGame(@Valid @RequestBody GameRequestDTO request) {
         try {
             log.info("Tag-based random recommendation request: tags={}, review={}, korean={}, free={}",
                     request.getTags(), request.getReview(), request.getKorean_check(), request.getFree_check());
 
             Boolean excludedCheck = request.getExcludedTag() != null;
 
-            List<SteamAppDTO> games = recommendService.findGame(
+            RecommendationResultDTO recommendServiceGame = recommendService.findGame(
                     request.getTags(),
                     request.getReview(),
                     request.getKorean_check(),
@@ -48,8 +48,8 @@ public class RecommendController {
                     request.getExcludedTag()
             );
 
-            log.info("Tag-based random recommendation successful: found {} games", games.size());
-            return ResponseEntity.ok(games);
+            log.info("Tag-based random recommendation successful: found {} games", recommendServiceGame.getRecommendedGame().size());
+            return ResponseEntity.ok(recommendServiceGame);
 
         } catch (Exception e) {
             log.error("Tag-based random recommendation error", e);

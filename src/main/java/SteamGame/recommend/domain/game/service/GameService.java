@@ -10,6 +10,7 @@ import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.recommendation.service.CacheService;
 import SteamGame.recommend.domain.tag.service.TagService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class GameService {
     private final GameRepository gameRepository;
@@ -83,7 +85,11 @@ public class GameService {
                 .map(SteamAppDTO::getAppid)
                 .collect(Collectors.toList());
 
+        log.info("Looking for reviews for appIds: {}", appIds);
+
         List<Review> reviews = reviewRepository.findByAppidIn(appIds);
+
+        log.info("Found {} reviews for {} games", reviews.size(), games.size());
 
         Map<Long, Review> reviewMap = reviews.stream()
                 .collect(Collectors.toMap(Review::getAppid, review -> review));

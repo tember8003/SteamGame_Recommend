@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface RecommendService {
     // Find games based on tags, review count, Korean language support, free status, etc.
-    List<SteamAppDTO> findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag);
+    RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag);
 
     // Extract game tags using Gemini API and provide recommendations
     RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck);
