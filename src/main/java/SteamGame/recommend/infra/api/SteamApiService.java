@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Slf4j
@@ -233,14 +235,31 @@ public class SteamApiService {
                     int playtime2Weeks = game.path("playtime_2weeks").asInt(0);
                     long lastPlayed = game.path("rtime_last_played").asLong(0);
 
+                    // 🔧 디버깅 로그 추가
+                    if (playtime2Weeks > 0) {
+                        log.info("Recent game found: steamId={}, appId={}, 2weeks={}min ({}h)",
+                                steamId, appId, playtime2Weeks, playtime2Weeks / 60.0);
+                    }
+
                     GamePlaytimeInfo info = new GamePlaytimeInfo(
                             appId,
                             BigDecimal.valueOf(playtimeForever / 60.0),
                             BigDecimal.valueOf(playtime2Weeks / 60.0),
-                            lastPlayed > 0 ? LocalDate.ofEpochDay(lastPlayed / 86400) : null
+                            // 🔧 lastPlayed 시간 변환 수정 (Unix timestamp → LocalDate)
+                            lastPlayed > 0 ?
+                                    LocalDate.ofInstant(
+                                            Instant.ofEpochSecond(lastPlayed),
+                                            ZoneId.systemDefault()
+                                    ) : null
                     );
 
                     playtimeMap.put(appId, info);
+
+                    log.debug("Game parsed: appId={}, forever={}h, 2weeks={}h, lastPlayed={}",
+                            appId,
+                            info.getTotalHours(),
+                            info.getRecentHours(),
+                            info.getLastPlayedDate());
 
                 } catch (Exception e) {
                     log.warn("Failed to parse individual game playtime: steamId={}, game={}", steamId, game, e);
@@ -248,7 +267,13 @@ public class SteamApiService {
                 }
             }
 
-            log.info("Retrieved {} playtime data entries successfully: steamId={}", playtimeMap.size(), steamId);
+            long recentPlayCount = playtimeMap.values().stream()
+                    .filter(info -> info.getRecentHours().compareTo(BigDecimal.ZERO) > 0)
+                    .count();
+
+            log.info("Retrieved {} playtime data entries successfully: steamId={}, recentPlayGames={}",
+                    playtimeMap.size(), steamId, recentPlayCount);
+
             return playtimeMap;
 
         } catch (Exception e) {

@@ -4,6 +4,7 @@ import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.service.GameService;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
@@ -25,8 +26,11 @@ import java.util.stream.Collectors;
 public class RecommendServiceImpl implements RecommendService {
 
     private static final int CO_THRESHOLD = 5;
-    private static final int DEFAULT_REVIEW = 1000;
     private static final List<String> FALLBACK_TAGS = List.of("Singleplayer","Multiplayer");
+
+    private static final int MAX_RECOMMENDATION_ATTEMPTS = 5;
+    private static final int MAX_SEARCH_ITERATIONS = 3;
+    private static final int TOP_TAGS_COUNT = 8;
 
     private final SteamApiService steamApiService;
     private final GeminiApiService geminiApiService;
@@ -67,7 +71,7 @@ public class RecommendServiceImpl implements RecommendService {
     // Extract game tags using Gemini API and find games
     @Override
     public RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck) {
-        if (input == null || input.length() < 3) {
+        if (input == null || input.length() < MAX_SEARCH_ITERATIONS) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "The input sentence is too short.");
         }
@@ -77,7 +81,8 @@ public class RecommendServiceImpl implements RecommendService {
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
             List<SteamAppDTO> game = findGame(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
-            return new RecommendationResultDTO(cachingTags, game);
+            List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
+            return new RecommendationResultDTO(cachingTags, game,reviewResponseDTOS);
         }
 
         boolean hit = cachingTags != null && !cachingTags.isEmpty();
@@ -94,14 +99,16 @@ public class RecommendServiceImpl implements RecommendService {
 
         // Final recommendation
         List<SteamAppDTO> game = findGame(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
-        return new RecommendationResultDTO(tags, game);
+
+        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
+        return new RecommendationResultDTO(tags, game,reviewResponseDTOS);
     }
 
-    // Extract tags from Steam user profile games list
+    // Extract tags from a Steam user profile games list
     @Override
     public RecommendationResultDTO recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck){
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
-        List<String> topTags = tagService.getTopTagsByProfile(steamId,8);
+        List<String> topTags = tagService.getTopTagsByProfile(steamId,TOP_TAGS_COUNT);
 
         if(topTags.isEmpty()){
             throw new ResponseStatusException(
@@ -109,7 +116,7 @@ public class RecommendServiceImpl implements RecommendService {
             );
         }
 
-        /* Top 2 tags + 2 random tags logic applied.
+        /* Top 2 tags + 2 random tags logics applied.
         List<String> selectedTags = new ArrayList<>();
         selectedTags.add(topTags.get(0));
         if (topTags.size() > 1) {
@@ -128,7 +135,7 @@ public class RecommendServiceImpl implements RecommendService {
         List<String> tags = null;
         List<SteamAppDTO> resultGames = null;
 
-        for (int attempt = 0; attempt < 5; attempt++) {
+        for (int attempt = 0; attempt < MAX_RECOMMENDATION_ATTEMPTS; attempt++) {
             tags = tagService.shuffleTag(topTags,5,7);
             List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
 
@@ -148,10 +155,11 @@ public class RecommendServiceImpl implements RecommendService {
             );
         }
 
-        return new RecommendationResultDTO(tags,resultGames);
+        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(resultGames);
+        return new RecommendationResultDTO(tags,resultGames,reviewResponseDTOS);
     }
 
-    // Find games based on tags extracted from user profile
+    // Find games based on tags extracted from a user profile
     @Override
     public List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck) {
         Optional<TagPairKey> optKey = cooccurrenceService.findOptimalPairKey(topTags, CO_THRESHOLD);
@@ -199,7 +207,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> allTags = tagRepository.findTagNamesByAppIds(recentAppIds);
 
-        List<String> topTags = tagService.getTopTags(allTags,8);
+        List<String> topTags = tagService.getTopTags(allTags,TOP_TAGS_COUNT);
 
         List<String> tags = null;
         List<SteamAppDTO> resultGames = null;
@@ -224,7 +232,8 @@ public class RecommendServiceImpl implements RecommendService {
             );
         }
 
-        return new RecommendationResultDTO(tags,resultGames);
+        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(resultGames);
+        return new RecommendationResultDTO(tags,resultGames,reviewResponseDTOS);
     }
 
     @Override
@@ -242,7 +251,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         log.info(selectedTags.toString());
 
-        List<String> topTags = tagService.getTopTags(selectedTags,8);
+        List<String> topTags = tagService.getTopTags(selectedTags,TOP_TAGS_COUNT);
         List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
@@ -264,7 +273,8 @@ public class RecommendServiceImpl implements RecommendService {
             );
         }
 
-        return new RecommendationResultDTO(topTags, resultGames);
+        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(resultGames);
+        return new RecommendationResultDTO(topTags, resultGames,reviewResponseDTOS);
     }
 
 }

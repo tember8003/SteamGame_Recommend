@@ -14,4 +14,5 @@ import java.util.List;
 public class RecommendationResultDTO {
     private List<String> usedTags;
     private List<SteamAppDTO> recommendedGame;
+    private List<ReviewResponseDTO> review;
 }

@@ -571,7 +571,7 @@
         return `
             <div class="stat-grid">
                 <div class="stat-item">
-                    <div class="stat-value">${(recentActivity.totalRecentPlaytime || 0).toFixed(1)}h</div>
+                    <div class="stat-value">${(recentActivity.totalPlaytime || 0).toFixed(1)}h</div>
                     <div class="stat-label">Total Hours</div>
                 </div>
                 <div class="stat-item">
@@ -709,7 +709,7 @@
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: genreData.map(item => item.tagName || item.genre),
+                labels: genreData.map(item => item.genre),
                 datasets: [{
                     data: genreData.map(item => item.percentage),
                     backgroundColor: genreData.map(item => item.color),

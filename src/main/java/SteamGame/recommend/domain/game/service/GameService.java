@@ -1,6 +1,9 @@
 package SteamGame.recommend.domain.game.service;
 
 import SteamGame.recommend.domain.game.dto.GameSearchResponseDTO;
+import SteamGame.recommend.domain.game.entity.Review;
+import SteamGame.recommend.domain.game.repository.ReviewRepository;
+import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
@@ -15,17 +18,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GameService {
     private final GameRepository gameRepository;
     private final CacheService cacheService;
     private final TagService tagService;
+    private final ReviewRepository reviewRepository;
 
-    public GameService(GameRepository gameRepository,TagService tagService, CacheService cacheService){
+    public GameService(GameRepository gameRepository,TagService tagService, CacheService cacheService, ReviewRepository reviewRepository){
         this.gameRepository = gameRepository;
         this.tagService = tagService;
         this.cacheService = cacheService;
+        this.reviewRepository = reviewRepository;
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +61,7 @@ public class GameService {
             for (Game g : Games) {
                 if (!cacheService.isAlreadyRecommended(g.getAppid())) {
                     cacheService.setRecommended(g.getAppid());
-                    appList.add(GameMapper.convertToDTO(g));
+                    appList.add(GameMapper.convertToSteamDTO(g));
                     if (appList.size() == 4) {
                         break;
                     }
@@ -72,21 +78,35 @@ public class GameService {
         }
     }
 
-    public SteamAppDTO findGameByAppid(long appid){
-        Game game = gameRepository.findByAppid(appid).orElseThrow();
+    public List<ReviewResponseDTO> ResponseList(List<SteamAppDTO> games){
+        List<Long> appIds = games.stream()
+                .map(SteamAppDTO::getAppid)
+                .collect(Collectors.toList());
 
-        if(game==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        List<Review> reviews = reviewRepository.findByAppidIn(appIds);
+
+        Map<Long, Review> reviewMap = reviews.stream()
+                .collect(Collectors.toMap(Review::getAppid, review -> review));
+
+        List<ReviewResponseDTO> reviewResponseDTOS = new ArrayList<>();
+        for(SteamAppDTO dto : games){
+            Review review = reviewMap.get(dto.getAppid());
+            if (review != null) {
+                ReviewResponseDTO responseDTO = GameMapper.convertToReviewDTO(review);
+                reviewResponseDTOS.add(responseDTO);
+            } else {
+                reviewResponseDTOS.add(new ReviewResponseDTO());
+            }
         }
 
-        SteamAppDTO steamApp = new SteamAppDTO();
-        steamApp.setAppid(game.getAppid());
-        steamApp.setName(game.getName());
-        steamApp.setShortDescription(game.getDescription());
-        steamApp.setHeaderImage(game.getImageUrl());
-        steamApp.setSteamStore("");
+        return reviewResponseDTOS;
+    }
 
-        return steamApp;
+    public SteamAppDTO findGameByAppid(long appid){
+        Game game = gameRepository.findByAppid(appid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+
+        return GameMapper.convertToSteamDTO(game);
     }
 
     public List<String> getTags(){

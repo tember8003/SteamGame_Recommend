@@ -420,6 +420,108 @@
       margin-bottom: 20px;
     }
 
+    /* 리뷰 정보 스타일 추가 */
+    .review-section {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+    }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .review-header h4 {
+      color: var(--primary);
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .review-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .review-texts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .review-text-card {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .review-text-card h5 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .review-text-card.positive h5 {
+      color: var(--success);
+    }
+
+    .review-text-card.negative h5 {
+      color: var(--error);
+    }
+
+    .review-text-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .rating-bar {
+      background: var(--bg-tertiary);
+      border-radius: 20px;
+      height: 8px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .rating-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+      border-radius: 20px;
+      transition: width 0.3s ease;
+    }
+
     .steam-link {
       display: inline-flex;
       align-items: center;
@@ -547,6 +649,14 @@
       .game-image {
         max-width: 300px;
         margin: 0 auto;
+      }
+
+      .review-texts {
+        grid-template-columns: 1fr;
+      }
+
+      .review-stats {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
@@ -727,12 +837,14 @@
 
     let usedTags = [];
     let games = [];
+    let reviews = [];
 
     if (Array.isArray(data)) {
       games = data;
     } else {
       usedTags = data.usedTags || [];
       games = data.recommendedGames || data.recommendedGame || [];
+      reviews = data.reviewResponseDTOS || [];
     }
 
     if (!Array.isArray(games) || games.length === 0) {
@@ -759,7 +871,9 @@
       `;
     }
 
-    games.forEach(game => {
+    games.forEach((game, index) => {
+      const review = reviews[index] || {};
+
       html += `
         <div class="game-card">
           <div class="game-content">
@@ -770,6 +884,9 @@
               <h3>${game.name}</h3>
               <p class="app-id">AppID: ${game.appid}</p>
               <p class="description">${game.shortDescription}</p>
+
+              ${renderReviewSection(review)}
+
               <a href="${game.steamStore}" target="_blank" class="steam-link">
                 <i class="fab fa-steam"></i>
                 View on Steam
@@ -794,29 +911,81 @@
     });
   }
 
-  function renderErrorResult() {
-    const container = document.getElementById('random-result');
-    container.innerHTML = `
-      <div class="no-results">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>An error occurred</h3>
-        <p>Please try again later.</p>
+  function renderReviewSection(review) {
+    if (!review || Object.keys(review).length === 0) {
+      return `
+      <div class="review-section">
+          <div class="review-header">
+              <i class="fas fa-star"></i>
+              <h4>Review Information</h4>
+          </div>
+          <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+              No review data available
+          </p>
       </div>
+      `;
+    }
+
+    const positiveRating = review.positiveRating || 0;
+    const reviewSummary = review.reviewSummary || 'No rating';
+    const positiveHours = review.positiveHours || 0;
+    const negativeHours = review.negativeHours || 0;
+
+    return `
+    <div class="review-section">
+        <div class="review-header">
+            <i class="fas fa-star"></i>
+            <h4>Review Information</h4>
+        </div>
+
+        <div class="review-stats">
+            <div class="stat-item">
+                <span class="stat-value">${positiveRating}%</span>
+                <div class="stat-label">Positive Rating</div>
+                <div class="rating-bar">
+                    <div class="rating-fill" style="width: ${positiveRating}%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${reviewSummary}</span>
+                <div class="stat-label">Overall Rating</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${positiveHours}h</span>
+                <div class="stat-label">Avg Positive Hours</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${negativeHours}h</span>
+                <div class="stat-label">Avg Negative Hours</div>
+            </div>
+        </div>
+
+        ${(review.positiveReview || review.negativeReview) ? `
+        <div class="review-texts">
+            ${review.positiveReview ? `
+            <div class="review-text-card positive">
+                <h5>
+                    <i class="fas fa-thumbs-up"></i>
+                    Positive Review
+                </h5>
+                <p>${review.positiveReview}</p>
+            </div>
+            ` : ''}
+
+            ${review.negativeReview ? `
+            <div class="review-text-card negative">
+                <h5>
+                    <i class="fas fa-thumbs-down"></i>
+                    Negative Review
+                </h5>
+                <p>${review.negativeReview}</p>
+            </div>
+            ` : ''}
+        </div>
+        ` : ''}
+    </div>
     `;
   }
-
-  window.addEventListener('load', () => {
-    const elements = document.querySelectorAll('.section-card, .controls');
-    elements.forEach((el, index) => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(30px)';
-      setTimeout(() => {
-        el.style.transition = 'all 0.6s ease';
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-      }, index * 200);
-    });
-  });
 </script>
 </body>
 </html>
