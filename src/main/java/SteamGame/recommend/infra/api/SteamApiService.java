@@ -235,7 +235,6 @@ public class SteamApiService {
                     int playtime2Weeks = game.path("playtime_2weeks").asInt(0);
                     long lastPlayed = game.path("rtime_last_played").asLong(0);
 
-                    // 🔧 디버깅 로그 추가
                     if (playtime2Weeks > 0) {
                         log.info("Recent game found: steamId={}, appId={}, 2weeks={}min ({}h)",
                                 steamId, appId, playtime2Weeks, playtime2Weeks / 60.0);
@@ -245,7 +244,7 @@ public class SteamApiService {
                             appId,
                             BigDecimal.valueOf(playtimeForever / 60.0),
                             BigDecimal.valueOf(playtime2Weeks / 60.0),
-                            // 🔧 lastPlayed 시간 변환 수정 (Unix timestamp → LocalDate)
+                            // lastPlayed (Unix timestamp → LocalDate)
                             lastPlayed > 0 ?
                                     LocalDate.ofInstant(
                                             Instant.ofEpochSecond(lastPlayed),

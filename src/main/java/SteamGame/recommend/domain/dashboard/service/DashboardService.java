@@ -280,9 +280,9 @@ public class DashboardService {
         }
 
         return tagCounts.entrySet().stream()
-                .filter(entry -> entry.getValue() >= 2)  // 최소 2개 게임 이상
+                .filter(entry -> entry.getValue() >= 2)  // At least 2 games required
                 .sorted((e1, e2) -> {
-                    // 플레이타임 우선, 게임 수 보조
+                    // Prioritize playtime, with the number of games as a secondary factor
                     BigDecimal playtime1 = tagPlaytimes.get(e1.getKey());
                     BigDecimal playtime2 = tagPlaytimes.get(e2.getKey());
                     int playtimeCompare = playtime2.compareTo(playtime1);

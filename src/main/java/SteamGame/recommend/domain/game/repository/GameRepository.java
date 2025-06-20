@@ -62,4 +62,17 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     GROUP BY g.appid""")
     List<Map<String, Object>> findTagCountsByAppids(@Param("appIds") List<Long> appids);
 
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid 
+    WHERE r.total_reviews >= :review
+        AND (:korean_check IS NULL OR g.korean_support = :korean_check)
+        AND (:free IS NULL OR g.is_free = :free)
+    ORDER BY RAND()
+    LIMIT 50
+""", nativeQuery = true)
+    List<Game> findRandomGamesWithoutTags(@Param("review") int review,
+                                          @Param("korean_check") Boolean korean_check,
+                                          @Param("free") Boolean free);
+
 }

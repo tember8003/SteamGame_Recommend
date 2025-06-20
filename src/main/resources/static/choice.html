@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Steam Game Choice</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --bg-card: #1e1e2e;
+            --border: #333344;
+            --border-hover: #4a4a6a;
+            --text-primary: #ffffff;
+            --text-secondary: #b4b4c8;
+            --text-muted: #8b8ba3;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+            --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #f59e0b 100%);
+            --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-primary);
+            background-image:
+                    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            color: var(--primary);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .section-card {
+            background: var(--gradient-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .section-card:hover::before {
+            opacity: 1;
+        }
+
+        .section-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px var(--shadow);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .round-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .round-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .round-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 30px;
+            align-items: center;
+            margin: 40px 0;
+        }
+
+        .game-option {
+            background: var(--gradient-card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .game-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.3);
+        }
+
+        .game-option:hover::before {
+            transform: scaleX(1);
+        }
+
+        .game-option.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+            transform: scale(1.02);
+        }
+
+        .game-option.selected::before {
+            transform: scaleX(1);
+        }
+
+        .game-image {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .game-option:hover .game-image {
+            transform: scale(1.05);
+        }
+
+        .game-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .game-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .game-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .game-tag {
+            background: var(--secondary);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .game-review {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+        }
+
+        .review-score {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .review-score.mixed {
+            color: var(--warning);
+        }
+
+        .review-score.negative {
+            color: var(--error);
+        }
+
+        .review-details {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .vs-divider {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { text-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+            to { text-shadow: 0 0 30px rgba(245, 158, 11, 0.8), 0 0 40px rgba(245, 158, 11, 0.3); }
+        }
+
+        .controls {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .control-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card);
+        }
+
+        .control-item label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .control-item input[type="number"] {
+            width: 80px;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .control-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .start-button {
+            width: 100%;
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .start-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .loading-content .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            margin-top: 40px;
+        }
+
+        .result-card {
+            background: var(--gradient-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .used-tags {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .used-tags h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .used-tags .tag {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--bg-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin: 4px 8px 4px 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .recommended-game {
+            background: var(--gradient-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .recommended-game:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--shadow);
+        }
+
+        .recommended-game img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .recommended-game h4 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .recommended-game p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .steam-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .steam-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .vs-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .vs-divider {
+                font-size: 2rem;
+                transform: rotate(90deg);
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h3>Processing...</h3>
+        <p>Please wait a moment</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-heart"></i> Steam Game Choice</h1>
+        <p class="subtitle">Choose your favorite games and get personalized recommendations!</p>
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Home
+        </a>
+    </div>
+
+    <!-- Setup Section -->
+    <div id="setup-section" class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-cog"></i>
+            Choice Settings
+        </h2>
+
+        <div class="controls">
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label for="choice-review">Review Count</label>
+                    <input type="number" id="choice-review" value="0" min="0" max="1000000" />
+                </div>
+                <div class="control-item">
+                    <label for="choice-korean">Korean Support Only</label>
+                    <input type="checkbox" id="choice-korean" />
+                </div>
+                <div class="control-item">
+                    <label for="choice-free">Free Games Only</label>
+                    <input type="checkbox" id="choice-free" />
+                </div>
+            </div>
+            <button id="start-choice" class="start-button">
+                <i class="fas fa-play"></i>
+                Start Game Choice
+            </button>
+        </div>
+    </div>
+
+    <!-- Choice Section -->
+    <div id="choice-section" class="section-card hidden">
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+
+        <div class="round-info">
+            <div id="round-title" class="round-title">Round 1</div>
+            <div class="round-subtitle">Choose your preferred game</div>
+        </div>
+
+        <div class="vs-container">
+            <div id="game1" class="game-option">
+                <img id="game1-image" class="game-image" src="" alt="Game 1" />
+                <div id="game1-title" class="game-title"></div>
+                <div id="game1-description" class="game-description"></div>
+                <div id="game1-tags" class="game-tags"></div>
+                <div id="game1-review" class="game-review"></div>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <div id="game2" class="game-option">
+                <img id="game2-image" class="game-image" src="" alt="Game 2" />
+                <div id="game2-title" class="game-title"></div>
+                <div id="game2-description" class="game-description"></div>
+                <div id="game2-tags" class="game-tags"></div>
+                <div id="game2-review" class="game-review"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="result-section hidden">
+        <div class="result-card">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                Choice Complete!
+            </h2>
+
+            <div id="used-tags-container" class="used-tags">
+                <h4><i class="fas fa-tags"></i> Your Preferred Tags</h4>
+                <div id="used-tags"></div>
+            </div>
+
+            <h3 style="color: var(--primary); margin-bottom: 20px;">
+                <i class="fas fa-gamepad"></i> Recommended Games
+            </h3>
+            <div id="recommended-games" class="game-grid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const baseUrl = '';
+    let currentChoiceSession = null;
+    let currentRoundIndex = 0;
+
+    // Start choice session
+    document.getElementById('start-choice').addEventListener('click', async () => {
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        try {
+            loadingOverlay.classList.add('show');
+
+            const body = {
+                review: +document.getElementById('choice-review').value,
+                korean_check: document.getElementById('choice-korean').checked,
+                free_check: document.getElementById('choice-free').checked
+            };
+
+            const response = await fetch(`${baseUrl}/api/choice/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) throw new Error('Failed to start choice session');
+
+            currentChoiceSession = await response.json();
+            currentRoundIndex = 0;
+
+            // Hide setup, show choice
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('choice-section').classList.remove('hidden');
+
+            // Start first round
+            displayRound(currentRoundIndex);
+
+        } catch (error) {
+            console.error('Error starting choice session:', error);
+            alert('Failed to start choice session. Please try again.');
+        } finally {
+            loadingOverlay.classList.remove('show');
+        }
+    });
+
+    // Display current round - 리뷰 텍스트 제거
+    function displayRound(roundIndex) {
+        const round = currentChoiceSession.rounds[roundIndex];
+        const progress = ((roundIndex + 1) / currentChoiceSession.rounds.length) * 100;
+
+        // Update progress
+        document.getElementById('progress-fill').style.width = `${progress}%`;
+        document.getElementById('round-title').textContent = `Round ${roundIndex + 1}`;
+
+        // Update game options
+        updateGameOption('game1', round.game1);
+        updateGameOption('game2', round.game2);
+
+        // Reset selections
+        document.getElementById('game1').classList.remove('selected');
+        document.getElementById('game2').classList.remove('selected');
+    }
+
+    // Update game option - 리뷰 텍스트 제거 버전
+    function updateGameOption(elementId, gameData) {
+        // gameData는 RecommendationResultDTO 구조
+        const game = gameData.recommendedGame[0]; // 첫 번째 (유일한) 게임
+        const tags = gameData.usedTags || [];
+        const reviews = gameData.review || [];
+
+        // 게임 기본 정보
+        document.getElementById(`${elementId}-image`).src = game.headerImage;
+        document.getElementById(`${elementId}-title`).textContent = game.name;
+        document.getElementById(`${elementId}-description`).textContent =
+            game.shortDescription || 'No description available';
+
+        // 태그 표시
+        const tagsContainer = document.getElementById(`${elementId}-tags`);
+        if (tags && tags.length > 0) {
+            tagsContainer.innerHTML = tags
+                .slice(0, 3) // 최대 3개 태그만 표시
+                .map(tag => `<span class="game-tag">${tag}</span>`)
+                .join('');
+        } else {
+            tagsContainer.innerHTML = '';
+        }
+
+        // 리뷰 정보 표시 (텍스트는 제외하고 점수와 요약만)
+        const reviewContainer = document.getElementById(`${elementId}-review`);
+        if (reviews && reviews.length > 0) {
+            const review = reviews[0];
+            const positiveScore = review.positiveRating || review.positivePercentage;
+            const scoreClass = getReviewScoreClass(positiveScore);
+
+            reviewContainer.innerHTML = `
+                <div class="review-score ${scoreClass}">
+                    <i class="fas fa-thumbs-up"></i> ${positiveScore ? Math.round(positiveScore) + '%' : 'N/A'}
+                </div>
+                <div class="review-details">
+                    ${review.reviewSummary || 'No rating available'}
+                </div>
+            `;
+        } else {
+            reviewContainer.innerHTML = `
+                <div class="review-score">
+                    <i class="fas fa-question"></i> No review data
+                </div>
+            `;
+        }
+
+        // Add click handler
+        const element = document.getElementById(elementId);
+        element.onclick = () => selectGame(game.appid, elementId);
+    }
+
+    // 리뷰 점수에 따른 CSS 클래스 결정
+    function getReviewScoreClass(positivePercentage) {
+        if (!positivePercentage) return '';
+        if (positivePercentage >= 80) return '';          // 긍정적 (기본 녹색)
+        if (positivePercentage >= 70) return 'mixed';     // 복합적 (노란색)
+        return 'negative';                                // 부정적 (빨간색)
+    }
+
+    // Select game
+    async function selectGame(gameId, elementId) {
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        try {
+            // Visual feedback
+            document.getElementById('game1').classList.remove('selected');
+            document.getElementById('game2').classList.remove('selected');
+            document.getElementById(elementId).classList.add('selected');
+
+            // Brief delay for visual feedback
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            loadingOverlay.classList.add('show');
+
+            const body = {
+                sessionId: currentChoiceSession.sessionId,
+                roundIndex: currentRoundIndex,
+                selectedGameId: gameId
+            };
+
+            const response = await fetch(`${baseUrl}/api/choice/select`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) throw new Error('Failed to submit selection');
+
+            const result = await response.json();
+
+            if (result.completed) {
+                // Choice session finished, show results
+                await showResults();
+            } else {
+                // Move to next round
+                currentRoundIndex = result.nextRoundIndex;
+                displayRound(currentRoundIndex);
+            }
+
+        } catch (error) {
+            console.error('Error submitting selection:', error);
+            alert('Failed to submit selection. Please try again.');
+        } finally {
+            loadingOverlay.classList.remove('show');
+        }
+    }
+
+    // Show choice results
+    async function showResults() {
+        try {
+            const body = {
+                sessionId: currentChoiceSession.sessionId,
+                review: +document.getElementById('choice-review').value,
+                korean_check: document.getElementById('choice-korean').checked,
+                free_check: document.getElementById('choice-free').checked
+            };
+
+            const response = await fetch(`${baseUrl}/api/choice/result`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) throw new Error('Failed to get results');
+
+            const results = await response.json();
+
+            // Hide choice, show results
+            document.getElementById('choice-section').classList.add('hidden');
+            document.getElementById('results-section').classList.remove('hidden');
+
+            // Display used tags
+            const tagsContainer = document.getElementById('used-tags');
+            tagsContainer.innerHTML = results.usedTags
+                .map(tag => `<span class="tag">${tag}</span>`)
+                .join('');
+
+            // Display recommended games
+            const gamesContainer = document.getElementById('recommended-games');
+            gamesContainer.innerHTML = results.recommendedGames
+                .map(game => `
+                        <div class="recommended-game">
+                            <img src="${game.headerImage}" alt="${game.name}" />
+                            <h4>${game.name}</h4>
+                            <p>${game.shortDescription || 'No description available'}</p>
+                            <a href="${game.steamStore}" target="_blank" class="steam-link">
+                                <i class="fab fa-steam"></i>
+                                View on Steam
+                            </a>
+                        </div>
+                    `)
+                .join('');
+
+            // Scroll to results
+            document.getElementById('results-section').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+
+        } catch (error) {
+            console.error('Error getting results:', error);
+            alert('Failed to get results. Please try again.');
+        }
+    }
+
+    // Page load animation
+    window.addEventListener('load', () => {
+        const elements = document.querySelectorAll('.section-card');
+        elements.forEach((el, index) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            setTimeout(() => {
+                el.style.transition = 'all 0.6s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    });
+</script>
+</body>
+</html>
