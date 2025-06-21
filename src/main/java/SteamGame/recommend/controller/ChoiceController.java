@@ -30,11 +30,7 @@ public class ChoiceController {
             log.info("Choice start request: review={}, korean={}, free={}",
                     request.getReview(), request.getKorean_check(), request.getFree_check());
 
-            ChoiceStartResponseDTO response = gameChoiceService.startChoice(
-                    request.getReview(),
-                    request.getKorean_check(),
-                    request.getFree_check()
-            );
+            ChoiceStartResponseDTO response = gameChoiceService.startChoice();
 
             log.info("Choice started successfully with {} rounds", response.getRounds().size());
             return ResponseEntity.ok(response);

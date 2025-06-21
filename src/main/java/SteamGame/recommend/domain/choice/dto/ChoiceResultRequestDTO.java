@@ -16,7 +16,7 @@ public class ChoiceResultRequestDTO {
     private String sessionId;
 
     @Min(0)
-    private int review = 0;
+    private int review = 10000;
     private Boolean korean_check;
     private Boolean free_check;
 }

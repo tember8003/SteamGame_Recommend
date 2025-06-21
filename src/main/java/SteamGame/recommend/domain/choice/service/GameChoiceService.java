@@ -53,9 +53,13 @@ public class GameChoiceService {
     }
 
     @Transactional(readOnly = true)
-    public ChoiceStartResponseDTO startChoice(int review, Boolean koreanCheck, Boolean freeCheck) {
+    public ChoiceStartResponseDTO startChoice() {
+        final int FIXED_REVIEW_COUNT = 10000;
+        final Boolean KOREAN_CHECK = null;
+        final Boolean FREE_CHECK = null;
+
         // 랜덤 게임 선택 (14개 - 7라운드를 위해)
-        List<Game> randomGames = getRandomGamesForChoice(CHOICE_ROUNDS * 2, review, koreanCheck, freeCheck);
+        List<Game> randomGames = getRandomGamesForChoice(CHOICE_ROUNDS * 2, FIXED_REVIEW_COUNT, KOREAN_CHECK, FREE_CHECK);
 
         if (randomGames.size() < CHOICE_ROUNDS * 2) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -362,8 +366,8 @@ public class GameChoiceService {
     private List<String> findOptimalTagCombination(List<String> topTags) {
         log.info("Finding optimal tag combination from {} tags: {}", topTags.size(), topTags);
 
-        // 실용적 접근: 최대 4개 태그까지만 사용
-        int maxTags = Math.min(4, topTags.size());
+        // 실용적 접근: 최대 6개 태그까지만 사용
+        int maxTags = Math.min(6, topTags.size());
 
         try {
             // Cooccurrence 서비스로 최적의 태그 쌍 찾기 시도
@@ -376,7 +380,7 @@ public class GameChoiceService {
                 result.add(optimalPair.get().getFirstTag());
                 result.add(optimalPair.get().getSecondTag());
 
-                // 추가 태그를 조심스럽게 추가 (최대 4개까지)
+                // 추가 태그를 조심스럽게 추가 (최대 6개까지)
                 for (String tag : topTags) {
                     if (!result.contains(tag) && result.size() < maxTags) {
                         result.add(tag);
@@ -390,7 +394,7 @@ public class GameChoiceService {
             log.warn("Cooccurrence optimization failed: {}", e.getMessage());
         }
 
-        // Cooccurrence 실패 시: 상위 3-4개 태그만 사용
+        // Cooccurrence 실패 시: 상위 3-6개 태그만 사용
         List<String> result = topTags.subList(0, Math.min(3, topTags.size()));
         log.info("Using top {} tags without cooccurrence: {}", result.size(), result);
 
@@ -401,8 +405,8 @@ public class GameChoiceService {
                                                            int review, Boolean koreanCheck, Boolean freeCheck) {
         log.info("Starting recommendation with {} tags: {}", tags.size(), tags);
 
-        // 전략 1: 원본 태그로 시도 (최대 4개까지만)
-        List<String> primaryTags = tags.subList(0, Math.min(4, tags.size()));
+        // 전략 1: 원본 태그로 시도 (최대 6개까지만)
+        List<String> primaryTags = tags.subList(0, Math.min(6, tags.size()));
         List<SteamAppDTO> games = tryRecommendation(primaryTags, excludedGameIds, review, koreanCheck, freeCheck, "primary");
         if (!games.isEmpty()) return games;
 

@@ -324,64 +324,35 @@
             to { text-shadow: 0 0 30px rgba(245, 158, 11, 0.8), 0 0 40px rgba(245, 158, 11, 0.3); }
         }
 
-        .controls {
+        .start-section {
             background: var(--bg-secondary);
             border-radius: 12px;
-            padding: 20px;
+            padding: 30px;
             margin-bottom: 30px;
             border: 1px solid var(--border);
+            text-align: center;
         }
 
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            align-items: center;
+        .start-description {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
             margin-bottom: 20px;
+            line-height: 1.6;
         }
 
-        .control-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
+        .start-note {
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .control-item:hover {
-            border-color: var(--border-hover);
-            background: var(--bg-card);
-        }
-
-        .control-item label {
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .control-item input[type="number"] {
-            width: 80px;
-            padding: 8px 12px;
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
             border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-
-        .control-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
-            cursor: pointer;
+            padding: 15px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
         }
 
         .start-button {
             width: 100%;
+            max-width: 400px;
             background: var(--gradient-primary);
             color: var(--bg-primary);
             border: none;
@@ -401,6 +372,88 @@
         }
 
         .start-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .preference-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .preference-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .preference-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .preference-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card);
+        }
+
+        .preference-item label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .preference-item input[type="number"] {
+            width: 100px;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .preference-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .get-recommendations-button {
+            width: 100%;
+            background: var(--gradient-secondary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .get-recommendations-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.4);
+        }
+
+        .get-recommendations-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
@@ -560,7 +613,7 @@
                 transform: rotate(90deg);
             }
 
-            .controls-grid {
+            .preference-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
@@ -590,27 +643,21 @@
         </a>
     </div>
 
-    <!-- Setup Section -->
-    <div id="setup-section" class="section-card">
+    <!-- Start Section -->
+    <div id="start-section" class="section-card">
         <h2 class="section-title">
-            <i class="fas fa-cog"></i>
-            Choice Settings
+            <i class="fas fa-play"></i>
+            Start Game Choice
         </h2>
 
-        <div class="controls">
-            <div class="controls-grid">
-                <div class="control-item">
-                    <label for="choice-review">Review Count</label>
-                    <input type="number" id="choice-review" value="0" min="0" max="1000000" />
-                </div>
-                <div class="control-item">
-                    <label for="choice-korean">Korean Support Only</label>
-                    <input type="checkbox" id="choice-korean" />
-                </div>
-                <div class="control-item">
-                    <label for="choice-free">Free Games Only</label>
-                    <input type="checkbox" id="choice-free" />
-                </div>
+        <div class="start-section">
+            <p class="start-description">
+                We'll show you popular games (10,000+ reviews) in 7 rounds.<br>
+                Pick your favorites to discover your gaming preferences!
+            </p>
+            <div class="start-note">
+                <i class="fas fa-info-circle"></i>
+                After completing all rounds, you'll see your preferred tags and can customize filters for recommendations.
             </div>
             <button id="start-choice" class="start-button">
                 <i class="fas fa-play"></i>
@@ -651,18 +698,51 @@
         </div>
     </div>
 
+    <!-- Preference Section -->
+    <div id="preference-section" class="section-card hidden">
+        <h2 class="section-title">
+            <i class="fas fa-tags"></i>
+            Your Gaming Preferences
+        </h2>
+
+        <div id="used-tags-container" class="used-tags">
+            <h4><i class="fas fa-heart"></i> Based on your choices, you prefer these tags:</h4>
+            <div id="discovered-tags"></div>
+        </div>
+
+        <h3 style="color: var(--primary); margin-bottom: 20px;">
+            <i class="fas fa-sliders-h"></i> Customize Your Recommendations
+        </h3>
+
+        <div class="preference-section">
+            <div class="preference-grid">
+                <div class="preference-item">
+                    <label for="final-review">Minimum Review Count</label>
+                    <input type="number" id="final-review" value="10000" min="0" max="1000000" />
+                </div>
+                <div class="preference-item">
+                    <label for="final-korean">Korean Support Only</label>
+                    <input type="checkbox" id="final-korean" />
+                </div>
+                <div class="preference-item">
+                    <label for="final-free">Free Games Only</label>
+                    <input type="checkbox" id="final-free" />
+                </div>
+            </div>
+            <button id="get-recommendations" class="get-recommendations-button">
+                <i class="fas fa-magic"></i>
+                Get My Recommendations
+            </button>
+        </div>
+    </div>
+
     <!-- Results Section -->
     <div id="results-section" class="result-section hidden">
         <div class="result-card">
             <h2 class="section-title">
                 <i class="fas fa-star"></i>
-                Choice Complete!
+                Your Personalized Recommendations!
             </h2>
-
-            <div id="used-tags-container" class="used-tags">
-                <h4><i class="fas fa-tags"></i> Your Preferred Tags</h4>
-                <div id="used-tags"></div>
-            </div>
 
             <h3 style="color: var(--primary); margin-bottom: 20px;">
                 <i class="fas fa-gamepad"></i> Recommended Games
@@ -676,6 +756,7 @@
     const baseUrl = '';
     let currentChoiceSession = null;
     let currentRoundIndex = 0;
+    let discoveredTags = [];
 
     // Start choice session
     document.getElementById('start-choice').addEventListener('click', async () => {
@@ -684,16 +765,11 @@
         try {
             loadingOverlay.classList.add('show');
 
-            const body = {
-                review: +document.getElementById('choice-review').value,
-                korean_check: document.getElementById('choice-korean').checked,
-                free_check: document.getElementById('choice-free').checked
-            };
-
+            // 빈 body로 요청 (파라미터 없음)
             const response = await fetch(`${baseUrl}/api/choice/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify({})
             });
 
             if (!response.ok) throw new Error('Failed to start choice session');
@@ -701,8 +777,8 @@
             currentChoiceSession = await response.json();
             currentRoundIndex = 0;
 
-            // Hide setup, show choice
-            document.getElementById('setup-section').classList.add('hidden');
+            // Hide start, show choice
+            document.getElementById('start-section').classList.add('hidden');
             document.getElementById('choice-section').classList.remove('hidden');
 
             // Start first round
@@ -716,7 +792,7 @@
         }
     });
 
-    // Display current round - 리뷰 텍스트 제거
+    // Display current round
     function displayRound(roundIndex) {
         const round = currentChoiceSession.rounds[roundIndex];
         const progress = ((roundIndex + 1) / currentChoiceSession.rounds.length) * 100;
@@ -734,10 +810,9 @@
         document.getElementById('game2').classList.remove('selected');
     }
 
-    // Update game option - 리뷰 텍스트 제거 버전
+    // Update game option
     function updateGameOption(elementId, gameData) {
-        // gameData는 RecommendationResultDTO 구조
-        const game = gameData.recommendedGame[0]; // 첫 번째 (유일한) 게임
+        const game = gameData.recommendedGame[0];
         const tags = gameData.usedTags || [];
         const reviews = gameData.review || [];
 
@@ -751,14 +826,14 @@
         const tagsContainer = document.getElementById(`${elementId}-tags`);
         if (tags && tags.length > 0) {
             tagsContainer.innerHTML = tags
-                .slice(0, 3) // 최대 3개 태그만 표시
+                .slice(0, 3)
                 .map(tag => `<span class="game-tag">${tag}</span>`)
                 .join('');
         } else {
             tagsContainer.innerHTML = '';
         }
 
-        // 리뷰 정보 표시 (텍스트는 제외하고 점수와 요약만)
+        // 리뷰 정보 표시
         const reviewContainer = document.getElementById(`${elementId}-review`);
         if (reviews && reviews.length > 0) {
             const review = reviews[0];
@@ -789,9 +864,9 @@
     // 리뷰 점수에 따른 CSS 클래스 결정
     function getReviewScoreClass(positivePercentage) {
         if (!positivePercentage) return '';
-        if (positivePercentage >= 80) return '';          // 긍정적 (기본 녹색)
-        if (positivePercentage >= 70) return 'mixed';     // 복합적 (노란색)
-        return 'negative';                                // 부정적 (빨간색)
+        if (positivePercentage >= 80) return '';
+        if (positivePercentage >= 70) return 'mixed';
+        return 'negative';
     }
 
     // Select game
@@ -826,8 +901,8 @@
             const result = await response.json();
 
             if (result.completed) {
-                // Choice session finished, show results
-                await showResults();
+                // Choice session finished, show preferences
+                await showPreferences();
             } else {
                 // Move to next round
                 currentRoundIndex = result.nextRoundIndex;
@@ -842,14 +917,62 @@
         }
     }
 
-    // Show choice results
-    async function showResults() {
+    // Show preferences section
+    async function showPreferences() {
         try {
+            // 임시로 태그 분석을 위해 기본 설정으로 결과 요청
+            const tempBody = {
+                sessionId: currentChoiceSession.sessionId,
+                review: 10000,
+                korean_check: null,
+                free_check: null
+            };
+
+            const response = await fetch(`${baseUrl}/api/choice/result`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tempBody)
+            });
+
+            if (!response.ok) throw new Error('Failed to get preferences');
+
+            const results = await response.json();
+            discoveredTags = results.usedTags;
+
+            // Hide choice, show preferences
+            document.getElementById('choice-section').classList.add('hidden');
+            document.getElementById('preference-section').classList.remove('hidden');
+
+            // Display discovered tags
+            const tagsContainer = document.getElementById('discovered-tags');
+            tagsContainer.innerHTML = discoveredTags
+                .map(tag => `<span class="tag">${tag}</span>`)
+                .join('');
+
+            // Scroll to preferences
+            document.getElementById('preference-section').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+
+        } catch (error) {
+            console.error('Error getting preferences:', error);
+            alert('Failed to analyze preferences. Please try again.');
+        }
+    }
+
+    // Get final recommendations
+    document.getElementById('get-recommendations').addEventListener('click', async () => {
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        try {
+            loadingOverlay.classList.add('show');
+
             const body = {
                 sessionId: currentChoiceSession.sessionId,
-                review: +document.getElementById('choice-review').value,
-                korean_check: document.getElementById('choice-korean').checked,
-                free_check: document.getElementById('choice-free').checked
+                review: +document.getElementById('final-review').value,
+                korean_check: document.getElementById('final-korean').checked,
+                free_check: document.getElementById('final-free').checked
             };
 
             const response = await fetch(`${baseUrl}/api/choice/result`, {
@@ -858,34 +981,28 @@
                 body: JSON.stringify(body)
             });
 
-            if (!response.ok) throw new Error('Failed to get results');
+            if (!response.ok) throw new Error('Failed to get recommendations');
 
             const results = await response.json();
 
-            // Hide choice, show results
-            document.getElementById('choice-section').classList.add('hidden');
+            // Hide preferences, show results
+            document.getElementById('preference-section').classList.add('hidden');
             document.getElementById('results-section').classList.remove('hidden');
-
-            // Display used tags
-            const tagsContainer = document.getElementById('used-tags');
-            tagsContainer.innerHTML = results.usedTags
-                .map(tag => `<span class="tag">${tag}</span>`)
-                .join('');
 
             // Display recommended games
             const gamesContainer = document.getElementById('recommended-games');
             gamesContainer.innerHTML = results.recommendedGames
                 .map(game => `
-                        <div class="recommended-game">
-                            <img src="${game.headerImage}" alt="${game.name}" />
-                            <h4>${game.name}</h4>
-                            <p>${game.shortDescription || 'No description available'}</p>
-                            <a href="${game.steamStore}" target="_blank" class="steam-link">
-                                <i class="fab fa-steam"></i>
-                                View on Steam
-                            </a>
-                        </div>
-                    `)
+                    <div class="recommended-game">
+                        <img src="${game.headerImage}" alt="${game.name}" />
+                        <h4>${game.name}</h4>
+                        <p>${game.shortDescription || 'No description available'}</p>
+                        <a href="${game.steamStore}" target="_blank" class="steam-link">
+                            <i class="fab fa-steam"></i>
+                            View on Steam
+                        </a>
+                    </div>
+                `)
                 .join('');
 
             // Scroll to results
@@ -895,10 +1012,12 @@
             });
 
         } catch (error) {
-            console.error('Error getting results:', error);
-            alert('Failed to get results. Please try again.');
+            console.error('Error getting final recommendations:', error);
+            alert('Failed to get recommendations. Please try again.');
+        } finally {
+            loadingOverlay.classList.remove('show');
         }
-    }
+    });
 
     // Page load animation
     window.addEventListener('load', () => {
