@@ -347,22 +347,68 @@ public class DashboardService {
                 })
                 .collect(Collectors.toList());
 
+        // ====== 디버깅 로그 추가 ======
+        log.info("=== DEBUGGING Recently Played Games ===");
+        log.info("Total owned games: {}", ownedGames.size());
+        log.info("Total playtime map entries: {}", playtimeMap.size());
+
+        // 최근 플레이타임이 있는 게임들 확인
+        long recentGamesCount = playtimeMap.values().stream()
+                .filter(info -> info.getRecentHours().compareTo(BigDecimal.ZERO) > 0)
+                .count();
+        log.info("Games with recent hours > 0: {}", recentGamesCount);
+
+        // 실제 최근 플레이 게임들 출력
+        playtimeMap.entrySet().stream()
+                .filter(entry -> entry.getValue().getRecentHours().compareTo(BigDecimal.ZERO) > 0)
+                .forEach(entry -> {
+                    Long appId = entry.getKey();
+                    GamePlaytimeInfo info = entry.getValue();
+
+                    // 해당 게임이 ownedGames 리스트에 있는지 확인
+                    boolean gameExists = ownedGames.stream()
+                            .anyMatch(game -> game.getAppid().equals(appId));
+
+                    log.info("Recent game - AppID: {}, Recent hours: {}, Game exists in ownedGames: {}",
+                            appId, info.getRecentHours(), gameExists);
+
+                    if (gameExists) {
+                        Game game = ownedGames.stream()
+                                .filter(g -> g.getAppid().equals(appId))
+                                .findFirst()
+                                .orElse(null);
+                        if (game != null) {
+                            log.info("  -> Game name: {}", game.getName());
+                        }
+                    }
+                });
+
         // Recently Played Games
+        log.info("=== Starting Recently Played Games filtering ===");
         List<GameStatsDTO> recentlyPlayed = ownedGames.stream()
-                .filter(game -> playtimeMap.containsKey(game.getAppid()))
+                .filter(game -> {
+                    boolean containsKey = playtimeMap.containsKey(game.getAppid());
+                    log.info("Game: {} ({}), playtimeMap contains: {}",
+                            game.getName(), game.getAppid(), containsKey);
+                    return containsKey;
+                })
                 .filter(game -> {
                     GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
-                    return info.getLastPlayedDate() != null &&
-                            info.getRecentHours().compareTo(BigDecimal.ZERO) > 0;
+                    boolean hasRecentHours = info.getRecentHours().compareTo(BigDecimal.ZERO) > 0;
+                    log.info("Game: {} ({}), recent hours: {}, hasRecentHours: {}",
+                            game.getName(), game.getAppid(), info.getRecentHours(), hasRecentHours);
+                    return hasRecentHours;
                 })
                 .sorted((g1, g2) -> {
-                    LocalDate date1 = playtimeMap.get(g1.getAppid()).getLastPlayedDate();
-                    LocalDate date2 = playtimeMap.get(g2.getAppid()).getLastPlayedDate();
-                    return date2.compareTo(date1);
+                    GamePlaytimeInfo info1 = playtimeMap.get(g1.getAppid());
+                    GamePlaytimeInfo info2 = playtimeMap.get(g2.getAppid());
+                    return info2.getRecentHours().compareTo(info1.getRecentHours());
                 })
-                .limit(8)  // Recent 8 games
+                .limit(8)
                 .map(game -> {
                     GamePlaytimeInfo info = playtimeMap.get(game.getAppid());
+                    log.info("Adding to recentlyPlayed: {} - {} recent hours",
+                            game.getName(), info.getRecentHours());
                     return new GameStatsDTO(
                             game.getAppid(),
                             game.getName(),
@@ -373,6 +419,8 @@ public class DashboardService {
                     );
                 })
                 .collect(Collectors.toList());
+
+        log.info("=== Final recently played count: {} ===", recentlyPlayed.size());
 
         return new GameLibraryStatsDTO(
                 neverPlayed, shortPlayed, mediumPlayed, longPlayed,

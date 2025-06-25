@@ -16,6 +16,7 @@
             --bg-primary: #0a0a0f;
             --bg-secondary: #1a1a2e;
             --bg-card: #1e1e2e;
+            --bg-tertiary: #16213e;
             --border: #333344;
             --text-primary: #ffffff;
             --text-secondary: #b4b4c8;
@@ -64,6 +65,13 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 16px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
         }
 
         .search-section {
@@ -272,6 +280,28 @@
             margin-bottom: 20px;
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            color: var(--primary);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
         .wide-card {
             grid-column: 1 / -1;
         }
@@ -353,6 +383,10 @@
     <div class="header">
         <h1><i class="fas fa-chart-line"></i> Steam Game Dashboard</h1>
         <p class="subtitle">Analyze your gaming preferences at a glance</p>
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Home
+        </a>
     </div>
 
     <div class="search-section">
@@ -526,15 +560,6 @@
                     </div>
                     ${renderTopGames(data.libraryStats?.topPlayedGames)}
                 </div>
-
-                <!-- Recently Played Games -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-history"></i>
-                        <h3>Recently Played</h3>
-                    </div>
-                    ${renderRecentGames(data.libraryStats?.recentlyPlayedGames)}
-                </div>
             </div>
         `;
 
@@ -642,15 +667,15 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${libraryStats.shortPlayed || 0}</div>
-                    <div class="stat-label">Short Play (&lt;2h)</div>
+                    <div class="stat-label">Short Play (&lt;5h)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${libraryStats.mediumPlayed || 0}</div>
-                    <div class="stat-label">Medium Play (2-10h)</div>
+                    <div class="stat-label">Medium Play (5-50h)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${libraryStats.longPlayed || 0}</div>
-                    <div class="stat-label">Long Play (&gt;10h)</div>
+                    <div class="stat-label">Long Play (&gt;50h)</div>
                 </div>
             </div>
         `;
@@ -673,28 +698,6 @@
                         <div class="game-info">
                             <div class="game-name">${game.name}</div>
                             <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours total</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-
-    function renderRecentGames(recentGames) {
-        if (!recentGames || recentGames.length === 0) {
-            return '<div class="empty-state"><i class="fas fa-history"></i><p>No recently played games found</p></div>';
-        }
-
-        return `
-            <div class="game-list">
-                ${recentGames.slice(0, 5).map(game => `
-                    <div class="game-item">
-                        <img src="${game.headerImage || ''}" alt="${game.name}" class="game-image"
-                             onerror="this.style.display='none'">
-                        <div class="game-info">
-                            <div class="game-name">${game.name}</div>
-                            <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours total</div>
-                            ${game.lastPlayed ? `<div style="font-size: 0.8rem; color: var(--text-muted);">Last played: ${game.lastPlayed}</div>` : ''}
                         </div>
                     </div>
                 `).join('')}
