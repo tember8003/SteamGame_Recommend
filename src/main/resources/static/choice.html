@@ -499,6 +499,14 @@
 
         .result-section {
             margin-top: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result-section.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .result-card {
@@ -592,6 +600,17 @@
 
         .hidden {
             display: none;
+        }
+
+        /* 결과 상태 표시 */
+        .recommendations-status {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -734,26 +753,31 @@
                 Get My Recommendations
             </button>
         </div>
-    </div>
 
-    <!-- Results Section -->
-    <div id="results-section" class="result-section hidden">
-        <div class="result-card">
-            <h2 class="section-title">
-                <i class="fas fa-star"></i>
-                Your Personalized Recommendations!
-            </h2>
+        <!-- Results Section - preference-section 내부에 위치 -->
+        <div id="results-section" class="result-section hidden">
+            <div class="recommendations-status">
+                <i class="fas fa-info-circle"></i>
+                Settings applied successfully! You can adjust the filters above and get new recommendations anytime.
+            </div>
 
-            <h3 style="color: var(--primary); margin-bottom: 20px;">
-                <i class="fas fa-gamepad"></i> Recommended Games
-            </h3>
-            <div id="recommended-games" class="game-grid"></div>
+            <div class="result-card">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i>
+                    Your Personalized Recommendations!
+                </h2>
+
+                <h3 style="color: var(--primary); margin-bottom: 20px;">
+                    <i class="fas fa-gamepad"></i> Recommended Games
+                </h3>
+                <div id="recommended-games" class="game-grid"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    const baseUrl = '';
+    const baseUrl = 'http://localhost:8080';
     let currentChoiceSession = null;
     let currentRoundIndex = 0;
     let discoveredTags = [];
@@ -786,7 +810,17 @@
 
         } catch (error) {
             console.error('Error starting choice session:', error);
-            alert('Failed to start choice session. Please try again.');
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+
+            // 응답 상태 확인
+            if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response text:', await error.response.text());
+            }
+
+            alert(`Failed to start choice session: ${error.message}`);
         } finally {
             loadingOverlay.classList.remove('show');
         }
@@ -861,11 +895,11 @@
         element.onclick = () => selectGame(game.appid, elementId);
     }
 
-    // 리뷰 점수에 따른 CSS 클래스 결정
-    function getReviewScoreClass(positivePercentage) {
-        if (!positivePercentage) return '';
-        if (positivePercentage >= 80) return '';
-        if (positivePercentage >= 70) return 'mixed';
+    // Get review score class
+    function getReviewScoreClass(score) {
+        if (!score) return '';
+        if (score >= 80) return '';
+        if (score >= 60) return 'mixed';
         return 'negative';
     }
 
@@ -961,7 +995,7 @@
         }
     }
 
-    // Get final recommendations
+    // Get final recommendations - 🔧 핵심 수정 부분
     document.getElementById('get-recommendations').addEventListener('click', async () => {
         const loadingOverlay = document.getElementById('loading-overlay');
 
@@ -985,9 +1019,14 @@
 
             const results = await response.json();
 
-            // Hide preferences, show results
-            document.getElementById('preference-section').classList.add('hidden');
-            document.getElementById('results-section').classList.remove('hidden');
+            // ✅ preference-section은 숨기지 않고, results-section만 표시
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.classList.remove('hidden');
+
+            // 부드러운 애니메이션
+            setTimeout(() => {
+                resultsSection.classList.add('show');
+            }, 100);
 
             // Display recommended games
             const gamesContainer = document.getElementById('recommended-games');
@@ -1005,8 +1044,8 @@
                 `)
                 .join('');
 
-            // Scroll to results
-            document.getElementById('results-section').scrollIntoView({
+            // Scroll to results smoothly
+            resultsSection.scrollIntoView({
                 behavior: 'smooth',
                 block: 'start'
             });

@@ -378,7 +378,7 @@
 </div>
 
 <script>
-    const baseUrl = '';
+    const baseUrl = 'http://localhost:8080';
     let currentSteamId = '';
 
     async function loadDashboard() {
@@ -694,7 +694,7 @@
                         <div class="game-info">
                             <div class="game-name">${game.name}</div>
                             <div class="game-playtime">${game.playtimeHours.toFixed(1)} hours total</div>
-                            ${game.lastPlayedDate ? `<div style="font-size: 0.8rem; color: var(--text-muted);">Last played: ${game.lastPlayedDate}</div>` : ''}
+                            ${game.lastPlayed ? `<div style="font-size: 0.8rem; color: var(--text-muted);">Last played: ${game.lastPlayed}</div>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -734,7 +734,7 @@
                                 labels.forEach((label, index) => {
                                     const data = genreData[index];
                                     if (data) {
-                                        label.text = `${data.tagName} (${data.gameCount} games)`;
+                                        label.text = `${data.genre} (${data.gameCount} games)`;
                                     }
                                 });
 
@@ -746,7 +746,7 @@
                         callbacks: {
                             label: function(context) {
                                 const data = genreData[context.dataIndex];
-                                return `${data.tagName}: ${data.percentage.toFixed(1)}% (${data.gameCount} games)`;
+                                return `${data.genre}: ${data.percentage.toFixed(1)}% (${data.gameCount} games)`;
                             }
                         }
                     }
