@@ -158,10 +158,9 @@
             box-shadow: 0 25px 50px var(--shadow);
         }
 
-        // Various card colors
-           .feature-card:nth-child(2n)::before {
-               background: var(--gradient-secondary);
-           }
+        .feature-card:nth-child(2n)::before {
+            background: var(--gradient-secondary);
+        }
 
         .feature-card:nth-child(3n)::before {
             background: var(--gradient-dashboard);
@@ -186,10 +185,9 @@
             background: var(--gradient-secondary);
         }
 
-        // Dashboard card icon style
-           .feature-card:nth-child(3n) .feature-icon {
-               background: var(--gradient-dashboard);
-           }
+        .feature-card:nth-child(3n) .feature-icon {
+            background: var(--gradient-dashboard);
+        }
 
         .feature-icon::before {
             content: '';
@@ -260,12 +258,11 @@
             box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
         }
 
-        // Special dashboard card style
-           .dashboard-card {
-               background: linear-gradient(135deg, #1e1e2e 0%, #2a3a2e 100%);
-               border: 2px solid var(--success);
-               position: relative;
-           }
+       .dashboard-card {
+           background: linear-gradient(135deg, #1e1e2e 0%, #2a3a2e 100%);
+           border: 2px solid var(--success);
+           position: relative;
+       }
 
         .dashboard-card::before {
             background: var(--gradient-dashboard) !important;
@@ -455,12 +452,11 @@
             }
         }
 
-        // Page load animation
-           .fade-in {
-               opacity: 0;
-               transform: translateY(30px);
-               animation: fadeInUp 0.8s ease forwards;
-           }
+       .fade-in {
+           opacity: 0;
+           transform: translateY(30px);
+           animation: fadeInUp 0.8s ease forwards;
+       }
 
         .fade-in:nth-child(1) { animation-delay: 0.1s; }
         .fade-in:nth-child(2) { animation-delay: 0.2s; }
@@ -587,6 +583,7 @@
                 Get Started
             </a>
         </div>
+
     </div>
 
     <div class="stats-section">
@@ -627,6 +624,21 @@
             for personalized recommendations
         </p>
         <a href="choice.html" class="feature-link">
+            <i class="fas fa-arrow-right"></i>
+            Get Started
+        </a>
+    </div>
+
+    <div class="feature-card fade-in">
+        <div class="feature-icon">
+            <i class="fas fa-brain"></i>
+        </div>
+        <h3 class="feature-title">Review Guess Game</h3>
+        <p class="feature-description">
+            Test your Steam game knowledge! Read real user reviews
+            and try to guess which game they belong to
+        </p>
+        <a href="review-guess.html" class="feature-link">
             <i class="fas fa-arrow-right"></i>
             Get Started
         </a>
