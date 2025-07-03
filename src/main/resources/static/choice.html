@@ -777,7 +777,7 @@
 </div>
 
 <script>
-    const baseUrl = 'http://localhost:8080';
+    const baseUrl = 'http://localhost:8888';
     let currentChoiceSession = null;
     let currentRoundIndex = 0;
     let discoveredTags = [];
@@ -957,7 +957,7 @@
             // 임시로 태그 분석을 위해 기본 설정으로 결과 요청
             const tempBody = {
                 sessionId: currentChoiceSession.sessionId,
-                review: 10000,
+                review: 1000,
                 korean_check: null,
                 free_check: null
             };

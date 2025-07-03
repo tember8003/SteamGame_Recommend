@@ -8,12 +8,11 @@ import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.service.CooccurrenceService;
+import SteamGame.recommend.domain.recommendation.service.InMemoryCacheService;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.domain.choice.dto.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,30 +30,27 @@ public class GameChoiceService {
     private final TagRepository tagRepository;
     private final CooccurrenceService cooccurrenceService;
     private final GameService gameService;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final InMemoryCacheService cacheService;
 
     private static final int CHOICE_ROUNDS = 7;
     private static final Duration SESSION_TTL = Duration.ofHours(1);
     private static final String SESSION_KEY_PREFIX = "choice:";
+    private static final int FIXED_REVIEW_COUNT = 5000;
 
     public GameChoiceService(GameRepository gameRepository,
                              TagRepository tagRepository,
                              CooccurrenceService cooccurrenceService,
                              GameService gameService,
-                             RedisTemplate<String, String> redisTemplate,
-                             ObjectMapper objectMapper) {
+                             InMemoryCacheService cacheService) {
         this.gameRepository = gameRepository;
         this.tagRepository = tagRepository;
         this.cooccurrenceService = cooccurrenceService;
         this.gameService = gameService;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
+        this.cacheService = cacheService;
     }
 
     @Transactional(readOnly = true)
     public ChoiceStartResponseDTO startChoice() {
-        final int FIXED_REVIEW_COUNT = 10000;
         final Boolean KOREAN_CHECK = null;
         final Boolean FREE_CHECK = null;
 
@@ -530,28 +526,12 @@ public class GameChoiceService {
     }
 
     private void saveChoiceSession(ChoiceSession session) {
-        try {
-            String key = SESSION_KEY_PREFIX + session.getSessionId();
-            String json = objectMapper.writeValueAsString(session);
-            redisTemplate.opsForValue().set(key, json, SESSION_TTL);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Failed to serialize choice session: {}", session.getSessionId(), e);
-            throw new RuntimeException("Failed to save choice session", e);
-        }
+        String key = SESSION_KEY_PREFIX + session.getSessionId();
+        cacheService.setObject(key, session, SESSION_TTL);
     }
 
     private ChoiceSession getChoiceSession(String sessionId) {
-        try {
-            String key = SESSION_KEY_PREFIX + sessionId;
-            String json = redisTemplate.opsForValue().get(key);
-            if (json == null) {
-                return null;
-            }
-            return objectMapper.readValue(json, ChoiceSession.class);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to deserialize choice session: {}", sessionId, e);
-            return null;
-        }
+        String key = SESSION_KEY_PREFIX + sessionId;
+        return cacheService.getObject(key, ChoiceSession.class).orElse(null);
     }
 }

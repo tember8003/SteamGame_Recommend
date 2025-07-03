@@ -30,26 +30,57 @@ repositories {
 }
 
 dependencies {
-	implementation 'mysql:mysql-connector-java:8.0.33'
+	// Database - H2로 변경
+	implementation 'com.h2database:h2'
+
+	// Spring AI
 	implementation 'org.springframework.ai:spring-ai-core:0.8.1'
 	implementation 'org.springframework.ai:spring-ai-vertex-ai-spring-boot-starter:0.8.0-SNAPSHOT'
+
+	// Spring Boot Core
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
-	implementation "me.paulschwarz:spring-dotenv:3.0.0"
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// Resilience4j
+	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.1.0'
+
+	// Environment Management
+	implementation "me.paulschwarz:spring-dotenv:3.0.0"
+
+	// Rate Limiting
 	implementation 'com.bucket4j:bucket4j-core:8.3.0'
+
+	// Documentation
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
 }
 
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.ai:spring-ai-bom:0.8.1"
+	}
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+bootJar {
+	archiveFileName = 'recommend-0.0.1-SNAPSHOT.jar'
+	enabled = true
+}
+
+jar {
+	enabled = false
 }

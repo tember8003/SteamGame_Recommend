@@ -4,12 +4,10 @@ import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.entity.Review;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.repository.ReviewRepository;
+import SteamGame.recommend.domain.recommendation.service.InMemoryCacheService;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.domain.guess.dto.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,24 +24,21 @@ public class GuessService {
     private final GameRepository gameRepository;
     private final ReviewRepository reviewRepository;
     private final TagRepository tagRepository;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final InMemoryCacheService cacheService;
 
     private static final int TOTAL_ROUNDS = 7;
-    private static final int MIN_REVIEW_COUNT = 5000;
+    private static final int MIN_REVIEW_COUNT = 3500;
     private static final Duration SESSION_TTL = Duration.ofHours(2);
     private static final String SESSION_KEY_PREFIX = "review_guess:";
 
     public GuessService(GameRepository gameRepository,
-                              ReviewRepository reviewRepository,
-                              TagRepository tagRepository,
-                              RedisTemplate<String, String> redisTemplate,
-                              ObjectMapper objectMapper) {
+                        ReviewRepository reviewRepository,
+                        TagRepository tagRepository,
+                        InMemoryCacheService cacheService) {
         this.gameRepository = gameRepository;
         this.reviewRepository = reviewRepository;
         this.tagRepository = tagRepository;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
+        this.cacheService = cacheService;
     }
 
     @Transactional(readOnly = true)
@@ -217,7 +212,7 @@ public class GuessService {
 
     // 단일 라운드 생성
     private ReviewGuessRoundDTO generateSingleRound(Set<Long> usedGameIds) {
-        // 1. 정답 게임 선택 (리뷰 5000개 이상, 아직 사용되지 않은 게임)
+        // 1. 정답 게임 선택 (리뷰 3500개 이상, 아직 사용되지 않은 게임)
         Game correctGame = selectCorrectGame(usedGameIds);
         if (correctGame == null) {
             return null;
@@ -256,7 +251,7 @@ public class GuessService {
         );
     }
 
-    // 정답 게임 선택 (리뷰 5000개 이상)
+    // 정답 게임 선택 (리뷰 3500개 이상)
     private Game selectCorrectGame(Set<Long> usedGameIds) {
         List<Game> candidateGames = gameRepository.findRandomGamesWithoutTags(MIN_REVIEW_COUNT, null, null);
 
@@ -333,27 +328,12 @@ public class GuessService {
 
     // Redis 세션 저장/로드
     private void saveSession(ReviewGuessSession session) {
-        try {
-            String key = SESSION_KEY_PREFIX + session.getSessionId();
-            String json = objectMapper.writeValueAsString(session);
-            redisTemplate.opsForValue().set(key, json, SESSION_TTL);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize review guess session: {}", session.getSessionId(), e);
-            throw new RuntimeException("Failed to save game session", e);
-        }
+        String key = SESSION_KEY_PREFIX + session.getSessionId();
+        cacheService.setObject(key, session, SESSION_TTL);
     }
 
     private ReviewGuessSession getSession(String sessionId) {
-        try {
-            String key = SESSION_KEY_PREFIX + sessionId;
-            String json = redisTemplate.opsForValue().get(key);
-            if (json == null) {
-                return null;
-            }
-            return objectMapper.readValue(json, ReviewGuessSession.class);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to deserialize review guess session: {}", sessionId, e);
-            return null;
-        }
+        String key = SESSION_KEY_PREFIX + sessionId;
+        return cacheService.getObject(key, ReviewGuessSession.class).orElse(null);
     }
 }

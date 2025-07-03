@@ -12,7 +12,7 @@ public class GameMapper {
 
     public static SteamAppDTO convertToSteamDTO(Game game) {
         SteamAppDTO app = new SteamAppDTO();
-        app.setName(game.getName());
+        app.setName(cleanGameName(game.getName()));
         app.setAppid(game.getAppid());
         app.setShortDescription(game.getDescription());
         app.setHeaderImage(game.getImageUrl());
@@ -29,5 +29,20 @@ public class GameMapper {
         dto.setReviewSummary(review.getReviewScore());
         dto.setPositiveRating(review.getPositivePercentage());
         return dto;
+    }
+
+    private static String cleanGameName(String name) {
+        if (name == null) return null;
+
+        return name
+                .replace("짰","®")
+                .replace("Â®", "®")
+                .replace("â„¢", "™")
+                .replace("Â©", "©")
+                .replace("Â", "")
+                .replace("â€™", "'")
+                .replace("â€œ", "\"")
+                .replace("â€", "\"")
+                .trim();
     }
 }

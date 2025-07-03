@@ -127,11 +127,26 @@ public class GameService {
 
         for(Game g : gameList){
             GameSearchResponseDTO dto = new GameSearchResponseDTO();
-            dto.setGameName(g.getName());
+            dto.setGameName(cleanGameName(g.getName()));
             dto.setHeaderImage(g.getImageUrl());
             gameName.add(dto);
         }
 
         return gameName;
+    }
+
+    private static String cleanGameName(String name) {
+        if (name == null) return null;
+
+        return name
+                .replace("짰","®")
+                .replace("Â®", "®")
+                .replace("â„¢", "™")
+                .replace("Â©", "©")
+                .replace("Â", "")
+                .replace("â€™", "'")
+                .replace("â€œ", "\"")
+                .replace("â€", "\"")
+                .trim();
     }
 }

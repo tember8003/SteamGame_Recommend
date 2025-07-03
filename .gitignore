@@ -45,3 +45,6 @@ __pycache__/
 /dist/
 /nbdist/
 /.nb-gradle/
+
+# API Keys
+api-keys.json

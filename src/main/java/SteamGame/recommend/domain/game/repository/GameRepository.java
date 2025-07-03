@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.game.repository;
 
 import SteamGame.recommend.domain.game.entity.Game;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,7 +34,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
         )
     GROUP BY g.id
     HAVING (:tagCount = 0 OR COUNT(DISTINCT t.name) = :tagCount)
-    ORDER BY RAND()
+    ORDER BY RANDOM()
     LIMIT 10
 """, nativeQuery = true)
     List<Game> findRandomGameByTags(@Param("tagNames") List<String> tagNames,
@@ -68,7 +68,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     WHERE r.total_reviews >= :review
         AND (:korean_check IS NULL OR g.korean_support = :korean_check)
         AND (:free IS NULL OR g.is_free = :free)
-    ORDER BY RAND()
+    ORDER BY RANDOM()
     LIMIT 50
 """, nativeQuery = true)
     List<Game> findRandomGamesWithoutTags(@Param("review") int review,
