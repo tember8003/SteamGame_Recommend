@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-    <title>Game Recommend UI - Home</title>
+    <title>Game Recommend - Home</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -28,6 +28,7 @@
             --shadow: rgba(0, 0, 0, 0.3);
             --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
             --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #f59e0b 100%);
+            --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #10b981 100%);
             --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
         }
 
@@ -35,6 +36,11 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        html, body {
+            height: 100vh;
+            overflow: hidden;
         }
 
         body {
@@ -45,124 +51,185 @@
                     radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
             font-family: 'Inter', sans-serif;
             color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
+            line-height: 1.4;
         }
 
-        .container {
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 20px;
-            position: relative;
-            z-index: 1;
         }
 
-        .hero-section {
-            text-align: center;
-            padding: 80px 0;
+        .header {
+            height: 50px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-card);
+            border-bottom: 1px solid var(--border);
             position: relative;
         }
 
-        .hero-section::before {
+        .header::before {
             content: '';
             position: absolute;
             top: 0;
             left: 50%;
             transform: translateX(-50%);
             width: 200px;
-            height: 200px;
+            height: 80px;
             background: var(--gradient-primary);
             border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.3;
+            filter: blur(40px);
+            opacity: 0.2;
             z-index: -1;
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             background: var(--gradient-primary);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
             text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
-            animation: glow 2s ease-in-out infinite alternate;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        @keyframes glow {
-            from {
-                text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-            }
-            to {
-                text-shadow: 0 0 40px rgba(0, 212, 255, 0.5), 0 0 60px rgba(124, 58, 237, 0.3);
-            }
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
-        .hero-subtitle {
-            font-size: 1.4rem;
+        .content-description {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .content-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .content-subtitle {
+            font-size: 0.75rem;
             color: var(--text-secondary);
-            margin-bottom: 40px;
-            font-weight: 400;
+            max-width: 450px;
+            margin: 0 auto;
         }
 
-        .hero-description {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 60px;
-            line-height: 1.7;
+        .features-layout {
+            flex: 0 1 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            min-height: 0;
+            justify-content: center;
+            align-items: start;
+        }
+
+        .recommendations-section {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            max-height: fit-content;
+        }
+
+        .games-section {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            max-height: fit-content;
+        }
+
+        .section-header {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px 6px 0 0;
+            padding: 6px 10px;
+            text-align: center;
+            border-bottom: none;
+            flex-shrink: 0;
         }
 
         .section-title {
-            text-align: center;
-            font-size: 2.5rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            background: var(--gradient-primary);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 60px 0 40px;
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
-        .section-subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 50px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Recommendation Cards Grid */
-        .recommendation-grid {
+        .recommendations-grid {
+            flex: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 80px;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, minmax(120px, 140px));
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0 0 6px 6px;
+            border-top: none;
+            padding: 15px 15px 10px 15px;
+            min-height: 0;
+            place-items: center;
+            align-content: start;
         }
 
-        /* Games & Fun Cards Grid */
+        .recommendations-grid .feature-card:nth-child(5) {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
         .games-grid {
+            flex: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 60px;
+            grid-template-rows: repeat(2, minmax(120px, 140px));
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0 0 6px 6px;
+            border-top: none;
+            padding: 15px 15px 10px 15px;
+            min-height: 0;
+            place-items: center;
+            align-content: start;
         }
 
         .feature-card {
             background: var(--gradient-card);
-            border-radius: 20px;
+            border-radius: 8px;
             border: 1px solid var(--border);
-            padding: 40px 30px;
+            padding: 10px;
             text-align: center;
-            transition: all 0.4s ease;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(10px);
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            width: 100%;
+            max-width: 200px;
+            height: 100%;
+            max-height: 130px;
         }
 
         .feature-card::before {
@@ -171,7 +238,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background: var(--gradient-primary);
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -182,9 +249,9 @@
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-2px);
             border-color: var(--border-hover);
-            box-shadow: 0 25px 50px var(--shadow);
+            box-shadow: 0 8px 20px var(--shadow);
         }
 
         .feature-card.secondary::before {
@@ -192,22 +259,23 @@
         }
 
         .feature-card.accent::before {
-            background: linear-gradient(135deg, #f59e0b 0%, #10b981 100%);
+            background: var(--gradient-accent);
         }
 
         .feature-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 25px;
+            width: 28px;
+            height: 28px;
+            margin: 0 auto 6px;
             background: var(--gradient-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 0.8rem;
             color: var(--bg-primary);
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .feature-card.secondary .feature-icon {
@@ -215,7 +283,7 @@
         }
 
         .feature-card.accent .feature-icon {
-            background: linear-gradient(135deg, #f59e0b 0%, #10b981 100%);
+            background: var(--gradient-accent);
         }
 
         .feature-icon::before {
@@ -234,37 +302,49 @@
             100% { transform: rotate(360deg); }
         }
 
+        .feature-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 0;
+        }
+
         .feature-title {
-            font-size: 1.5rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 15px;
+            margin-bottom: 4px;
+            line-height: 1.2;
         }
 
         .feature-description {
-            font-size: 1rem;
+            font-size: 0.65rem;
             color: var(--text-secondary);
-            margin-bottom: 25px;
-            line-height: 1.6;
+            line-height: 1.3;
+            flex-grow: 1;
         }
 
-        .feature-link {
+        .feature-button {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 3px;
             background: var(--bg-secondary);
             color: var(--primary);
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 4px 8px;
+            border-radius: 15px;
             border: 1px solid var(--border);
             font-weight: 500;
+            font-size: 0.65rem;
             transition: all 0.3s ease;
+            margin-top: 6px;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
-        .feature-link::before {
+        .feature-button::before {
             content: '';
             position: absolute;
             top: 0;
@@ -276,15 +356,13 @@
             z-index: -1;
         }
 
-        .feature-link:hover::before {
+        .feature-card:hover .feature-button::before {
             left: 0;
         }
 
-        .feature-link:hover {
+        .feature-card:hover .feature-button {
             color: var(--bg-primary);
             border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
         }
 
         .floating-elements {
@@ -294,17 +372,17 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: -1;
+            z-index: 1;
         }
 
         .floating-element {
             position: absolute;
-            opacity: 0.1;
+            opacity: 0.03;
             animation: float 6s ease-in-out infinite;
         }
 
         .floating-element:nth-child(1) {
-            top: 10%;
+            top: 15%;
             left: 10%;
             animation-delay: 0s;
         }
@@ -326,113 +404,21 @@
                 transform: translateY(0px);
             }
             50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        .cta-section {
-            margin-top: 80px;
-            text-align: center;
-            padding: 60px 40px;
-            background: var(--gradient-primary);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 50%);
-        }
-
-        .cta-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--bg-primary);
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-description {
-            font-size: 1.2rem;
-            color: var(--bg-primary);
-            opacity: 0.9;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--bg-primary);
-            color: var(--primary);
-            text-decoration: none;
-            padding: 18px 36px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.1rem;
-            }
-
-            .recommendation-grid,
-            .games-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .feature-card {
-                padding: 30px 20px;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .cta-title {
-                font-size: 2rem;
-            }
-
-            .container {
-                padding: 20px 15px;
+                transform: translateY(-10px);
             }
         }
 
         .fade-in {
             opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.8s ease forwards;
+            transform: translateY(10px);
+            animation: fadeInUp 0.4s ease forwards;
         }
 
-        .fade-in:nth-child(1) { animation-delay: 0.1s; }
-        .fade-in:nth-child(2) { animation-delay: 0.2s; }
-        .fade-in:nth-child(3) { animation-delay: 0.3s; }
-        .fade-in:nth-child(4) { animation-delay: 0.4s; }
-        .fade-in:nth-child(5) { animation-delay: 0.5s; }
-        .fade-in:nth-child(6) { animation-delay: 0.6s; }
+        .fade-in:nth-child(1) { animation-delay: 0.05s; }
+        .fade-in:nth-child(2) { animation-delay: 0.1s; }
+        .fade-in:nth-child(3) { animation-delay: 0.15s; }
+        .fade-in:nth-child(4) { animation-delay: 0.2s; }
+        .fade-in:nth-child(5) { animation-delay: 0.25s; }
 
         @keyframes fadeInUp {
             to {
@@ -440,168 +426,230 @@
                 transform: translateY(0);
             }
         }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1000px) {
+            .features-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+
+            .recommendations-grid {
+                grid-template-columns: repeat(5, 1fr);
+                grid-template-rows: 1fr;
+            }
+
+            .recommendations-grid .feature-card:nth-child(5) {
+                grid-column: 5;
+                grid-row: 1;
+            }
+
+            .games-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .main-content {
+                padding: 10px;
+            }
+
+            .hero-title {
+                font-size: 1.2rem;
+            }
+
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(5, 1fr);
+            }
+
+            .recommendations-grid .feature-card:nth-child(5) {
+                grid-column: auto;
+                grid-row: auto;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
 <div class="floating-elements">
-    <i class="fas fa-gamepad floating-element" style="font-size: 3rem;"></i>
-    <i class="fas fa-trophy floating-element" style="font-size: 2.5rem;"></i>
-    <i class="fas fa-star floating-element" style="font-size: 2rem;"></i>
+    <i class="fas fa-gamepad floating-element" style="font-size: 2rem;"></i>
+    <i class="fas fa-trophy floating-element" style="font-size: 1.5rem;"></i>
+    <i class="fas fa-star floating-element" style="font-size: 1.2rem;"></i>
 </div>
 
-<div class="container">
-    <div class="hero-section">
+<div class="app-container">
+    <header class="header">
         <h1 class="hero-title">
             <i class="fas fa-gamepad"></i>
             Game Recommend
         </h1>
-        <p class="hero-subtitle">Game Recommendation System</p>
-        <p class="hero-description">
-            Analyze your preferences to find the perfect games for you.
-            Get accurate recommendations from thousands of Steam games.
-        </p>
-    </div>
+    </header>
 
-    <div class="recommendation-grid">
-        <div class="feature-card fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-dice"></i>
-            </div>
-            <h3 class="feature-title">Tag-Based Random</h3>
-            <p class="feature-description">
-                Select your preferred game genres and styles
-                to discover perfect games randomly
+    <main class="main-content">
+        <div class="content-description">
+            <h2 class="content-title">Find Your Perfect Game</h2>
+            <p class="content-subtitle">
+                Discover amazing games tailored to your preferences through multiple recommendation methods
             </p>
-            <a href="random.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Get Started
-            </a>
         </div>
 
-        <div class="feature-card secondary fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-keyboard"></i>
+        <div class="features-layout">
+            <!-- 추천 기능들 (왼쪽) -->
+            <div class="recommendations-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-robot"></i>
+                        Game Recommendations
+                    </h3>
+                </div>
+                <div class="recommendations-grid">
+                    <a href="random.html" class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-dice"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Tag-Based Random</h3>
+                            <p class="feature-description">
+                                Select preferred genres and styles to discover games randomly
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+
+                    <a href="input.html" class="feature-card secondary fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Custom Input</h3>
+                            <p class="feature-description">
+                                Enter gaming preferences for accurate tailored recommendations
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+
+                    <a href="profile.html" class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Profile-Based</h3>
+                            <p class="feature-description">
+                                Analyze your gaming profile to match your playing style
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+
+                    <a href="recent.html" class="feature-card secondary fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Recent Play Based</h3>
+                            <p class="feature-description">
+                                Analyze last 2 weeks gaming patterns for perfect recommendations
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+
+                    <a href="similar.html" class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Similar Games</h3>
+                            <p class="feature-description">
+                                Discover games with similar tags to your favorites
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+                </div>
             </div>
-            <h3 class="feature-title">Custom Input</h3>
-            <p class="feature-description">
-                Enter your own gaming preferences directly
-                for more accurate and tailored recommendations
-            </p>
-            <a href="input.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Get Started
-            </a>
-        </div>
 
-        <div class="feature-card fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-user"></i>
+            <!-- 게임 기능들 (오른쪽) -->
+            <div class="games-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-gamepad"></i>
+                        Interactive Games
+                    </h3>
+                </div>
+                <div class="games-grid">
+                    <a href="choice.html" class="feature-card accent fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Game Choice</h3>
+                            <p class="feature-description">
+                                Choose between games in 7 rounds to discover your preferences
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Play
+                        </div>
+                    </a>
+
+                    <a href="review-guess.html" class="feature-card accent fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Review Guess Game</h3>
+                            <p class="feature-description">
+                                Read user reviews and guess which Steam game they belong to
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Play
+                        </div>
+                    </a>
+                </div>
             </div>
-            <h3 class="feature-title">Profile-Based</h3>
-            <p class="feature-description">
-                Analyze your gaming profile to recommend
-                games that match your playing style
-            </p>
-            <a href="profile.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Get Started
-            </a>
         </div>
-
-        <div class="feature-card secondary fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-clock"></i>
-            </div>
-            <h3 class="feature-title">Recent Play Based</h3>
-            <p class="feature-description">
-                Analyze your gaming patterns from the last 2 weeks
-                to find games perfect for you right now
-            </p>
-            <a href="recent.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Get Started
-            </a>
-        </div>
-
-        <div class="feature-card fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-sitemap"></i>
-            </div>
-            <h3 class="feature-title">Similar Games</h3>
-            <p class="feature-description">
-                Discover new games with similar tags
-                to your favorite games
-            </p>
-            <a href="similar.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Get Started
-            </a>
-        </div>
-    </div>
-
-    <!-- Games & Fun Section -->
-    <div class="section-title">🎲 Games & Fun</div>
-    <div class="section-subtitle">
-        Interactive gaming experiences to discover your preferences
-    </div>
-
-    <div class="games-grid">
-        <div class="feature-card accent fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-heart"></i>
-            </div>
-            <h3 class="feature-title">Game Choice</h3>
-            <p class="feature-description">
-                Choose between games in 7 rounds and discover your gaming preferences
-                for personalized recommendations
-            </p>
-            <a href="choice.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Play Now
-            </a>
-        </div>
-
-        <div class="feature-card accent fade-in">
-            <div class="feature-icon">
-                <i class="fas fa-brain"></i>
-            </div>
-            <h3 class="feature-title">Review Guess Game</h3>
-            <p class="feature-description">
-                Test your Steam game knowledge! Read real user reviews
-                and try to guess which game they belong to
-            </p>
-            <a href="review-guess.html" class="feature-link">
-                <i class="fas fa-arrow-right"></i>
-                Play Now
-            </a>
-        </div>
-    </div>
-
-    <div class="cta-section">
-        <h2 class="cta-title">Ready to Find Your Next Favorite Game?</h2>
-        <p class="cta-description">
-            Start with any recommendation method and discover amazing games tailored just for you
-        </p>
-        <a href="random.html" class="cta-button">
-            <i class="fas fa-rocket"></i>
-            Start Exploring
-        </a>
-    </div>
+    </main>
 </div>
 
 <script>
     // Smooth animation on page load
     window.addEventListener('load', () => {
-        // Card animation on scroll
+        // Card animation observer
         const observerOptions = {
             threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            rootMargin: '0px 0px -20px 0px'
         };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.8s ease forwards';
+                    entry.target.style.animation = 'fadeInUp 0.4s ease forwards';
                 }
             });
         }, observerOptions);
@@ -611,7 +659,7 @@
             observer.observe(card);
         });
 
-        // 3D effect on card hover
+        // 3D hover effect on cards
         document.querySelectorAll('.feature-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
@@ -621,10 +669,10 @@
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
 
-                const rotateX = (y - centerY) / centerY * -10;
-                const rotateY = (x - centerX) / centerX * 10;
+                const rotateX = (y - centerY) / centerY * -1.5;
+                const rotateY = (x - centerX) / centerX * 1.5;
 
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
             });
 
             card.addEventListener('mouseleave', () => {
@@ -632,19 +680,58 @@
             });
         });
 
-        // Smooth link transition
+        // Smooth page transition
         document.querySelectorAll('a[href$=".html"]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const href = link.getAttribute('href');
 
-                // Fade out effect
-                document.body.style.opacity = '0';
-                document.body.style.transition = 'opacity 0.3s ease';
+                // Add click animation
+                link.style.transform = 'scale(0.95)';
 
                 setTimeout(() => {
-                    window.location.href = href;
-                }, 300);
+                    // Fade out effect
+                    document.body.style.opacity = '0';
+                    document.body.style.transition = 'opacity 0.2s ease';
+
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 200);
+                }, 100);
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const cards = document.querySelectorAll('.feature-card');
+            const currentFocus = document.activeElement;
+            const currentIndex = Array.from(cards).indexOf(currentFocus);
+
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = (currentIndex + 1) % cards.length;
+                cards[nextIndex].focus();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = (currentIndex - 1 + cards.length) % cards.length;
+                cards[prevIndex].focus();
+            } else if (e.key === 'Enter' && currentFocus.classList.contains('feature-card')) {
+                e.preventDefault();
+                currentFocus.click();
+            }
+        });
+
+        // Make cards focusable for keyboard navigation
+        document.querySelectorAll('.feature-card').forEach((card, index) => {
+            card.setAttribute('tabindex', index === 0 ? '0' : '-1');
+
+            card.addEventListener('focus', () => {
+                card.style.outline = '2px solid var(--primary)';
+                card.style.outlineOffset = '2px';
+            });
+
+            card.addEventListener('blur', () => {
+                card.style.outline = 'none';
             });
         });
     });

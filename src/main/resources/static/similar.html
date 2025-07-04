@@ -36,6 +36,11 @@
             padding: 0;
         }
 
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+        }
+
         body {
             background: var(--bg-primary);
             background-image:
@@ -44,38 +49,40 @@
             font-family: 'Inter', sans-serif;
             color: var(--text-primary);
             line-height: 1.6;
-            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 0;
+            height: 80px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
         }
 
         .header h1 {
-            font-size: 3rem;
+            font-size: 1.8rem;
             font-weight: 700;
             background: var(--gradient-primary);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
         }
 
         .back-button {
@@ -85,68 +92,86 @@
             background: var(--bg-card);
             color: var(--primary);
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 8px 16px;
+            border-radius: 8px;
             border: 1px solid var(--border);
             transition: all 0.3s ease;
             font-weight: 500;
-            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
         }
 
         .back-button:hover {
             background: var(--bg-tertiary);
             border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel {
+            width: 450px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .section-card {
             background: var(--gradient-card);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 30px;
             backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: relative;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            margin-bottom: 30px;
         }
 
-        .section-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .section-card:hover::before {
-            opacity: 1;
-        }
-
-        .section-card:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px var(--shadow);
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .section-title {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.3rem;
+            gap: 10px;
+            font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 20px;
+            margin: 0;
         }
 
         .section-title i {
             color: var(--primary);
-            font-size: 1.1rem;
+            font-size: 1rem;
+        }
+
+        .search-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .warning-text {
@@ -155,24 +180,22 @@
             gap: 8px;
             background: rgba(245, 158, 11, 0.1);
             border: 1px solid var(--warning);
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 12px;
             color: var(--warning);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .input-group {
-            margin-bottom: 20px;
             position: relative;
         }
 
         .input-text {
             width: 100%;
-            padding: 16px 20px;
+            padding: 12px 16px;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             color: var(--text-primary);
             font-size: 1rem;
             transition: all 0.3s ease;
@@ -182,7 +205,7 @@
             outline: none;
             border-color: var(--primary);
             background: var(--bg-tertiary);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
         }
 
         .input-text::placeholder {
@@ -197,7 +220,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-top: none;
-            border-radius: 0 0 12px 12px;
+            border-radius: 0 0 8px 8px;
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
@@ -208,7 +231,7 @@
         .autocomplete-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            padding: 10px 12px;
             cursor: pointer;
             transition: background 0.2s ease;
             border-bottom: 1px solid var(--border);
@@ -219,12 +242,12 @@
         }
 
         .autocomplete-item img {
-            width: 40px;
-            height: 22px;
+            width: 32px;
+            height: 18px;
             object-fit: cover;
-            margin-right: 12px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            margin-right: 10px;
+            border-radius: 3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
         .autocomplete-item:hover {
@@ -233,61 +256,59 @@
 
         .autocomplete-item span {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
-        .controls {
-            background: var(--bg-secondary);
+        .controls-section {
+            background: var(--gradient-card);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
             border: 1px solid var(--border);
+            padding: 20px;
         }
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            align-items: center;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .control-item {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
+            padding: 10px 12px;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
 
         .control-item:hover {
             border-color: var(--border-hover);
-            background: var(--bg-card);
         }
 
         .control-item label {
             font-weight: 500;
             color: var(--text-secondary);
             cursor: pointer;
-            flex: 1;
-        }
-
-        .control-item input[type="number"] {
-            width: 80px;
-            padding: 8px 12px;
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
             font-size: 0.9rem;
         }
 
+        .control-item input[type="number"] {
+            width: 60px;
+            padding: 4px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
         .control-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             accent-color: var(--primary);
             cursor: pointer;
         }
@@ -297,25 +318,19 @@
             background: var(--gradient-primary);
             color: var(--bg-primary);
             border: none;
-            border-radius: 12px;
-            padding: 16px 32px;
-            font-size: 1.1rem;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .recommend-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(0, 212, 255, 0.4);
-        }
-
-        .recommend-button:active {
-            transform: translateY(0);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
         }
 
         .recommend-button.loading {
@@ -325,8 +340,8 @@
 
         .recommend-button .loading-spinner {
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border: 2px solid transparent;
             border-top: 2px solid currentColor;
             border-radius: 50%;
@@ -344,179 +359,121 @@
         }
 
         .result-section {
-            margin-top: 40px;
+            flex: 1;
+            background: var(--gradient-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .result-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .result-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
         }
 
         .game-card {
-            background: var(--gradient-card);
-            border-radius: 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 30px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 16px;
             transition: all 0.3s ease;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .game-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .game-card:hover::before {
-            opacity: 1;
         }
 
         .game-card:hover {
             border-color: var(--border-hover);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px var(--shadow);
+            transform: translateY(-2px);
         }
 
         .game-content {
             display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 30px;
+            grid-template-columns: 160px 1fr;
+            gap: 20px;
             align-items: start;
         }
 
         .game-image {
-            position: relative;
+            border-radius: 8px;
             overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
 
         .game-image img {
             width: 100%;
             height: auto;
             display: block;
-            transition: transform 0.3s ease;
-        }
-
-        .game-image:hover img {
-            transform: scale(1.05);
         }
 
         .game-info h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.2rem;
+            font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .game-info .app-id {
             color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 16px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
         }
 
         .game-info .description {
             color: var(--text-secondary);
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        /* 리뷰 정보 스타일 */
-        .review-section {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid var(--border);
-        }
-
-        .review-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
             margin-bottom: 16px;
         }
 
-        .review-header h4 {
-            color: var(--primary);
-            font-size: 1.1rem;
-            margin: 0;
+        .review-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            border: 1px solid var(--border);
         }
 
         .review-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .stat-item {
             background: var(--bg-tertiary);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 6px;
             text-align: center;
             border: 1px solid var(--border);
         }
 
         .stat-value {
             display: block;
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--primary);
         }
 
         .stat-label {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .review-texts {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .review-text-card {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .review-text-card h5 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-
-        .review-text-card.positive h5 {
-            color: var(--success);
-        }
-
-        .review-text-card.negative h5 {
-            color: var(--error);
-        }
-
-        .review-text-card p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.5;
+            margin-top: 2px;
         }
 
         .rating-bar {
             background: var(--bg-tertiary);
             border-radius: 20px;
-            height: 8px;
+            height: 6px;
             overflow: hidden;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .rating-fill {
@@ -529,68 +486,61 @@
         .steam-link {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: var(--gradient-primary);
+            gap: 6px;
+            background: var(--primary);
             color: var(--bg-primary);
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
             transition: all 0.3s ease;
         }
 
         .steam-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0, 212, 255, 0.3);
         }
 
         .used-tags {
             background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
             border: 1px solid var(--border);
         }
 
         .used-tags h4 {
             color: var(--primary);
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-size: 1rem;
         }
 
         .used-tags .tag {
             display: inline-block;
             background: var(--primary);
             color: var(--bg-primary);
-            padding: 6px 12px;
-            border-radius: 20px;
-            margin: 4px 8px 4px 0;
-            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin: 2px 4px 2px 0;
+            font-size: 0.75rem;
             font-weight: 500;
         }
 
         .no-results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
             text-align: center;
-            padding: 60px 20px;
-            background: var(--gradient-card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
+            color: var(--text-muted);
         }
 
         .no-results i {
-            font-size: 4rem;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        .no-results h3 {
-            font-size: 1.5rem;
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-        }
-
-        .no-results p {
-            color: var(--text-muted);
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
         .loading-overlay {
@@ -617,94 +567,53 @@
         }
 
         .loading-content .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid var(--border);
-            border-top: 4px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 16px;
         }
 
-        /* 리뷰 텍스트 더보기 기능 스타일 */
-        .review-text-content {
-            position: relative;
+        /* 스크롤바 스타일링 */
+        .result-content::-webkit-scrollbar,
+        .autocomplete-items::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .review-text-content.collapsed .full-text {
-            display: none;
+        .result-content::-webkit-scrollbar-track,
+        .autocomplete-items::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
         }
 
-        .review-text-content.expanded .short-text {
-            display: none;
+        .result-content::-webkit-scrollbar-thumb,
+        .autocomplete-items::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
         }
 
-        .show-more-btn, .show-less-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            padding: 4px 0;
-            text-decoration: underline;
-            transition: color 0.3s ease;
+        .result-content::-webkit-scrollbar-thumb:hover,
+        .autocomplete-items::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
         }
 
-        .show-more-btn:hover, .show-less-btn:hover {
-            color: var(--primary-dark);
-        }
-
-        .ellipsis {
-            color: var(--text-muted);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
             }
 
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .controls-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
+            .left-panel {
+                width: 100%;
+                flex-shrink: 1;
+                max-height: 300px;
             }
 
             .game-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
+                grid-template-columns: 120px 1fr;
+                gap: 16px;
             }
-
-            .game-image {
-                max-width: 300px;
-                margin: 0 auto;
-            }
-
-            .review-texts {
-                grid-template-columns: 1fr;
-            }
-
-            .review-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .rating-bar {
-            background: var(--bg-tertiary);
-            border-radius: 20px;
-            height: 8px;
-            overflow: hidden;
-            margin: 8px 0;
-        }
-
-        .rating-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
-            border-radius: 20px;
-            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -717,62 +626,85 @@
     </div>
 </div>
 
-<div class="container">
-    <div class="header">
-        <h1><i class="fas fa-puzzle-piece"></i> Similar Game Recommendation</h1>
-        <p class="subtitle">Get recommendations for games with similar tags to your favorite games!</p>
-        <a href="index.html" class="back-button">
-            <i class="fas fa-arrow-left"></i>
-            Back to Home
-        </a>
-    </div>
-
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-search"></i>
-            Game Search & Recommendation
-        </h2>
-
-        <div class="warning-text">
-            <i class="fas fa-info-circle"></i>
-            Enter a game name and an autocomplete list will appear. Please select the exact game.
+<div class="app-container">
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                Back to Home
+            </a>
+            <h1><i class="fas fa-puzzle-piece"></i> Similar Game Finder</h1>
         </div>
+    </header>
 
-        <div class="input-group">
-            <input
-                    type="text"
-                    id="similar-name"
-                    class="input-text"
-                    placeholder="Enter the name of the game you want recommendations for"
-                    autocomplete="off"
-            />
-            <div id="autocomplete-items" class="autocomplete-items"></div>
-        </div>
-
-        <div class="controls">
-            <div class="controls-grid">
-                <div class="control-item">
-                    <label for="input-review">Review Count</label>
-                    <input type="number" id="input-review" value="0" min="0" max="1000000" />
+    <main class="main-content">
+        <div class="left-panel">
+            <div class="section-card search-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-search"></i>
+                        Game Search
+                    </h2>
                 </div>
-                <div class="control-item">
-                    <label for="input-korean">Korean Support Only</label>
-                    <input type="checkbox" id="input-korean" />
-                </div>
-                <div class="control-item">
-                    <label for="input-free">Free Games Only</label>
-                    <input type="checkbox" id="input-free" />
+                <div class="search-content">
+                    <div class="warning-text">
+                        <i class="fas fa-info-circle"></i>
+                        Enter a game name and select from the autocomplete list
+                    </div>
+                    <div class="input-group">
+                        <input
+                                type="text"
+                                id="similar-name"
+                                class="input-text"
+                                placeholder="Enter game name for recommendations"
+                                autocomplete="off"
+                        />
+                        <div id="autocomplete-items" class="autocomplete-items"></div>
+                    </div>
                 </div>
             </div>
-            <button id="btn-similar" class="recommend-button">
-                <span class="loading-spinner"></span>
-                <i class="fas fa-search"></i>
-                Get Recommendations
-            </button>
-        </div>
-    </div>
 
-    <div id="similar-result" class="result-section"></div>
+            <div class="controls-section">
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <label for="input-review">Min Reviews</label>
+                        <input type="number" id="input-review" value="0" min="0" max="1000000" />
+                    </div>
+                    <div class="control-item">
+                        <label for="input-korean">Korean Only</label>
+                        <input type="checkbox" id="input-korean" />
+                    </div>
+                    <div class="control-item">
+                        <label for="input-free">Free Only</label>
+                        <input type="checkbox" id="input-free" />
+                    </div>
+                </div>
+                <button id="btn-similar" class="recommend-button">
+                    <span class="loading-spinner"></span>
+                    <i class="fas fa-search"></i>
+                    Get Recommendations
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="result-section">
+                <div class="result-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-star"></i>
+                        Similar Games
+                    </h2>
+                </div>
+                <div class="result-content" id="similar-result">
+                    <div class="no-results">
+                        <i class="fas fa-puzzle-piece"></i>
+                        <h3>Ready to find similar games</h3>
+                        <p>Search for a game to get recommendations based on similar tags and features!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
 
 <script>
@@ -875,22 +807,14 @@
             if (!res.ok) throw new Error('Recommendation request failed');
             const data = await res.json();
 
-            // Wait briefly before showing results (UX improvement)
             setTimeout(() => {
                 renderGameResult(data);
-
-                // Scroll to results
-                document.getElementById('similar-result').scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
             }, 500);
 
         } catch (error) {
             console.error('Error:', error);
             renderErrorResult();
         } finally {
-            // End loading state
             setTimeout(() => {
                 button.classList.remove('loading');
                 loadingOverlay.classList.remove('show');
@@ -964,29 +888,13 @@
         });
 
         container.innerHTML = html;
-
-        // Card animation
-        const cards = container.querySelectorAll('.game-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 200);
-        });
     }
 
     function renderReviewSection(review) {
         if (!review || Object.keys(review).length === 0) {
             return `
         <div class="review-section">
-            <div class="review-header">
-                <i class="fas fa-star"></i>
-                <h4>Review Information</h4>
-            </div>
-            <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+            <p style="color: var(--text-muted); text-align: center;">
                 No review data available
             </p>
         </div>
@@ -1000,104 +908,29 @@
 
         return `
     <div class="review-section">
-        <div class="review-header">
-            <i class="fas fa-star"></i>
-            <h4>Review Information</h4>
-        </div>
-
         <div class="review-stats">
             <div class="stat-item">
                 <span class="stat-value">${positiveRating}%</span>
-                <div class="stat-label">Positive Rating</div>
+                <div class="stat-label">Positive</div>
                 <div class="rating-bar">
                     <div class="rating-fill" style="width: ${positiveRating}%"></div>
                 </div>
             </div>
             <div class="stat-item">
                 <span class="stat-value">${reviewSummary}</span>
-                <div class="stat-label">Overall Rating</div>
+                <div class="stat-label">Rating</div>
             </div>
             <div class="stat-item">
                 <span class="stat-value">${positiveHours}h</span>
-                <div class="stat-label">Positive Hours</div>
+                <div class="stat-label">Pos Hours</div>
             </div>
             <div class="stat-item">
                 <span class="stat-value">${negativeHours}h</span>
-                <div class="stat-label">Negative Hours</div>
+                <div class="stat-label">Neg Hours</div>
             </div>
         </div>
-
-        ${(review.positiveReview || review.negativeReview) ? `
-        <div class="review-texts">
-            ${review.positiveReview ? `
-            <div class="review-text-card positive">
-                <h5>
-                    <i class="fas fa-thumbs-up"></i>
-                    Positive Review
-                </h5>
-                ${renderReviewText(review.positiveReview, 'positive')}
-            </div>
-            ` : ''}
-
-            ${review.negativeReview ? `
-            <div class="review-text-card negative">
-                <h5>
-                    <i class="fas fa-thumbs-down"></i>
-                    Negative Review
-                </h5>
-                ${renderReviewText(review.negativeReview, 'negative')}
-            </div>
-            ` : ''}
-        </div>
-        ` : ''}
     </div>
     `;
-    }
-
-    function renderReviewText(text, type) {
-        if (!text) return '';
-
-        const maxLength = 150; // 글자 수 제한
-        const isLong = text.length > maxLength;
-        const shortText = text.substring(0, maxLength);
-        const uniqueId = `review-${type}-${Math.random().toString(36).substr(2, 9)}`;
-
-        if (!isLong) {
-            return `<p>${text}</p>`;
-        }
-
-        return `
-          <div class="review-text-content collapsed" id="${uniqueId}">
-            <p>
-              <span class="short-text">${shortText}<span class="ellipsis">...</span></span>
-              <span class="full-text">${text}</span>
-            </p>
-            <button class="show-more-btn" onclick="toggleReviewText('${uniqueId}')">
-              <i class="fas fa-chevron-down"></i> Show more
-            </button>
-            <button class="show-less-btn" onclick="toggleReviewText('${uniqueId}')" style="display: none;">
-              <i class="fas fa-chevron-up"></i> Show less
-            </button>
-          </div>
-        `;
-    }
-
-    function toggleReviewText(id) {
-        const container = document.getElementById(id);
-        const showMoreBtn = container.querySelector('.show-more-btn');
-        const showLessBtn = container.querySelector('.show-less-btn');
-
-        if (container.classList.contains('collapsed')) {
-            container.classList.remove('collapsed');
-            container.classList.add('expanded');
-            showMoreBtn.style.display = 'none';
-            showLessBtn.style.display = 'inline-block';
-        } else {
-            container.classList.remove('expanded');
-            container.classList.add('collapsed');
-            showMoreBtn.style.display = 'inline-block';
-            showLessBtn.style.display = 'none';
-        }
     }
 
     function renderErrorResult() {
@@ -1110,20 +943,6 @@
             </div>
         `;
     }
-
-    // Page load animation
-    window.addEventListener('load', () => {
-        const elements = document.querySelectorAll('.section-card');
-        elements.forEach((el, index) => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            setTimeout(() => {
-                el.style.transition = 'all 0.6s ease';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            }, index * 200);
-        });
-    });
 </script>
 </body>
 </html>

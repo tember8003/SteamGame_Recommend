@@ -6,11 +6,13 @@
   "author": "Your Name",
   "scripts": {
     "start": "electron .",
+    "debug": "electron . --enable-logging --verbose",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
     "dist": "electron-builder --publish=never",
     "copy-jar": "copy ..\\build\\libs\\recommend-0.0.1-SNAPSHOT.jar resources\\",
-    "full-build": "npm run copy-jar && npm run dist"
+    "full-build": "npm run copy-jar && npm run dist",
+    "clean": "rmdir /s /q dist node_modules\\.cache"
   },
   "build": {
     "appId": "com.steamgame.recommend",
@@ -30,24 +32,30 @@
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!dist",
+      "!main-backup.js"
     ],
     "extraResources": [
       {
-        "from": "resources/",
-        "to": "./",
-        "filter": ["*.jar"]
+        "from": "resources/recommend-0.0.1-SNAPSHOT.jar",
+        "to": "recommend-0.0.1-SNAPSHOT.jar"
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
       "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
     }
   },
   "devDependencies": {

@@ -14,6 +14,18 @@ let apiKeys = {
 console.log('=== App Starting ===');
 console.log('App path:', app.getAppPath());
 console.log('Is packaged:', app.isPackaged);
+console.log('Working directory:', process.cwd());
+
+// 올바른 앱 루트 경로 얻기 (asar 문제 해결)
+const getAppRootPath = () => {
+    if (app.isPackaged) {
+        return process.resourcesPath;
+    } else {
+        return process.cwd(); // 개발 환경에서는 process.cwd() 사용
+    }
+};
+
+console.log('App root path:', getAppRootPath());
 
 // API 키 파일 경로
 const getApiKeysPath = () => {
@@ -25,10 +37,11 @@ const getApiKeysPath = () => {
 function loadApiKeys() {
     try {
         const apiKeysPath = getApiKeysPath();
+        console.log('Looking for API keys at:', apiKeysPath);
         if (fs.existsSync(apiKeysPath)) {
             const data = fs.readFileSync(apiKeysPath, 'utf8');
             apiKeys = JSON.parse(data);
-            console.log('✅ API keys loaded from:', apiKeysPath);
+            console.log('✅ API keys loaded');
             return true;
         } else {
             console.log('ℹ️ No API keys file found');
@@ -52,7 +65,7 @@ function saveApiKeys(keys) {
 
         apiKeys = { ...apiKeys, ...keys };
         fs.writeFileSync(apiKeysPath, JSON.stringify(apiKeys, null, 2));
-        console.log('✅ API keys saved to:', apiKeysPath);
+        console.log('✅ API keys saved');
         return true;
     } catch (error) {
         console.error('❌ Failed to save API keys:', error);
@@ -111,463 +124,338 @@ async function validateGeminiApiKey(apiKey) {
 
 // 앱 메뉴 생성
 function createApplicationMenu() {
-    const template = [
-        {
-            label: 'File',
-            submenu: [
-                {
-                    label: 'Settings',
-                    accelerator: 'CmdOrCtrl+,',
-                    click() {
-                        showConfigScreen();
+    try {
+        const template = [
+            {
+                label: 'File',
+                submenu: [
+                    {
+                        label: 'Settings',
+                        accelerator: 'CmdOrCtrl+,',
+                        click() {
+                            showConfigScreen();
+                        }
+                    },
+                    {
+                        type: 'separator'
+                    },
+                    {
+                        label: 'Restart App',
+                        accelerator: 'CmdOrCtrl+R',
+                        click() {
+                            app.relaunch();
+                            app.exit();
+                        }
+                    },
+                    {
+                        type: 'separator'
+                    },
+                    {
+                        label: 'Exit',
+                        accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+                        click() {
+                            app.quit();
+                        }
                     }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Restart App',
-                    accelerator: 'CmdOrCtrl+R',
-                    click() {
-                        app.relaunch();
-                        app.exit();
+                ]
+            },
+            {
+                label: 'View',
+                submenu: [
+                    {
+                        label: 'Reload',
+                        accelerator: 'CmdOrCtrl+Shift+R',
+                        click() {
+                            if (mainWindow) mainWindow.reload();
+                        }
+                    },
+                    {
+                        label: 'Toggle Developer Tools',
+                        accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Ctrl+Shift+I',
+                        click() {
+                            if (mainWindow) mainWindow.webContents.toggleDevTools();
+                        }
                     }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Exit',
-                    accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-                    click() {
-                        app.quit();
+                ]
+            },
+            {
+                label: 'Help',
+                submenu: [
+                    {
+                        label: 'About',
+                        click() {
+                            showAboutDialog();
+                        }
                     }
-                }
-            ]
-        },
-        {
-            label: 'View',
-            submenu: [
-                {
-                    label: 'Reload',
-                    accelerator: 'CmdOrCtrl+Shift+R',
-                    click() {
-                        mainWindow.reload();
-                    }
-                },
-                {
-                    label: 'Force Reload',
-                    accelerator: 'CmdOrCtrl+Shift+F5',
-                    click() {
-                        mainWindow.webContents.reloadIgnoringCache();
-                    }
-                },
-                {
-                    label: 'Toggle Developer Tools',
-                    accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Ctrl+Shift+I',
-                    click() {
-                        mainWindow.webContents.toggleDevTools();
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Actual Size',
-                    accelerator: 'CmdOrCtrl+0',
-                    click() {
-                        mainWindow.webContents.setZoomLevel(0);
-                    }
-                },
-                {
-                    label: 'Zoom In',
-                    accelerator: 'CmdOrCtrl+Plus',
-                    click() {
-                        const currentZoom = mainWindow.webContents.getZoomLevel();
-                        mainWindow.webContents.setZoomLevel(currentZoom + 0.5);
-                    }
-                },
-                {
-                    label: 'Zoom Out',
-                    accelerator: 'CmdOrCtrl+-',
-                    click() {
-                        const currentZoom = mainWindow.webContents.getZoomLevel();
-                        mainWindow.webContents.setZoomLevel(currentZoom - 0.5);
-                    }
-                }
-            ]
-        },
-        {
-            label: 'Help',
-            submenu: [
-                {
-                    label: 'Steam API Key Guide',
-                    click() {
-                        shell.openExternal('https://steamcommunity.com/dev/apikey');
-                    }
-                },
-                {
-                    label: 'Gemini API Key Guide',
-                    click() {
-                        shell.openExternal('https://aistudio.google.com/app/apikey');
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'About',
-                    click() {
-                        showAboutDialog();
-                    }
-                }
-            ]
-        }
-    ];
+                ]
+            }
+        ];
 
-    // macOS 메뉴 조정
-    if (process.platform === 'darwin') {
-        template.unshift({
-            label: app.getName(),
-            submenu: [
-                {
-                    label: 'About ' + app.getName(),
-                    click() {
-                        showAboutDialog();
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Settings',
-                    accelerator: 'Cmd+,',
-                    click() {
-                        showConfigScreen();
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Hide ' + app.getName(),
-                    accelerator: 'Cmd+H',
-                    role: 'hide'
-                },
-                {
-                    label: 'Hide Others',
-                    accelerator: 'Cmd+Shift+H',
-                    role: 'hideothers'
-                },
-                {
-                    label: 'Show All',
-                    role: 'unhide'
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Quit',
-                    accelerator: 'Cmd+Q',
-                    click() {
-                        app.quit();
-                    }
-                }
-            ]
-        });
+        const menu = Menu.buildFromTemplate(template);
+        Menu.setApplicationMenu(menu);
+        console.log('✅ Application menu created');
+    } catch (error) {
+        console.error('❌ Failed to create application menu:', error);
     }
-
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
 }
 
 // About 다이얼로그 표시
 function showAboutDialog() {
-    const aboutHtml = `
-        <div style="padding: 40px; font-family: Arial; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-            <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); max-width: 500px;">
-                <h1 style="margin-bottom: 20px;">🎮 Steam Game Recommend</h1>
-                <p style="font-size: 18px; margin-bottom: 15px;">Version 1.0.0</p>
-                <p style="margin-bottom: 20px;">AI-powered Steam game recommendation system</p>
-                <div style="margin-bottom: 20px;">
-                    <p style="font-size: 14px; color: rgba(255,255,255,0.8);">
-                        Built with Spring Boot, Electron, and Google Gemini AI<br>
-                        Find your next favorite game with personalized recommendations
-                    </p>
+    try {
+        const aboutHtml = `
+            <div style="padding: 40px; font-family: Arial; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); max-width: 500px;">
+                    <h1 style="margin-bottom: 20px;">🎮 Steam Game Recommend</h1>
+                    <p style="font-size: 18px; margin-bottom: 15px;">Version 1.0.0</p>
+                    <p style="margin-bottom: 20px;">AI-powered Steam game recommendation system</p>
+                    <button onclick="window.close()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Close</button>
                 </div>
-                <button onclick="window.close()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Close</button>
             </div>
-        </div>
-    `;
+        `;
 
-    const aboutWindow = new BrowserWindow({
-        width: 600,
-        height: 500,
-        modal: true,
-        parent: mainWindow,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        }
-    });
+        const aboutWindow = new BrowserWindow({
+            width: 600,
+            height: 500,
+            modal: true,
+            parent: mainWindow,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            }
+        });
 
-    aboutWindow.loadURL(`data:text/html,${encodeURIComponent(aboutHtml)}`);
-    aboutWindow.setMenuBarVisibility(false);
+        aboutWindow.loadURL(`data:text/html,${encodeURIComponent(aboutHtml)}`);
+        aboutWindow.setMenuBarVisibility(false);
+    } catch (error) {
+        console.error('❌ Failed to show about dialog:', error);
+    }
 }
 
 // IPC 핸들러들
 ipcMain.handle('get-api-keys', () => {
+    console.log('IPC: get-api-keys called');
     return apiKeys;
 });
 
 ipcMain.handle('save-api-keys', (event, keys) => {
+    console.log('IPC: save-api-keys called');
     return saveApiKeys(keys);
 });
 
 ipcMain.handle('validate-steam-api', async (event, apiKey) => {
+    console.log('IPC: validate-steam-api called');
     return await validateSteamApiKey(apiKey);
 });
 
 ipcMain.handle('validate-gemini-api', async (event, apiKey) => {
+    console.log('IPC: validate-gemini-api called');
     return await validateGeminiApiKey(apiKey);
 });
 
 ipcMain.handle('start-main-app', () => {
+    console.log('IPC: start-main-app called');
     startMainApp();
 });
 
 // 메인 앱 시작
 function startMainApp() {
     console.log('🚀 Starting main application...');
+    try {
+        // 로딩 화면 표시
+        showLoadingScreen();
 
-    // 로딩 화면 표시
-    showLoadingScreen();
-
-    // Java 앱 시작
-    setTimeout(() => {
-        startJavaApp();
-    }, 1000);
+        // Java 앱 시작
+        setTimeout(() => {
+            startJavaApp();
+        }, 1000);
+    } catch (error) {
+        console.error('❌ Error in startMainApp:', error);
+        showErrorScreen('Failed to start main application: ' + error.message);
+    }
 }
 
 // 로딩 화면 표시
 function showLoadingScreen() {
-    const loadingPath = path.join(__dirname, 'html/loading.html');
-    if (fs.existsSync(loadingPath)) {
-        mainWindow.loadFile(loadingPath);
-    } else {
-        // loading.html이 없으면 간단한 로딩 화면
-        mainWindow.loadURL('data:text/html,<div style="text-align:center;padding:50px;font-family:Arial;"><h2>🎮 Steam Game Recommend</h2><p>서버를 시작하고 있습니다...</p><div style="border:4px solid #f3f3f3;border-top:4px solid #3498db;border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;margin:20px auto;"></div><style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></div>');
-    }
-}
+    try {
+        const appRoot = getAppRootPath();
+        const loadingPath = path.join(appRoot, 'html', 'loading.html');
+        console.log('Looking for loading.html at:', loadingPath);
 
-// 설정 화면 표시 (API 키 검증 기능 포함)
-function showConfigScreen() {
-    const configPath = path.join(__dirname, 'html/config.html');
-    if (fs.existsSync(configPath)) {
-        mainWindow.loadFile(configPath);
-    } else {
-        // config.html이 없으면 향상된 설정 화면
-        const configHtml = `
-            <div style="padding: 40px; font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-                <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 600px; max-width: 90%;">
-                    <h2 style="text-align: center; margin-bottom: 30px;">🔑 API Key Configuration</h2>
-                    
-                    <div style="margin-bottom: 25px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Steam API Key:</label>
-                        <div style="position: relative;">
-                            <input type="text" id="steamApiKey" placeholder="Enter your Steam API key" style="width: 100%; padding: 12px 40px 12px 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; box-sizing: border-box;">
-                            <button id="validateSteam" onclick="validateSteamKey()" style="position: absolute; right: 5px; top: 5px; padding: 7px 12px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">Verify</button>
-                        </div>
-                        <div id="steamStatus" style="font-size: 12px; margin-top: 5px; min-height: 18px;"></div>
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 5px;">
-                            Get your Steam API key from: 
-                            <a href="#" onclick="openExternal('https://steamcommunity.com/dev/apikey')" style="color: #add8e6; text-decoration: none;">steamcommunity.com/dev/apikey</a>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 25px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Gemini API Key:</label>
-                        <div style="position: relative;">
-                            <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key" style="width: 100%; padding: 12px 40px 12px 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; box-sizing: border-box;">
-                            <button id="validateGemini" onclick="validateGeminiKey()" style="position: absolute; right: 5px; top: 5px; padding: 7px 12px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">Verify</button>
-                        </div>
-                        <div id="geminiStatus" style="font-size: 12px; margin-top: 5px; min-height: 18px;"></div>
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 5px;">
-                            Get your Gemini API key from: 
-                            <a href="#" onclick="openExternal('https://aistudio.google.com/app/apikey')" style="color: #add8e6; text-decoration: none;">aistudio.google.com/app/apikey</a>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button onclick="skipConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Skip for Now</button>
-                        <button onclick="saveConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #4CAF50; color: white;">Save & Continue</button>
-                    </div>
-                    <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: 600; display: none;"></div>
+        if (fs.existsSync(loadingPath)) {
+            console.log('✅ Loading loading.html from file');
+            mainWindow.loadFile(loadingPath);
+        } else {
+            console.log('ℹ️ loading.html not found, using inline loading screen');
+            const loadingHtml = `
+                <div style="text-align:center;padding:50px;font-family:Arial;background:#1a1a2e;color:white;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+                    <h2 style="color:#00d4ff;margin-bottom:20px;">🎮 Steam Game Recommend</h2>
+                    <p style="margin-bottom:30px;">서버를 시작하고 있습니다...</p>
+                    <div style="border:4px solid #333;border-top:4px solid #00d4ff;border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;margin:20px auto;"></div>
+                    <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
                 </div>
-            </div>
-            <script>
-                const { ipcRenderer, shell } = require('electron');
-                
-                // 외부 링크 열기
-                function openExternal(url) {
-                    shell.openExternal(url);
-                }
-                
-                // 기존 API 키 로드
-                window.addEventListener('DOMContentLoaded', () => {
-                    ipcRenderer.invoke('get-api-keys').then(keys => {
-                        if (keys.steamApiKey) document.getElementById('steamApiKey').value = keys.steamApiKey;
-                        if (keys.geminiApiKey) document.getElementById('geminiApiKey').value = keys.geminiApiKey;
-                    });
-                });
-                
-                // Steam API 키 검증
-                async function validateSteamKey() {
-                    const apiKey = document.getElementById('steamApiKey').value.trim();
-                    const statusDiv = document.getElementById('steamStatus');
-                    const validateBtn = document.getElementById('validateSteam');
-                    
-                    if (!apiKey) {
-                        statusDiv.style.color = '#ff6b6b';
-                        statusDiv.textContent = 'Please enter a Steam API key';
-                        return;
-                    }
-                    
-                    validateBtn.textContent = 'Checking...';
-                    validateBtn.disabled = true;
-                    statusDiv.style.color = '#ffa726';
-                    statusDiv.textContent = 'Validating Steam API key...';
-                    
-                    try {
-                        const result = await ipcRenderer.invoke('validate-steam-api', apiKey);
-                        
-                        if (result.valid) {
-                            statusDiv.style.color = '#4caf50';
-                            statusDiv.textContent = '✅ ' + result.message;
-                        } else {
-                            statusDiv.style.color = '#ff6b6b';
-                            statusDiv.textContent = '❌ ' + result.message;
-                        }
-                    } catch (error) {
-                        statusDiv.style.color = '#ff6b6b';
-                        statusDiv.textContent = '❌ Validation failed: ' + error.message;
-                    }
-                    
-                    validateBtn.textContent = 'Verify';
-                    validateBtn.disabled = false;
-                }
-                
-                // Gemini API 키 검증
-                async function validateGeminiKey() {
-                    const apiKey = document.getElementById('geminiApiKey').value.trim();
-                    const statusDiv = document.getElementById('geminiStatus');
-                    const validateBtn = document.getElementById('validateGemini');
-                    
-                    if (!apiKey) {
-                        statusDiv.style.color = '#ff6b6b';
-                        statusDiv.textContent = 'Please enter a Gemini API key';
-                        return;
-                    }
-                    
-                    validateBtn.textContent = 'Checking...';
-                    validateBtn.disabled = true;
-                    statusDiv.style.color = '#ffa726';
-                    statusDiv.textContent = 'Validating Gemini API key...';
-                    
-                    try {
-                        const result = await ipcRenderer.invoke('validate-gemini-api', apiKey);
-                        
-                        if (result.valid) {
-                            statusDiv.style.color = '#4caf50';
-                            statusDiv.textContent = '✅ ' + result.message;
-                        } else {
-                            statusDiv.style.color = '#ff6b6b';
-                            statusDiv.textContent = '❌ ' + result.message;
-                        }
-                    } catch (error) {
-                        statusDiv.style.color = '#ff6b6b';
-                        statusDiv.textContent = '❌ Validation failed: ' + error.message;
-                    }
-                    
-                    validateBtn.textContent = 'Verify';
-                    validateBtn.disabled = false;
-                }
-                
-                async function saveConfig() {
-                    const steamApiKey = document.getElementById('steamApiKey').value.trim();
-                    const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-                    const statusDiv = document.getElementById('status');
-                    
-                    try {
-                        await ipcRenderer.invoke('save-api-keys', { steamApiKey, geminiApiKey });
-                        statusDiv.style.display = 'block';
-                        statusDiv.style.background = 'rgba(76, 175, 80, 0.2)';
-                        statusDiv.style.border = '1px solid #4CAF50';
-                        statusDiv.textContent = '✅ API keys saved successfully!';
-                        setTimeout(() => { ipcRenderer.invoke('start-main-app'); }, 1500);
-                    } catch (error) {
-                        statusDiv.style.display = 'block';
-                        statusDiv.style.background = 'rgba(244, 67, 54, 0.2)';
-                        statusDiv.style.border = '1px solid #f44336';
-                        statusDiv.textContent = '❌ Failed to save API keys: ' + error.message;
-                    }
-                }
-                
-                function skipConfig() {
-                    ipcRenderer.invoke('start-main-app');
-                }
-            </script>
-        `;
-        mainWindow.loadURL(`data:text/html,${encodeURIComponent(configHtml)}`);
+            `;
+            mainWindow.loadURL(`data:text/html,${encodeURIComponent(loadingHtml)}`);
+        }
+    } catch (error) {
+        console.error('❌ Error in showLoadingScreen:', error);
+        showErrorScreen('Failed to show loading screen: ' + error.message);
     }
 }
 
-// Java 앱 시작
+// 설정 화면 표시
+function showConfigScreen() {
+    try {
+        const appRoot = getAppRootPath();
+        const configPath = path.join(appRoot, 'html', 'config.html');
+        console.log('Looking for config.html at:', configPath);
+
+        if (fs.existsSync(configPath)) {
+            console.log('✅ Loading config.html from file');
+            mainWindow.loadFile(configPath);
+        } else {
+            console.log('ℹ️ config.html not found, using inline config screen');
+            const configHtml = `
+                <div style="padding: 40px; font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 600px; max-width: 90%;">
+                        <h2 style="text-align: center; margin-bottom: 30px;">🔑 API Key Configuration</h2>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Steam API Key:</label>
+                            <input type="text" id="steamApiKey" placeholder="Enter your Steam API key" style="width: 100%; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; box-sizing: border-box;">
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 5px;">
+                                Get your Steam API key from: steamcommunity.com/dev/apikey
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Gemini API Key:</label>
+                            <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key" style="width: 100%; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; box-sizing: border-box;">
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 5px;">
+                                Get your Gemini API key from: aistudio.google.com/app/apikey
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 30px;">
+                            <button onclick="skipConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Skip for Now</button>
+                            <button onclick="saveConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #4CAF50; color: white;">Save & Continue</button>
+                        </div>
+                        <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: 600; display: none;"></div>
+                    </div>
+                </div>
+                <script>
+                    const { ipcRenderer } = require('electron');
+                    
+                    // 기존 API 키 로드
+                    window.addEventListener('DOMContentLoaded', () => {
+                        ipcRenderer.invoke('get-api-keys').then(keys => {
+                            if (keys.steamApiKey) document.getElementById('steamApiKey').value = keys.steamApiKey;
+                            if (keys.geminiApiKey) document.getElementById('geminiApiKey').value = keys.geminiApiKey;
+                        }).catch(err => console.error('Failed to load API keys:', err));
+                    });
+                    
+                    async function saveConfig() {
+                        const steamApiKey = document.getElementById('steamApiKey').value.trim();
+                        const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+                        const statusDiv = document.getElementById('status');
+                        
+                        try {
+                            await ipcRenderer.invoke('save-api-keys', { steamApiKey, geminiApiKey });
+                            statusDiv.style.display = 'block';
+                            statusDiv.style.background = 'rgba(76, 175, 80, 0.2)';
+                            statusDiv.style.border = '1px solid #4CAF50';
+                            statusDiv.textContent = '✅ API keys saved successfully!';
+                            setTimeout(() => { ipcRenderer.invoke('start-main-app'); }, 1500);
+                        } catch (error) {
+                            statusDiv.style.display = 'block';
+                            statusDiv.style.background = 'rgba(244, 67, 54, 0.2)';
+                            statusDiv.style.border = '1px solid #f44336';
+                            statusDiv.textContent = '❌ Failed to save API keys: ' + error.message;
+                        }
+                    }
+                    
+                    function skipConfig() {
+                        ipcRenderer.invoke('start-main-app');
+                    }
+                </script>
+            `;
+            mainWindow.loadURL(`data:text/html,${encodeURIComponent(configHtml)}`);
+        }
+    } catch (error) {
+        console.error('❌ Error in showConfigScreen:', error);
+        showErrorScreen('Failed to show config screen: ' + error.message);
+    }
+}
+
+// Java 앱 시작 - 수정된 경로 처리
 function startJavaApp() {
     console.log('=== Starting Java App ===');
 
-    const possiblePaths = [
-        path.join(process.resourcesPath, 'recommend-0.0.1-SNAPSHOT.jar'),
-        path.join(__dirname, 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
-        path.join(process.cwd(), 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
-        path.join(__dirname, '..', 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
-        path.join(app.getAppPath(), 'resources', 'recommend-0.0.1-SNAPSHOT.jar')
-    ];
-
-    let jarPath = null;
-    for (const testPath of possiblePaths) {
-        if (fs.existsSync(testPath)) {
-            jarPath = testPath;
-            console.log(`✅ Found JAR at: ${jarPath}`);
-            break;
-        }
-    }
-
-    if (!jarPath) {
-        console.error('❌ JAR file not found');
-        showErrorScreen('JAR file not found: recommend-0.0.1-SNAPSHOT.jar');
-        return;
-    }
-
-    // 환경변수에 API 키 설정
-    const env = {
-        ...process.env,
-        STEAM_API_KEY: apiKeys.steamApiKey || '',
-        GEMINI_API_KEY: apiKeys.geminiApiKey || '',
-        SPRING_PROFILES_ACTIVE: 'release'
-    };
-
-    console.log('🚀 Starting Java process with API keys...');
-
     try {
+        const appRoot = getAppRootPath();
+
+        // 올바른 JAR 파일 경로들
+        const possiblePaths = [
+            // 빌드된 앱에서의 경로
+            path.join(process.resourcesPath, 'recommend-0.0.1-SNAPSHOT.jar'),
+
+            // 개발 환경에서의 경로 (올바른 경로 사용)
+            path.join(appRoot, 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
+            path.join(appRoot, '..', 'build', 'libs', 'recommend-0.0.1-SNAPSHOT.jar')
+        ];
+
+        let jarPath = null;
+        console.log('Searching for JAR file...');
+        for (const testPath of possiblePaths) {
+            console.log(`  Checking: ${testPath}`);
+            if (fs.existsSync(testPath)) {
+                jarPath = testPath;
+                console.log(`  ✅ Found JAR at: ${jarPath}`);
+                break;
+            } else {
+                console.log(`  ❌ Not found`);
+            }
+        }
+
+        if (!jarPath) {
+            console.error('❌ JAR file not found');
+            showErrorScreen('JAR file not found: recommend-0.0.1-SNAPSHOT.jar<br><br>Please ensure the JAR file is in the resources folder.');
+            return;
+        }
+
+        // 환경변수에 API 키 설정
+        const env = {
+            ...process.env,
+            STEAM_API_KEY: apiKeys.steamApiKey || '',
+            GEMINI_API_KEY: apiKeys.geminiApiKey || '',
+            SPRING_PROFILES_ACTIVE: 'h2'
+        };
+
+        // 작업 디렉토리를 recommend 폴더로 설정 (data 폴더가 있는 곳)
+        const workingDirectory = path.join(appRoot, '..');  // recommend 폴더
+
+        console.log('🚀 Starting Java process...');
+        console.log('JAR path:', jarPath);
+        console.log('Working directory:', workingDirectory);
+
+        // data 폴더 존재 확인
+        const dataFolder = path.join(workingDirectory, 'data');
+        const initSqlPath = path.join(dataFolder, 'init.sql');
+
+        if (fs.existsSync(initSqlPath)) {
+            console.log('✅ Found init.sql at:', initSqlPath);
+        } else {
+            console.log('⚠️ init.sql not found at:', initSqlPath);
+        }
+
         // 기존 프로세스가 있다면 종료
         if (javaProcess) {
+            console.log('Terminating existing Java process...');
             javaProcess.kill();
         }
 
-        javaProcess = spawn('java', ['-jar', jarPath,'--spring.profiles.active=h2'], {
+        javaProcess = spawn('java', ['-jar', jarPath, '--spring.profiles.active=h2'], {
             stdio: ['ignore', 'pipe', 'pipe'],
-            cwd: path.dirname(jarPath),
+            cwd: workingDirectory,  // recommend 폴더에서 실행
             env: env
         });
 
@@ -588,22 +476,33 @@ function startJavaApp() {
         });
 
         javaProcess.stderr.on('data', (data) => {
-            console.error('Java stderr:', data.toString());
+            const errorOutput = data.toString();
+            console.error('Java stderr:', errorOutput);
         });
 
         javaProcess.on('close', (code) => {
             console.log(`Java process terminated with code: ${code}`);
             isJavaServerReady = false;
+
+            if (code !== 0 && code !== null) {
+                console.error(`Java process exited with error code: ${code}`);
+                showErrorScreen(`Java application exited with error code: ${code}`);
+            }
         });
 
         javaProcess.on('error', (error) => {
             console.error('Failed to start Java process:', error);
             isJavaServerReady = false;
-            showErrorScreen('Failed to start Java process: ' + error.message);
+
+            if (error.code === 'ENOENT') {
+                showErrorScreen('Java is not installed or not found in PATH.<br><br>Please install Java and try again.');
+            } else {
+                showErrorScreen('Failed to start Java process: ' + error.message);
+            }
         });
 
     } catch (error) {
-        console.error('Error starting Java process:', error);
+        console.error('Error in startJavaApp:', error);
         showErrorScreen('Error starting Java process: ' + error.message);
     }
 }
@@ -619,7 +518,6 @@ async function checkServerAndConnect() {
         try {
             console.log(`🔍 Connection attempt ${attempts + 1}/${maxAttempts}...`);
 
-            // index.html 연결 테스트
             const response = await fetch('http://localhost:8888/index.html', {
                 method: 'GET',
                 signal: AbortSignal.timeout(3000)
@@ -627,7 +525,6 @@ async function checkServerAndConnect() {
 
             if (response.ok) {
                 console.log('✅ Server connection successful!');
-                // 성공하면 index.html 로드
                 mainWindow.loadURL('http://localhost:8888/index.html');
                 return;
             }
@@ -640,65 +537,113 @@ async function checkServerAndConnect() {
     }
 
     console.log('❌ Server connection failed');
-    showErrorScreen('Failed to connect to server after maximum attempts');
+    showErrorScreen('Failed to connect to server after maximum attempts.');
 }
 
 // 에러 화면 표시
 function showErrorScreen(message) {
-    const errorHtml = `
-        <div style="padding: 40px; font-family: Arial; text-align: center; background: #f44336; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-            <div>
-                <h1>❌ Error</h1>
-                <p style="font-size: 18px; margin: 20px 0;">${message}</p>
-                <div style="margin-top: 20px;">
-                    <button onclick="location.reload()" style="padding: 12px 24px; font-size: 16px; background: white; color: #f44336; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 10px;">Retry</button>
-                    <button onclick="showSettings()" style="padding: 12px 24px; font-size: 16px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; font-weight: 600;">Settings</button>
+    try {
+        const errorHtml = `
+            <div style="padding: 40px; font-family: Arial; text-align: center; background: #f44336; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                <div style="max-width: 600px;">
+                    <h1>❌ Error</h1>
+                    <p style="font-size: 18px; margin: 20px 0; line-height: 1.6;">${message}</p>
+                    <div style="margin-top: 30px;">
+                        <button onclick="location.reload()" style="padding: 12px 24px; font-size: 16px; background: white; color: #f44336; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 10px;">Retry</button>
+                        <button onclick="window.close()" style="padding: 12px 24px; font-size: 16px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <script>
-            const { ipcRenderer } = require('electron');
-            function showSettings() {
-                ipcRenderer.invoke('show-config-screen');
-            }
-        </script>
-    `;
-    mainWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`);
+        `;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`);
+        }
+    } catch (error) {
+        console.error('❌ Error in showErrorScreen:', error);
+    }
 }
 
 function createWindow() {
     console.log('=== Creating Window ===');
 
-    mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        show: false,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
+    try {
+        mainWindow = new BrowserWindow({
+            width: 1200,
+            height: 800,
+            show: false,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            }
+        });
+
+        // 애플리케이션 메뉴 생성
+        createApplicationMenu();
+
+        mainWindow.once('ready-to-show', () => {
+            console.log('✅ Window ready - showing now');
+            mainWindow.show();
+            mainWindow.focus();
+
+            // 개발 중에는 DevTools 열기
+            if (!app.isPackaged) {
+                mainWindow.webContents.openDevTools();
+            }
+        });
+
+        // API 키 로드 시도
+        const hasApiKeys = loadApiKeys();
+
+        // API 키가 있고 유효하면 메인 앱 시작, 없으면 설정 화면
+        if (hasApiKeys && apiKeys.steamApiKey && apiKeys.geminiApiKey) {
+            console.log('✅ API keys found - starting main app');
+            startMainApp();
+        } else {
+            console.log('⚙️ API keys missing or incomplete - showing config screen');
+            showConfigScreen();
         }
-    });
 
-    // 애플리케이션 메뉴 생성
-    createApplicationMenu();
-
-    mainWindow.once('ready-to-show', () => {
-        console.log('✅ Window ready - showing now');
-        mainWindow.show();
-        mainWindow.focus();
-        // 개발 중에만 DevTools 열기 (릴리즈시 주석 처리)
-        // mainWindow.webContents.openDevTools();
-    });
-
-    // API 키 로드 시도
-    const hasApiKeys = loadApiKeys();
-
-    // API 키가 있고 유효하면 메인 앱 시작, 없으면 설정 화면
-    if (hasApiKeys && apiKeys.steamApiKey && apiKeys.geminiApiKey) {
-        console.log('✅ API keys found - starting main app');
-        startMainApp();
-    } else {
-        console.log('⚙️ API keys missing or incomplete - showing config screen');
-        showConfigScreen();
+    } catch (error) {
+        console.error('❌ Error creating window:', error);
+        app.quit();
     }
 }
+
+// 앱 이벤트 핸들러
+app.whenReady().then(() => {
+    console.log('=== App Ready ===');
+    createWindow();
+}).catch(error => {
+    console.error('❌ App failed to become ready:', error);
+});
+
+app.on('window-all-closed', () => {
+    console.log('=== All Windows Closed ===');
+    // Java 프로세스 종료
+    if (javaProcess) {
+        console.log('Terminating Java process...');
+        javaProcess.kill();
+    }
+
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+
+app.on('activate', () => {
+    console.log('=== App Activated ===');
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
+});
+
+// 앱 종료 시 Java 프로세스 정리
+app.on('before-quit', () => {
+    console.log('=== App Before Quit ===');
+    if (javaProcess) {
+        console.log('Cleaning up Java process before quit...');
+        javaProcess.kill();
+    }
+});
+
+console.log('=== Fixed Main.js loaded successfully ===');

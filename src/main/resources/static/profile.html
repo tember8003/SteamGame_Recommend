@@ -36,6 +36,13 @@
             padding: 0;
         }
 
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background: var(--bg-primary);
             background-image:
@@ -44,38 +51,48 @@
             font-family: 'Inter', sans-serif;
             color: var(--text-primary);
             line-height: 1.6;
-            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             position: relative;
-            z-index: 1;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 0;
+            height: 80px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .header h1 {
-            font-size: 3rem;
+            font-size: 1.8rem;
             font-weight: 700;
             background: var(--gradient-primary);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            margin: 0;
         }
 
         .header .subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
         }
 
         .back-button {
@@ -85,12 +102,12 @@
             background: var(--bg-card);
             color: var(--primary);
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 10px 20px;
+            border-radius: 25px;
             border: 1px solid var(--border);
             transition: all 0.3s ease;
             font-weight: 500;
-            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
         }
 
         .back-button:hover {
@@ -100,53 +117,38 @@
             box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
         }
 
-        .section-card {
-            background: var(--gradient-card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 30px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: relative;
+        .main-content {
+            flex: 1;
+            display: flex;
             overflow: hidden;
-            margin-bottom: 30px;
+            position: relative;
         }
 
-        .section-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .input-panel {
+            width: 400px;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
-        .section-card:hover::before {
-            opacity: 1;
-        }
-
-        .section-card:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px var(--shadow);
-        }
-
-        .section-title {
+        .panel-title {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .section-title i {
+        .panel-title i {
             color: var(--primary);
-            font-size: 1.1rem;
         }
 
         .warning-text {
@@ -155,32 +157,40 @@
             gap: 8px;
             background: rgba(245, 158, 11, 0.1);
             border: 1px solid var(--warning);
-            border-radius: 10px;
-            padding: 12px 16px;
+            border-radius: 8px;
+            padding: 10px 12px;
             margin-bottom: 20px;
             color: var(--warning);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .input-group {
             margin-bottom: 20px;
         }
 
+        .input-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
         .input-text {
             width: 100%;
-            padding: 16px 20px;
-            background: var(--bg-secondary);
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             color: var(--text-primary);
-            font-size: 1rem;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
 
         .input-text:focus {
             outline: none;
             border-color: var(--primary);
-            background: var(--bg-tertiary);
+            background: var(--bg-card);
             box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
         }
 
@@ -189,57 +199,54 @@
         }
 
         .controls {
-            background: var(--bg-secondary);
-            border-radius: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
             padding: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             border: 1px solid var(--border);
         }
 
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+        .controls h4 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 8px;
         }
 
         .control-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            transition: all 0.3s ease;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
         }
 
-        .control-item:hover {
-            border-color: var(--border-hover);
-            background: var(--bg-card);
+        .control-item:last-child {
+            border-bottom: none;
         }
 
         .control-item label {
             font-weight: 500;
             color: var(--text-secondary);
             cursor: pointer;
-            flex: 1;
+            font-size: 0.9rem;
         }
 
         .control-item input[type="number"] {
             width: 80px;
-            padding: 8px 12px;
+            padding: 6px 10px;
             background: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
             font-size: 0.9rem;
         }
 
         .control-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             accent-color: var(--primary);
             cursor: pointer;
         }
@@ -249,16 +256,19 @@
             background: var(--gradient-primary);
             color: var(--bg-primary);
             border: none;
-            border-radius: 12px;
-            padding: 16px 32px;
-            font-size: 1.1rem;
+            border-radius: 10px;
+            padding: 14px 24px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
         }
 
         .recommend-button:hover {
@@ -277,13 +287,12 @@
 
         .recommend-button .loading-spinner {
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border: 2px solid transparent;
             border-top: 2px solid currentColor;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 8px;
         }
 
         .recommend-button.loading .loading-spinner {
@@ -295,15 +304,59 @@
             100% { transform: rotate(360deg); }
         }
 
-        .result-section {
-            margin-top: 40px;
+        .result-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            position: relative;
+        }
+
+        .result-header {
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
         }
 
         .game-card {
             background: var(--gradient-card);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 30px;
+            padding: 20px;
             margin-bottom: 20px;
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
@@ -329,22 +382,22 @@
 
         .game-card:hover {
             border-color: var(--border-hover);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px var(--shadow);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px var(--shadow);
         }
 
         .game-content {
             display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 30px;
+            grid-template-columns: 160px 1fr;
+            gap: 20px;
             align-items: start;
         }
 
         .game-image {
             position: relative;
             overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
 
         .game-image img {
@@ -359,348 +412,272 @@
         }
 
         .game-info h3 {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .game-info .app-id {
             color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 16px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
         }
 
         .game-info .description {
             color: var(--text-secondary);
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        /* 리뷰 정보 스타일 */
         .review-section {
             background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
             border: 1px solid var(--border);
         }
 
         .review-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .review-header h4 {
             color: var(--primary);
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             margin: 0;
         }
 
         .review-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
         .stat-item {
             background: var(--bg-tertiary);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             text-align: center;
             border: 1px solid var(--border);
         }
 
         .stat-value {
             display: block;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--primary);
         }
 
         .stat-label {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .review-texts {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .review-text-card {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .review-text-card h5 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-
-        .review-text-card.positive h5 {
-            color: var(--success);
-        }
-
-        .review-text-card.negative h5 {
-            color: var(--error);
-        }
-
-        .review-text-card p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.5;
+            margin-top: 2px;
         }
 
         .rating-bar {
             background: var(--bg-tertiary);
-            border-radius: 20px;
-            height: 8px;
+            border-radius: 10px;
+            height: 6px;
             overflow: hidden;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .rating-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
-            border-radius: 20px;
+            border-radius: 10px;
             transition: width 0.3s ease;
         }
 
         .steam-link {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background: var(--gradient-primary);
             color: var(--bg-primary);
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 8px 16px;
+            border-radius: 20px;
             font-weight: 600;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
         }
 
         .steam-link:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+            box-shadow: 0 6px 15px rgba(0, 212, 255, 0.4);
         }
 
         .used-tags {
             background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
             border: 1px solid var(--border);
         }
 
         .used-tags h4 {
             color: var(--primary);
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .used-tags .tag {
             display: inline-block;
             background: var(--primary);
             color: var(--bg-primary);
-            padding: 6px 12px;
-            border-radius: 20px;
-            margin: 4px 8px 4px 0;
-            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin: 2px 6px 2px 0;
+            font-size: 0.75rem;
             font-weight: 500;
         }
 
         .no-results {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             background: var(--gradient-card);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid var(--border);
         }
 
         .no-results i {
-            font-size: 4rem;
+            font-size: 3rem;
             color: var(--text-muted);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .no-results h3 {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .no-results p {
             color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+        @media (max-width: 1024px) {
+            .input-panel {
+                width: 350px;
+            }
 
-        .loading-overlay.show {
-            display: flex;
-        }
-
-        .loading-content {
-            text-align: center;
-            color: var(--text-primary);
-        }
-
-        .loading-content .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid var(--border);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        /* 리뷰 텍스트 더보기 기능 스타일 */
-        .review-text-content {
-            position: relative;
-        }
-
-        .review-text-content.collapsed .full-text {
-            display: none;
-        }
-
-        .review-text-content.expanded .short-text {
-            display: none;
-        }
-
-        .show-more-btn, .show-less-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            padding: 4px 0;
-            text-decoration: underline;
-            transition: color 0.3s ease;
-        }
-
-        .show-more-btn:hover, .show-less-btn:hover {
-            color: var(--primary-dark);
-        }
-
-        .ellipsis {
-            color: var(--text-muted);
+            .game-content {
+                grid-template-columns: 120px 1fr;
+                gap: 15px;
+            }
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+            .main-content {
+                flex-direction: column;
+            }
+
+            .input-panel {
+                width: 100%;
+                height: 300px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .header {
+                padding: 0 20px;
+                flex-direction: column;
+                height: auto;
+                min-height: 80px;
+                padding: 15px 20px;
+            }
+
+            .header-title {
+                flex-direction: column;
+                gap: 5px;
+                text-align: center;
             }
 
             .header h1 {
-                font-size: 2rem;
-            }
-
-            .controls-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
+                font-size: 1.5rem;
             }
 
             .game-content {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 15px;
             }
 
             .game-image {
-                max-width: 300px;
+                max-width: 200px;
                 margin: 0 auto;
             }
 
-            .review-texts {
+            .review-stats {
                 grid-template-columns: 1fr;
             }
+        }
 
-            .review-stats {
-                grid-template-columns: repeat(2, 1fr);
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
-        }
-
-        .rating-bar {
-            background: var(--bg-tertiary);
-            border-radius: 20px;
-            height: 8px;
-            overflow: hidden;
-            margin: 8px 0;
-        }
-
-        .rating-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
-            border-radius: 20px;
-            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body>
-<div class="loading-overlay" id="loading-overlay">
-    <div class="loading-content">
-        <div class="spinner"></div>
-        <h3>Analyzing profile...</h3>
-        <p>Please wait a moment</p>
-    </div>
-</div>
-
-<div class="container">
-    <div class="header">
-        <h1><i class="fab fa-steam"></i> Steam Profile-Based Recommendation</h1>
-        <p class="subtitle">Enter your Steam ID to get recommendations that match your gaming preferences!</p>
+<div class="app-container">
+    <header class="header">
         <a href="index.html" class="back-button">
             <i class="fas fa-arrow-left"></i>
             Back to Home
         </a>
-    </div>
-
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-user-circle"></i>
-            Steam Profile Analysis
-        </h2>
-
-        <div class="warning-text">
-            <i class="fas fa-info-circle"></i>
-            Please enter your Steam ID accurately. Only public profiles can be analyzed.
+        <div class="header-title">
+            <h1><i class="fab fa-steam"></i> Steam Profile-Based Recommendation</h1>
+            <p class="subtitle">Enter your Steam ID to get recommendations that match your gaming preferences!</p>
         </div>
+    </header>
 
-        <div class="input-group">
-            <input
-                    type="text"
-                    id="profile-id"
-                    class="input-text"
-                    placeholder="Enter your Steam ID"
-            />
-        </div>
+    <main class="main-content">
+        <aside class="input-panel">
+            <h2 class="panel-title">
+                <i class="fas fa-user-circle"></i>
+                Profile Analysis
+            </h2>
 
-        <div class="controls">
-            <div class="controls-grid">
+            <div class="warning-text">
+                <i class="fas fa-info-circle"></i>
+                Please enter your Steam ID accurately. Only public profiles can be analyzed.
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="profile-id">Steam ID</label>
+                <input
+                        type="text"
+                        id="profile-id"
+                        class="input-text"
+                        placeholder="Enter your Steam ID (e.g., your_username)"
+                />
+            </div>
+
+            <div class="controls">
+                <h4><i class="fas fa-cog"></i> Options</h4>
                 <div class="control-item">
                     <label for="input-review">Review Count</label>
                     <input type="number" id="input-review" value="0" min="0" max="1000000" />
@@ -714,15 +691,32 @@
                     <input type="checkbox" id="input-free" />
                 </div>
             </div>
+
             <button id="btn-profile" class="recommend-button">
                 <span class="loading-spinner"></span>
                 <i class="fas fa-search"></i>
                 Get Recommendations
             </button>
-        </div>
-    </div>
+        </aside>
 
-    <div id="profile-result" class="result-section"></div>
+        <section class="result-panel">
+            <div class="result-header">
+                <h2 class="result-title">
+                    <i class="fas fa-gamepad"></i>
+                    Profile-Based Recommendations
+                </h2>
+                <p class="result-subtitle">AI-powered game recommendations based on your Steam profile analysis</p>
+            </div>
+
+            <div id="profile-result">
+                <div class="empty-state">
+                    <i class="fab fa-steam"></i>
+                    <h3>Ready to Analyze Your Profile</h3>
+                    <p>Enter your Steam ID and click "Get Recommendations" to discover games perfectly matched to your gaming style!</p>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script>
@@ -730,7 +724,6 @@
 
     document.getElementById('btn-profile').addEventListener('click', async () => {
         const button = document.getElementById('btn-profile');
-        const loadingOverlay = document.getElementById('loading-overlay');
         const steamIdInput = document.getElementById('profile-id');
 
         // Input validation
@@ -745,7 +738,6 @@
 
         // Start loading state
         button.classList.add('loading');
-        loadingOverlay.classList.add('show');
 
         try {
             const body = {
@@ -766,12 +758,6 @@
             // Wait briefly before showing results (UX improvement)
             setTimeout(() => {
                 renderGameResult(data);
-
-                // Scroll to results
-                document.getElementById('profile-result').scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
             }, 500);
 
         } catch (error) {
@@ -781,7 +767,6 @@
             // End loading state
             setTimeout(() => {
                 button.classList.remove('loading');
-                loadingOverlay.classList.remove('show');
             }, 1000);
         }
     });
@@ -836,7 +821,7 @@
             const review = reviews[index] || {};
 
             html += `
-          <div class="game-card">
+          <div class="game-card fade-in" style="animation-delay: ${index * 0.1}s">
             <div class="game-content">
               <div class="game-image">
                 <img src="${game.headerImage}" alt="${game.name} header" />
@@ -859,18 +844,6 @@
         });
 
         container.innerHTML = html;
-
-        // Card animation
-        const cards = container.querySelectorAll('.game-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 200);
-        });
     }
 
     function renderReviewSection(review) {
@@ -881,7 +854,7 @@
                 <i class="fas fa-star"></i>
                 <h4>Review Information</h4>
             </div>
-            <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+            <p style="color: var(--text-muted); text-align: center; padding: 15px; font-size: 0.85rem;">
                 No review data available
             </p>
         </div>
@@ -912,87 +885,9 @@
                 <span class="stat-value">${reviewSummary}</span>
                 <div class="stat-label">Overall Rating</div>
             </div>
-            <div class="stat-item">
-                <span class="stat-value">${positiveHours}h</span>
-                <div class="stat-label">Positive Hours</div>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">${negativeHours}h</span>
-                <div class="stat-label">Negative Hours</div>
-            </div>
         </div>
-
-        ${(review.positiveReview || review.negativeReview) ? `
-        <div class="review-texts">
-            ${review.positiveReview ? `
-            <div class="review-text-card positive">
-                <h5>
-                    <i class="fas fa-thumbs-up"></i>
-                    Positive Review
-                </h5>
-                ${renderReviewText(review.positiveReview, 'positive')}
-            </div>
-            ` : ''}
-
-            ${review.negativeReview ? `
-            <div class="review-text-card negative">
-                <h5>
-                    <i class="fas fa-thumbs-down"></i>
-                    Negative Review
-                </h5>
-                ${renderReviewText(review.negativeReview, 'negative')}
-            </div>
-            ` : ''}
-        </div>
-        ` : ''}
     </div>
     `;
-    }
-
-    function renderReviewText(text, type) {
-        if (!text) return '';
-
-        const maxLength = 150; // 글자 수 제한
-        const isLong = text.length > maxLength;
-        const shortText = text.substring(0, maxLength);
-        const uniqueId = `review-${type}-${Math.random().toString(36).substr(2, 9)}`;
-
-        if (!isLong) {
-            return `<p>${text}</p>`;
-        }
-
-        return `
-          <div class="review-text-content collapsed" id="${uniqueId}">
-            <p>
-              <span class="short-text">${shortText}<span class="ellipsis">...</span></span>
-              <span class="full-text">${text}</span>
-            </p>
-            <button class="show-more-btn" onclick="toggleReviewText('${uniqueId}')">
-              <i class="fas fa-chevron-down"></i> Show more
-            </button>
-            <button class="show-less-btn" onclick="toggleReviewText('${uniqueId}')" style="display: none;">
-              <i class="fas fa-chevron-up"></i> Show less
-            </button>
-          </div>
-        `;
-    }
-
-    function toggleReviewText(id) {
-        const container = document.getElementById(id);
-        const showMoreBtn = container.querySelector('.show-more-btn');
-        const showLessBtn = container.querySelector('.show-less-btn');
-
-        if (container.classList.contains('collapsed')) {
-            container.classList.remove('collapsed');
-            container.classList.add('expanded');
-            showMoreBtn.style.display = 'none';
-            showLessBtn.style.display = 'inline-block';
-        } else {
-            container.classList.remove('expanded');
-            container.classList.add('collapsed');
-            showMoreBtn.style.display = 'inline-block';
-            showLessBtn.style.display = 'none';
-        }
     }
 
     function renderErrorResult() {
@@ -1008,16 +903,25 @@
 
     // Page load animation
     window.addEventListener('load', () => {
-        const elements = document.querySelectorAll('.section-card');
-        elements.forEach((el, index) => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            setTimeout(() => {
-                el.style.transition = 'all 0.6s ease';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            }, index * 200);
-        });
+        const panel = document.querySelector('.input-panel');
+        const resultPanel = document.querySelector('.result-panel');
+
+        panel.style.opacity = '0';
+        panel.style.transform = 'translateX(-30px)';
+        resultPanel.style.opacity = '0';
+        resultPanel.style.transform = 'translateX(30px)';
+
+        setTimeout(() => {
+            panel.style.transition = 'all 0.6s ease';
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateX(0)';
+        }, 100);
+
+        setTimeout(() => {
+            resultPanel.style.transition = 'all 0.6s ease';
+            resultPanel.style.opacity = '1';
+            resultPanel.style.transform = 'translateX(0)';
+        }, 200);
     });
 </script>
 </body>
