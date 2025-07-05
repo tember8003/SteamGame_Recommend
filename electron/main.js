@@ -41,14 +41,14 @@ function loadApiKeys() {
         if (fs.existsSync(apiKeysPath)) {
             const data = fs.readFileSync(apiKeysPath, 'utf8');
             apiKeys = JSON.parse(data);
-            console.log('✅ API keys loaded');
+            console.log('API keys loaded');
             return true;
         } else {
-            console.log('ℹ️ No API keys file found');
+            console.log('No API keys file found');
             return false;
         }
     } catch (error) {
-        console.error('❌ Failed to load API keys:', error);
+        console.error('Failed to load API keys:', error);
         return false;
     }
 }
@@ -65,10 +65,10 @@ function saveApiKeys(keys) {
 
         apiKeys = { ...apiKeys, ...keys };
         fs.writeFileSync(apiKeysPath, JSON.stringify(apiKeys, null, 2));
-        console.log('✅ API keys saved');
+        console.log('API keys saved');
         return true;
     } catch (error) {
-        console.error('❌ Failed to save API keys:', error);
+        console.error('Failed to save API keys:', error);
         throw error;
     }
 }
@@ -119,6 +119,145 @@ async function validateGeminiApiKey(apiKey) {
     } catch (error) {
         console.error('Gemini API validation error:', error);
         return { valid: false, message: 'Failed to validate Gemini API key (network error)' };
+    }
+}
+
+// API 키 자동 검증 함수
+async function validateAllApiKeys() {
+    console.log('Starting API key validation...');
+
+    const validationResults = {
+        steam: { valid: false, message: '' },
+        gemini: { valid: false, message: '' },
+        hasKeys: false,
+        allValid: false
+    };
+
+    // API 키가 존재하는지 확인
+    if (!apiKeys.steamApiKey && !apiKeys.geminiApiKey) {
+        console.log('No API keys found');
+        validationResults.hasKeys = false;
+        return validationResults;
+    }
+
+    validationResults.hasKeys = true;
+
+    // Steam API 키 검증
+    if (apiKeys.steamApiKey) {
+        console.log('Validating Steam API key...');
+        try {
+            validationResults.steam = await validateSteamApiKey(apiKeys.steamApiKey);
+            console.log(`Steam API validation result: ${validationResults.steam.valid ? 'VALID' : 'INVALID'} ${validationResults.steam.message}`);
+        } catch (error) {
+            console.error('Steam API validation failed:', error);
+            validationResults.steam = { valid: false, message: 'Network error during validation' };
+        }
+    } else {
+        validationResults.steam = { valid: false, message: 'Steam API key not provided' };
+    }
+
+    // Gemini API 키 검증
+    if (apiKeys.geminiApiKey) {
+        console.log('Validating Gemini API key...');
+        try {
+            validationResults.gemini = await validateGeminiApiKey(apiKeys.geminiApiKey);
+            console.log(`Gemini API validation result: ${validationResults.gemini.valid ? 'VALID' : 'INVALID'} ${validationResults.gemini.message}`);
+        } catch (error) {
+            console.error('Gemini API validation failed:', error);
+            validationResults.gemini = { valid: false, message: 'Network error during validation' };
+        }
+    } else {
+        validationResults.gemini = { valid: false, message: 'Gemini API key not provided' };
+    }
+
+    // 전체 결과 확인
+    validationResults.allValid = validationResults.steam.valid && validationResults.gemini.valid;
+
+    console.log(`API validation complete. All valid: ${validationResults.allValid ? 'YES' : 'NO'}`);
+    return validationResults;
+}
+
+// API 키 검증 결과 화면 표시
+function showValidationResultScreen(validationResults) {
+    try {
+        const steamStatus = validationResults.steam.valid ?
+            `<div style="color: #2CC934; margin-bottom: 10px;">VALID - Steam API: ${validationResults.steam.message}</div>` :
+            `<div style="color: #f44336; margin-bottom: 10px;">INVALID - Steam API: ${validationResults.steam.message}</div>`;
+
+        const geminiStatus = validationResults.gemini.valid ?
+            `<div style="color: #2CC934; margin-bottom: 10px;">VALID - Gemini API: ${validationResults.gemini.message}</div>` :
+            `<div style="color: #f44336; margin-bottom: 10px;">INVALID - Gemini API: ${validationResults.gemini.message}</div>`;
+
+        const resultHtml = `
+            <div style="padding: 40px; font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 600px; max-width: 90%;">
+                    <h2 style="text-align: center; margin-bottom: 30px;">API Key Validation Results</h2>
+                    
+                    <div style="margin-bottom: 25px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        ${steamStatus}
+                        ${geminiStatus}
+                    </div>
+
+                    ${validationResults.allValid ?
+            `<div style="padding: 15px; background: rgba(76, 175, 80, 0.2); border: 1px solid #2CC934; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+                            <strong>All API keys are valid! Starting application...</strong>
+                        </div>` :
+            `<div style="padding: 15px; background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+                            <strong>Some API keys are invalid. Please update your configuration.</strong>
+                        </div>`
+        }
+
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        ${validationResults.allValid ?
+            `<button onclick="continueWithValidKeys()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #2CC934; color: white;">Continue</button>` :
+            `<button onclick="reconfigureKeys()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #ff9800; color: white;">Reconfigure API Keys</button>
+                             <button onclick="continueAnyway()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Continue Anyway</button>`
+        }
+                    </div>
+                </div>
+            </div>
+            <script>
+                const { ipcRenderer } = require('electron');
+                
+                function continueWithValidKeys() {
+                    ipcRenderer.invoke('start-main-app');
+                }
+                
+                function reconfigureKeys() {
+                    ipcRenderer.invoke('show-config-screen');
+                }
+                
+                function continueAnyway() {
+                    ipcRenderer.invoke('start-main-app');
+                }
+
+                // 자동으로 계속 진행 (유효한 키가 있는 경우)
+                ${validationResults.allValid ? 'setTimeout(continueWithValidKeys, 3000);' : ''}
+            </script>
+        `;
+
+        mainWindow.loadURL(`data:text/html,${encodeURIComponent(resultHtml)}`);
+    } catch (error) {
+        console.error('Error in showValidationResultScreen:', error);
+        showErrorScreen('Failed to show validation result screen: ' + error.message);
+    }
+}
+
+// 검증 진행 화면 표시
+function showValidatingScreen() {
+    try {
+        const validatingHtml = `
+            <div style="text-align:center;padding:50px;font-family:Arial;background:#1a1a2e;color:white;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+                <h2 style="color:#00d4ff;margin-bottom:20px;">Validating API Keys</h2>
+                <p style="margin-bottom:30px;">Checking API key validation...</p>
+                <div style="border:4px solid #333;border-top:4px solid #00d4ff;border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;margin:20px auto;"></div>
+                <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+            </div>
+        `;
+        mainWindow.loadURL(`data:text/html,${encodeURIComponent(validatingHtml)}`);
+    } catch (error) {
+        console.error('Error in showValidatingScreen:', error);
+        showErrorScreen('Failed to show validating screen: ' + error.message);
     }
 }
 
@@ -193,9 +332,9 @@ function createApplicationMenu() {
 
         const menu = Menu.buildFromTemplate(template);
         Menu.setApplicationMenu(menu);
-        console.log('✅ Application menu created');
+        console.log('Application menu created');
     } catch (error) {
-        console.error('❌ Failed to create application menu:', error);
+        console.error('Failed to create application menu:', error);
     }
 }
 
@@ -205,10 +344,10 @@ function showAboutDialog() {
         const aboutHtml = `
             <div style="padding: 40px; font-family: Arial; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
                 <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); max-width: 500px;">
-                    <h1 style="margin-bottom: 20px;">🎮 Steam Game Recommend</h1>
+                    <h1 style="margin-bottom: 20px;">Steam Game Recommend</h1>
                     <p style="font-size: 18px; margin-bottom: 15px;">Version 1.0.0</p>
                     <p style="margin-bottom: 20px;">AI-powered Steam game recommendation system</p>
-                    <button onclick="window.close()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Close</button>
+                    <button onclick="window.close()" style="padding: 10px 20px; background: #2CC934; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Close</button>
                 </div>
             </div>
         `;
@@ -227,7 +366,7 @@ function showAboutDialog() {
         aboutWindow.loadURL(`data:text/html,${encodeURIComponent(aboutHtml)}`);
         aboutWindow.setMenuBarVisibility(false);
     } catch (error) {
-        console.error('❌ Failed to show about dialog:', error);
+        console.error('Failed to show about dialog:', error);
     }
 }
 
@@ -257,9 +396,21 @@ ipcMain.handle('start-main-app', () => {
     startMainApp();
 });
 
+// 설정 화면 표시 IPC 핸들러
+ipcMain.handle('show-config-screen', () => {
+    console.log('IPC: show-config-screen called');
+    showConfigScreen();
+});
+
+// API 키 재검증 IPC 핸들러
+ipcMain.handle('revalidate-api-keys', async () => {
+    console.log('IPC: revalidate-api-keys called');
+    return await validateAllApiKeys();
+});
+
 // 메인 앱 시작
 function startMainApp() {
-    console.log('🚀 Starting main application...');
+    console.log('Starting main application...');
     try {
         // 로딩 화면 표시
         showLoadingScreen();
@@ -269,7 +420,7 @@ function startMainApp() {
             startJavaApp();
         }, 1000);
     } catch (error) {
-        console.error('❌ Error in startMainApp:', error);
+        console.error('Error in startMainApp:', error);
         showErrorScreen('Failed to start main application: ' + error.message);
     }
 }
@@ -282,13 +433,13 @@ function showLoadingScreen() {
         console.log('Looking for loading.html at:', loadingPath);
 
         if (fs.existsSync(loadingPath)) {
-            console.log('✅ Loading loading.html from file');
+            console.log('Loading loading.html from file');
             mainWindow.loadFile(loadingPath);
         } else {
-            console.log('ℹ️ loading.html not found, using inline loading screen');
+            console.log('loading.html not found, using inline loading screen');
             const loadingHtml = `
                 <div style="text-align:center;padding:50px;font-family:Arial;background:#1a1a2e;color:white;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-                    <h2 style="color:#00d4ff;margin-bottom:20px;">🎮 Steam Game Recommend</h2>
+                    <h2 style="color:#00d4ff;margin-bottom:20px;">Steam Game Recommend</h2>
                     <p style="margin-bottom:30px;">서버를 시작하고 있습니다...</p>
                     <div style="border:4px solid #333;border-top:4px solid #00d4ff;border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;margin:20px auto;"></div>
                     <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
@@ -297,7 +448,7 @@ function showLoadingScreen() {
             mainWindow.loadURL(`data:text/html,${encodeURIComponent(loadingHtml)}`);
         }
     } catch (error) {
-        console.error('❌ Error in showLoadingScreen:', error);
+        console.error('Error in showLoadingScreen:', error);
         showErrorScreen('Failed to show loading screen: ' + error.message);
     }
 }
@@ -310,14 +461,14 @@ function showConfigScreen() {
         console.log('Looking for config.html at:', configPath);
 
         if (fs.existsSync(configPath)) {
-            console.log('✅ Loading config.html from file');
+            console.log('Loading config.html from file');
             mainWindow.loadFile(configPath);
         } else {
-            console.log('ℹ️ config.html not found, using inline config screen');
+            console.log('config.html not found, using inline config screen');
             const configHtml = `
                 <div style="padding: 40px; font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
                     <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 600px; max-width: 90%;">
-                        <h2 style="text-align: center; margin-bottom: 30px;">🔑 API Key Configuration</h2>
+                        <h2 style="text-align: center; margin-bottom: 30px;">API Key Configuration</h2>
                         
                         <div style="margin-bottom: 25px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600;">Steam API Key:</label>
@@ -337,7 +488,7 @@ function showConfigScreen() {
 
                         <div style="display: flex; gap: 10px; margin-top: 30px;">
                             <button onclick="skipConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Skip for Now</button>
-                            <button onclick="saveConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #4CAF50; color: white;">Save & Continue</button>
+                            <button onclick="saveConfig()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #2CC934; color: white;">Save & Continue</button>
                         </div>
                         <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: 600; display: none;"></div>
                     </div>
@@ -362,14 +513,14 @@ function showConfigScreen() {
                             await ipcRenderer.invoke('save-api-keys', { steamApiKey, geminiApiKey });
                             statusDiv.style.display = 'block';
                             statusDiv.style.background = 'rgba(76, 175, 80, 0.2)';
-                            statusDiv.style.border = '1px solid #4CAF50';
-                            statusDiv.textContent = '✅ API keys saved successfully!';
+                            statusDiv.style.border = '1px solid #2CC934';
+                            statusDiv.textContent = 'API keys saved successfully!';
                             setTimeout(() => { ipcRenderer.invoke('start-main-app'); }, 1500);
                         } catch (error) {
                             statusDiv.style.display = 'block';
                             statusDiv.style.background = 'rgba(244, 67, 54, 0.2)';
                             statusDiv.style.border = '1px solid #f44336';
-                            statusDiv.textContent = '❌ Failed to save API keys: ' + error.message;
+                            statusDiv.textContent = 'Failed to save API keys: ' + error.message;
                         }
                     }
                     
@@ -381,7 +532,7 @@ function showConfigScreen() {
             mainWindow.loadURL(`data:text/html,${encodeURIComponent(configHtml)}`);
         }
     } catch (error) {
-        console.error('❌ Error in showConfigScreen:', error);
+        console.error('Error in showConfigScreen:', error);
         showErrorScreen('Failed to show config screen: ' + error.message);
     }
 }
@@ -409,15 +560,15 @@ function startJavaApp() {
             console.log(`  Checking: ${testPath}`);
             if (fs.existsSync(testPath)) {
                 jarPath = testPath;
-                console.log(`  ✅ Found JAR at: ${jarPath}`);
+                console.log(`  Found JAR at: ${jarPath}`);
                 break;
             } else {
-                console.log(`  ❌ Not found`);
+                console.log(`  Not found`);
             }
         }
 
         if (!jarPath) {
-            console.error('❌ JAR file not found');
+            console.error('JAR file not found');
             showErrorScreen('JAR file not found: recommend-0.0.1-SNAPSHOT.jar<br><br>Please ensure the JAR file is in the resources folder.');
             return;
         }
@@ -433,18 +584,22 @@ function startJavaApp() {
         // 작업 디렉토리를 recommend 폴더로 설정 (data 폴더가 있는 곳)
         const workingDirectory = path.join(appRoot, '..');  // recommend 폴더
 
-        console.log('🚀 Starting Java process...');
+        console.log('Starting Java process...');
         console.log('JAR path:', jarPath);
         console.log('Working directory:', workingDirectory);
+        console.log('Environment variables:', {
+            STEAM_API_KEY: env.STEAM_API_KEY ? 'SET' : 'NOT SET',
+            GEMINI_API_KEY: env.GEMINI_API_KEY ? 'SET' : 'NOT SET'
+        });
 
         // data 폴더 존재 확인
         const dataFolder = path.join(workingDirectory, 'data');
         const initSqlPath = path.join(dataFolder, 'init.sql');
 
         if (fs.existsSync(initSqlPath)) {
-            console.log('✅ Found init.sql at:', initSqlPath);
+            console.log('Found init.sql at:', initSqlPath);
         } else {
-            console.log('⚠️ init.sql not found at:', initSqlPath);
+            console.log('Warning: init.sql not found at:', initSqlPath);
         }
 
         // 기존 프로세스가 있다면 종료
@@ -465,7 +620,7 @@ function startJavaApp() {
 
             if (output.includes('Started RecommendApplication') ||
                 output.includes('Tomcat started on port 8888')) {
-                console.log('✅ Java server started successfully!');
+                console.log('Java server started successfully!');
                 isJavaServerReady = true;
 
                 // 서버 준비되면 연결 시도
@@ -516,7 +671,7 @@ async function checkServerAndConnect() {
 
     while (attempts < maxAttempts) {
         try {
-            console.log(`🔍 Connection attempt ${attempts + 1}/${maxAttempts}...`);
+            console.log(`Connection attempt ${attempts + 1}/${maxAttempts}...`);
 
             const response = await fetch('http://localhost:8888/index.html', {
                 method: 'GET',
@@ -524,19 +679,19 @@ async function checkServerAndConnect() {
             });
 
             if (response.ok) {
-                console.log('✅ Server connection successful!');
+                console.log('Server connection successful!');
                 mainWindow.loadURL('http://localhost:8888/index.html');
                 return;
             }
         } catch (error) {
-            console.log(`⏳ Server not ready yet: ${error.message}`);
+            console.log(`Server not ready yet: ${error.message}`);
         }
 
         await new Promise(resolve => setTimeout(resolve, 1000));
         attempts++;
     }
 
-    console.log('❌ Server connection failed');
+    console.log('Server connection failed');
     showErrorScreen('Failed to connect to server after maximum attempts.');
 }
 
@@ -546,7 +701,7 @@ function showErrorScreen(message) {
         const errorHtml = `
             <div style="padding: 40px; font-family: Arial; text-align: center; background: #f44336; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
                 <div style="max-width: 600px;">
-                    <h1>❌ Error</h1>
+                    <h1>Error</h1>
                     <p style="font-size: 18px; margin: 20px 0; line-height: 1.6;">${message}</p>
                     <div style="margin-top: 30px;">
                         <button onclick="location.reload()" style="padding: 12px 24px; font-size: 16px; background: white; color: #f44336; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 10px;">Retry</button>
@@ -559,10 +714,11 @@ function showErrorScreen(message) {
             mainWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`);
         }
     } catch (error) {
-        console.error('❌ Error in showErrorScreen:', error);
+        console.error('Error in showErrorScreen:', error);
     }
 }
 
+// 수정된 createWindow 함수 - API 키 검증 로직 추가
 function createWindow() {
     console.log('=== Creating Window ===');
 
@@ -581,7 +737,7 @@ function createWindow() {
         createApplicationMenu();
 
         mainWindow.once('ready-to-show', () => {
-            console.log('✅ Window ready - showing now');
+            console.log('Window ready - showing now');
             mainWindow.show();
             mainWindow.focus();
 
@@ -591,21 +747,50 @@ function createWindow() {
             }
         });
 
+        // API 키 로드 및 검증 프로세스
+        initializeApiKeys();
+
+    } catch (error) {
+        console.error('Error creating window:', error);
+        app.quit();
+    }
+}
+
+// API 키 초기화 및 검증 프로세스
+async function initializeApiKeys() {
+    console.log('Initializing API keys...');
+
+    try {
         // API 키 로드 시도
         const hasApiKeys = loadApiKeys();
 
-        // API 키가 있고 유효하면 메인 앱 시작, 없으면 설정 화면
-        if (hasApiKeys && apiKeys.steamApiKey && apiKeys.geminiApiKey) {
-            console.log('✅ API keys found - starting main app');
-            startMainApp();
-        } else {
-            console.log('⚙️ API keys missing or incomplete - showing config screen');
+        if (!hasApiKeys || !apiKeys.steamApiKey || !apiKeys.geminiApiKey) {
+            console.log('API keys missing or incomplete - showing config screen');
             showConfigScreen();
+            return;
+        }
+
+        console.log('API keys found - starting validation...');
+
+        // 검증 진행 화면 표시
+        showValidatingScreen();
+
+        // API 키 검증 실행
+        const validationResults = await validateAllApiKeys();
+
+        // 검증 결과에 따른 처리
+        if (validationResults.allValid) {
+            console.log('All API keys are valid - starting main app');
+            // 잠시 결과 화면을 보여준 후 메인 앱 시작
+            showValidationResultScreen(validationResults);
+        } else {
+            console.log('Some API keys are invalid - showing validation results');
+            showValidationResultScreen(validationResults);
         }
 
     } catch (error) {
-        console.error('❌ Error creating window:', error);
-        app.quit();
+        console.error('Error during API key initialization:', error);
+        showErrorScreen('Failed to initialize API keys: ' + error.message);
     }
 }
 
@@ -614,7 +799,7 @@ app.whenReady().then(() => {
     console.log('=== App Ready ===');
     createWindow();
 }).catch(error => {
-    console.error('❌ App failed to become ready:', error);
+    console.error('App failed to become ready:', error);
 });
 
 app.on('window-all-closed', () => {
@@ -646,4 +831,4 @@ app.on('before-quit', () => {
     }
 });
 
-console.log('=== Fixed Main.js loaded successfully ===');
+console.log('=== Enhanced Main.js with API Key Validation loaded successfully ===');
