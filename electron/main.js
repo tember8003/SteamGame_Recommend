@@ -19,9 +19,11 @@ console.log('Working directory:', process.cwd());
 // 올바른 앱 루트 경로 얻기 (asar 문제 해결)
 const getAppRootPath = () => {
     if (app.isPackaged) {
+        // 빌드된 exe에서는 process.resourcesPath 사용
         return process.resourcesPath;
     } else {
-        return process.cwd(); // 개발 환경에서는 process.cwd() 사용
+        // 개발 환경에서는 process.cwd() 사용
+        return process.cwd();
     }
 };
 
@@ -429,7 +431,16 @@ function startMainApp() {
 function showLoadingScreen() {
     try {
         const appRoot = getAppRootPath();
-        const loadingPath = path.join(appRoot, 'html', 'loading.html');
+        let loadingPath;
+
+        if (app.isPackaged) {
+            // 빌드된 exe에서는 extraResources 경로 사용
+            loadingPath = path.join(process.resourcesPath, 'resources', 'html', 'loading.html');
+        } else {
+            // 개발 환경
+            loadingPath = path.join(appRoot, 'resources', 'html', 'loading.html');
+        }
+
         console.log('Looking for loading.html at:', loadingPath);
 
         if (fs.existsSync(loadingPath)) {
@@ -457,7 +468,16 @@ function showLoadingScreen() {
 function showConfigScreen() {
     try {
         const appRoot = getAppRootPath();
-        const configPath = path.join(appRoot, 'html', 'config.html');
+        let configPath;
+
+        if (app.isPackaged) {
+            // 빌드된 exe에서는 extraResources 경로 사용
+            configPath = path.join(process.resourcesPath, 'resources', 'html', 'config.html');
+        } else {
+            // 개발 환경
+            configPath = path.join(appRoot, 'resources', 'html', 'config.html');
+        }
+
         console.log('Looking for config.html at:', configPath);
 
         if (fs.existsSync(configPath)) {
@@ -537,19 +557,51 @@ function showConfigScreen() {
     }
 }
 
-// Java 앱 시작 - 수정된 경로 처리
+// 데이터베이스 초기화 파일들 존재 확인 및 로깅
+function checkDatabaseFiles(workingDirectory) {
+    console.log('=== Checking Database Files ===');
+
+    const dataFolder = path.join(workingDirectory, 'data');
+    const initSqlPath = path.join(dataFolder, 'init.sql');
+    const dataSqlPath = path.join(dataFolder, 'data.sql');
+
+    console.log('Data folder path:', dataFolder);
+    console.log('Init SQL path:', initSqlPath);
+    console.log('Data SQL path:', dataSqlPath);
+
+    const initExists = fs.existsSync(initSqlPath);
+    const dataExists = fs.existsSync(dataSqlPath);
+
+    console.log(`init.sql exists: ${initExists ? 'YES' : 'NO'}`);
+    console.log(`data.sql exists: ${dataExists ? 'YES' : 'NO'}`);
+
+    if (initExists) {
+        console.log('✓ Found init.sql - 테이블 스키마가 생성됩니다');
+    } else {
+        console.log('⚠ init.sql not found - 테이블 스키마가 생성되지 않을 수 있습니다');
+    }
+
+    if (dataExists) {
+        console.log('✓ Found data.sql - 초기 데이터가 삽입됩니다');
+    } else {
+        console.log('⚠ data.sql not found - 초기 데이터가 삽입되지 않을 수 있습니다');
+    }
+
+    return { initExists, dataExists };
+}
+
+// Java 앱 시작 - 수정된 경로 처리 및 데이터베이스 파일 확인
+// Java 앱 시작 함수 수정
 function startJavaApp() {
     console.log('=== Starting Java App ===');
 
     try {
         const appRoot = getAppRootPath();
 
-        // 올바른 JAR 파일 경로들
+        // JAR 파일 경로 찾기 (기존 코드와 동일)
         const possiblePaths = [
-            // 빌드된 앱에서의 경로
+            path.join(process.resourcesPath, 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
             path.join(process.resourcesPath, 'recommend-0.0.1-SNAPSHOT.jar'),
-
-            // 개발 환경에서의 경로 (올바른 경로 사용)
             path.join(appRoot, 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
             path.join(appRoot, '..', 'build', 'libs', 'recommend-0.0.1-SNAPSHOT.jar')
         ];
@@ -562,85 +614,182 @@ function startJavaApp() {
                 jarPath = testPath;
                 console.log(`  Found JAR at: ${jarPath}`);
                 break;
-            } else {
-                console.log(`  Not found`);
             }
         }
 
         if (!jarPath) {
             console.error('JAR file not found');
-            showErrorScreen('JAR file not found: recommend-0.0.1-SNAPSHOT.jar<br><br>Please ensure the JAR file is in the resources folder.');
+            showErrorScreen('JAR file not found: recommend-0.0.1-SNAPSHOT.jar');
             return;
         }
 
-        // 환경변수에 API 키 설정
+        // 수정: 작업 디렉토리를 JAR 파일이 있는 디렉토리로 설정
+        const workingDirectory = path.dirname(jarPath);
+        console.log('Working directory:', workingDirectory);
+
+        // 데이터베이스 관련 경로 확인
+        const possibleDataPaths = [
+            path.join(workingDirectory, 'data'),
+            path.join(workingDirectory, '..', 'data'),
+            path.join(process.resourcesPath, 'resources', 'data'),
+            path.join(appRoot, 'resources', 'data')
+        ];
+
+        let dataPath = null;
+        for (const testPath of possibleDataPaths) {
+            console.log(`  Checking data folder: ${testPath}`);
+            if (fs.existsSync(testPath)) {
+                dataPath = testPath;
+                console.log(`  Found data folder at: ${dataPath}`);
+                break;
+            }
+        }
+
+        // 데이터베이스 파일 존재 여부 확인
+        let shouldInitializeData = false;
+        if (dataPath) {
+            const dbPath = path.join(dataPath, 'gamedb.mv.db');
+            const dbExists = fs.existsSync(dbPath);
+
+            console.log(`Database file exists: ${dbExists ? 'YES' : 'NO'}`);
+
+            if (dbExists) {
+                console.log('✓ 기존 데이터베이스 파일 발견 - 기존 데이터 사용');
+                shouldInitializeData = false;
+            } else {
+                console.log('ℹ 데이터베이스 파일 없음 - 초기 데이터 생성 필요');
+                shouldInitializeData = true;
+
+                // data 폴더가 없으면 생성
+                if (!fs.existsSync(dataPath)) {
+                    fs.mkdirSync(dataPath, { recursive: true });
+                    console.log(`Created data directory: ${dataPath}`);
+                }
+            }
+        } else {
+            // data 폴더 생성
+            dataPath = path.join(workingDirectory, 'data');
+            fs.mkdirSync(dataPath, { recursive: true });
+            console.log(`Created data directory: ${dataPath}`);
+            shouldInitializeData = true;
+        }
+
+        // 환경변수 설정
         const env = {
             ...process.env,
             STEAM_API_KEY: apiKeys.steamApiKey || '',
             GEMINI_API_KEY: apiKeys.geminiApiKey || '',
-            SPRING_PROFILES_ACTIVE: 'h2'
+            SPRING_PROFILES_ACTIVE: 'h2',
+            // 데이터베이스 경로 명시적 설정
+            SPRING_DATASOURCE_URL: `jdbc:h2:file:${dataPath ? path.join(dataPath, 'gamedb') : './data/gamedb'}`,
+            // 데이터 초기화 여부 설정
+            INIT_DB: shouldInitializeData ? 'always' : 'never'
         };
 
-        // 작업 디렉토리를 recommend 폴더로 설정 (data 폴더가 있는 곳)
-        const workingDirectory = path.join(appRoot, '..');  // recommend 폴더
-
-        console.log('Starting Java process...');
-        console.log('JAR path:', jarPath);
-        console.log('Working directory:', workingDirectory);
         console.log('Environment variables:', {
             STEAM_API_KEY: env.STEAM_API_KEY ? 'SET' : 'NOT SET',
-            GEMINI_API_KEY: env.GEMINI_API_KEY ? 'SET' : 'NOT SET'
+            GEMINI_API_KEY: env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
+            SPRING_PROFILES_ACTIVE: env.SPRING_PROFILES_ACTIVE,
+            SPRING_DATASOURCE_URL: env.SPRING_DATASOURCE_URL,
+            INIT_DB: env.INIT_DB
         });
 
-        // data 폴더 존재 확인
-        const dataFolder = path.join(workingDirectory, 'data');
-        const initSqlPath = path.join(dataFolder, 'init.sql');
-
-        if (fs.existsSync(initSqlPath)) {
-            console.log('Found init.sql at:', initSqlPath);
-        } else {
-            console.log('Warning: init.sql not found at:', initSqlPath);
-        }
-
-        // 기존 프로세스가 있다면 종료
+        // 기존 프로세스 종료
         if (javaProcess) {
             console.log('Terminating existing Java process...');
             javaProcess.kill();
         }
 
-        javaProcess = spawn('java', ['-jar', jarPath, '--spring.profiles.active=h2'], {
+        // Java 실행 인자 수정
+        const javaArgs = [
+            '-jar', jarPath,
+            '--spring.profiles.active=h2',
+            `--spring.sql.init.mode=${shouldInitializeData ? 'always' : 'never'}`,
+            '--spring.jpa.defer-datasource-initialization=true',
+            '--logging.level.org.springframework.jdbc=DEBUG',
+            '--logging.level.org.springframework.boot.autoconfigure.sql=DEBUG',
+            '--logging.level.org.hibernate.SQL=DEBUG'
+        ];
+
+        console.log('Java arguments:', javaArgs);
+
+        javaProcess = spawn('java', javaArgs, {
             stdio: ['ignore', 'pipe', 'pipe'],
-            cwd: workingDirectory,  // recommend 폴더에서 실행
+            cwd: workingDirectory,
             env: env
         });
 
+        // 출력 모니터링 강화
         javaProcess.stdout.on('data', (data) => {
             const output = data.toString();
             console.log('Java stdout:', output);
 
+            // 데이터베이스 초기화 관련 로그 모니터링
+            if (output.includes('HikariPool')) {
+                console.log('✓ 데이터베이스 연결 풀 초기화됨');
+            }
+            if (output.includes('H2 database') || output.includes('Starting embedded database')) {
+                console.log('✓ H2 데이터베이스 연결됨');
+            }
+            if (output.includes('Executing SQL script') || output.includes('ScriptUtils')) {
+                console.log('✓ SQL 스크립트 실행 중:', output.trim());
+            }
+            if (output.includes('schema.sql')) {
+                console.log('✓ 스키마 파일 실행됨 - 테이블 생성');
+            }
+            if (output.includes('data.sql')) {
+                console.log('✓ 데이터 파일 실행됨 - 초기 데이터 삽입');
+            }
+            if (output.includes('Hibernate: create table') || output.includes('Hibernate: drop table')) {
+                console.log('✓ Hibernate DDL 실행:', output.trim());
+            }
+            if (output.includes('Hibernate: insert into') || output.includes('Hibernate: select')) {
+                console.log('✓ 데이터베이스 쿼리 실행:', output.trim());
+            }
+            if (output.includes('DataInitializer')) {
+                console.log('✓ 데이터 초기화 컴포넌트 실행:', output.trim());
+            }
+            if (output.includes('이미') && output.includes('게임이 있습니다')) {
+                console.log('✓ 기존 데이터 발견 - 초기화 건너뜀');
+            }
+            if (output.includes('게임 데이터를 삽입합니다')) {
+                console.log('✓ 약 8000개 게임 데이터 삽입 시작... (시간이 걸릴 수 있습니다)');
+            }
+            if (output.includes('데이터 삽입 진행중')) {
+                console.log('✓ 데이터 삽입 진행:', output.trim());
+            }
+            if (output.includes('데이터 삽입 완료')) {
+                console.log('✓ 모든 게임 데이터 삽입 완료!');
+            }
+            if (output.includes('외래키 체크')) {
+                console.log('✓ 외래키 설정:', output.trim());
+            }
+
+            // 서버 시작 확인
             if (output.includes('Started RecommendApplication') ||
                 output.includes('Tomcat started on port 8888')) {
-                console.log('Java server started successfully!');
+                console.log('✓ Java 서버 시작 완료!');
                 isJavaServerReady = true;
-
-                // 서버 준비되면 연결 시도
-                setTimeout(() => {
-                    checkServerAndConnect();
-                }, 2000);
+                setTimeout(() => checkServerAndConnect(), 2000);
             }
         });
 
         javaProcess.stderr.on('data', (data) => {
             const errorOutput = data.toString();
             console.error('Java stderr:', errorOutput);
+
+            // 데이터베이스 관련 에러 특별 처리
+            if (errorOutput.includes('SQLException') ||
+                errorOutput.includes('DataAccessException') ||
+                errorOutput.includes('JdbcTemplate')) {
+                console.error('!!! 데이터베이스 관련 오류 발생 !!!');
+            }
         });
 
         javaProcess.on('close', (code) => {
             console.log(`Java process terminated with code: ${code}`);
             isJavaServerReady = false;
-
             if (code !== 0 && code !== null) {
-                console.error(`Java process exited with error code: ${code}`);
                 showErrorScreen(`Java application exited with error code: ${code}`);
             }
         });
@@ -648,9 +797,8 @@ function startJavaApp() {
         javaProcess.on('error', (error) => {
             console.error('Failed to start Java process:', error);
             isJavaServerReady = false;
-
             if (error.code === 'ENOENT') {
-                showErrorScreen('Java is not installed or not found in PATH.<br><br>Please install Java and try again.');
+                showErrorScreen('Java is not installed or not found in PATH.');
             } else {
                 showErrorScreen('Failed to start Java process: ' + error.message);
             }
@@ -831,4 +979,4 @@ app.on('before-quit', () => {
     }
 });
 
-console.log('=== Enhanced Main.js with API Key Validation loaded successfully ===');
+console.log('=== Enhanced Main.js with API Key Validation and Database Initialization loaded successfully ===');

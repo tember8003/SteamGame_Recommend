@@ -191,7 +191,6 @@ public class GameChoiceService {
         return response;
     }
 
-    @Transactional(readOnly = true, noRollbackFor = {ResponseStatusException.class})
     public ChoiceResultDTO getChoiceResult(String sessionId, int review, Boolean koreanCheck, Boolean freeCheck) {
         ChoiceSession session = getChoiceSession(sessionId);
 

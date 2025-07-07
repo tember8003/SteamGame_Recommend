@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     CONSTRAINT fk_reviews_game FOREIGN KEY (appid) REFERENCES games (appid) ON DELETE CASCADE
     );
 
+
 CREATE TABLE IF NOT EXISTS tags (
     id BIGINT NOT NULL AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -66,10 +67,20 @@ CREATE TABLE IF NOT EXISTS tag_cooccurrence (
 -- 인덱스 생성
 -- ============================================
 
-CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
 CREATE INDEX IF NOT EXISTS idx_games_appid ON games(appid);
+CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
 CREATE INDEX IF NOT EXISTS idx_games_review_count ON games(review_count);
+
+-- reviews 테이블 인덱스
 CREATE INDEX IF NOT EXISTS idx_reviews_appid ON reviews(appid);
+
+-- game_tags 테이블 인덱스
 CREATE INDEX IF NOT EXISTS idx_game_tags_game_id ON game_tags(game_id);
 CREATE INDEX IF NOT EXISTS idx_game_tags_tag_id ON game_tags(tag_id);
+
+-- tags 테이블 인덱스
 CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
+
+-- tag_cooccurrence 테이블 인덱스
+CREATE INDEX IF NOT EXISTS idx_tag_cooccurrence_tag1 ON tag_cooccurrence(tag1);
+CREATE INDEX IF NOT EXISTS idx_tag_cooccurrence_tag2 ON tag_cooccurrence(tag2);

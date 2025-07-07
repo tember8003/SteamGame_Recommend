@@ -28,4 +28,7 @@ public class Game {
 
     @Column(name = "is_free")
     private boolean isFree;
+
+    @Column(name = "review_count")
+    private Integer reviewCount;
 }
