@@ -1,13 +1,12 @@
-# 🎮 SteamGame Recommend API & UI
+# 🎮 Steam Game Recommend API & UI
 
-Steam 게임의 태그 정보를 기반으로 사용자 프로필, 최근 플레이 정보, Gemini API 등을 활용하여 게임을 추천해주는 시스템입니다.
+Steam game recommendation system that uses tag information, user profiles, recent play history
 
-> 🔍 약 96,000개의 게임 데이터 기반 (2025년 6월 기준)
->
+> **Note**: To optimize database size with H2, we only include games that have 50+ reviews. Some games you're looking for might not be available due to this limitation.
 
 ---
 
-## 📁 프로젝트 구조
+## 📁 Project Structure
 
 ```
 recommend/
@@ -16,206 +15,281 @@ recommend/
 │   │   ├── java/SteamGame.recommend/  # Spring Boot REST API
 │   │   └── resources/
 │   │       ├── application.properties
-│   │       └── static/               # HTML 기반 UI
-│   │           ├── index.html        # 홈 (기능 메뉴)
-│   │           ├── random.html       # 태그 기반 랜덤 추천
-│   │           ├── input.html        # 직접 입력 태그 추천
-│   │           ├── profile.html      # 프로필 기반 추천
-│   │           ├── recent.html       # 최근 2주 플레이 기반 추천
-│   │           └── similar.html      # 비슷한 태그 추천
-├── electron/                         # Electron 데스크톱 앱
-│   ├── main.js                       # 메인 프로세스
-│   ├── package.json                  # 빌드 설정
+│   │       └── static/               # HTML-based UI
+│   │           ├── index.html        # Home (Feature menu)
+│   │           ├── random.html       # Tag-based random recommendations
+│   │           ├── input.html        # Direct input tag recommendations
+│   │           ├── profile.html      # Profile-based recommendations
+│   │           ├── recent.html       # Recent 2-week play recommendations
+│   │           ├── similar.html      # Similar tag recommendations
+│   │           ├── choice.html       # Game choice interactive feature
+│   │           └── review-guess.html # Review guessing game
+├── electron/                         # Electron desktop app
+│   ├── main.js                       # Main process
+│   ├── package.json                  # Build configuration
 │   ├── html/
-│   │   ├── config.html               # API 키 설정
-│   │   └── loading.html              # 로딩 화면
+│   │   ├── config.html               # API key settings
+│   │   └── loading.html              # Loading screen
 │   └── resources/
 │       └── recommend-0.0.1-SNAPSHOT.jar
-└── docker-compose.yml                # MySQL 컨테이너 설정
-
+└── data/                             # H2 Database files (auto-created)
+    └── gamedb.mv.db                  # H2 database file
 ```
 
 ---
 
-## ✅ 사전 준비 사항
+## 📑 Prerequisites
 
-- **공통**
-  - JDK 17 이상, Git, Docker & Docker Compose
-  - MySQL: 포트 3307 / Redis: 포트 6379 (포트 충돌 주의)
-- **데스크톱 앱**
-  - Windows 10/11 (64-bit)
-  - Java 17 이상 설치
-  - 앱 실행 시 API 키 설정 가능
-
+- **General Requirements**
+    - JDK 17 or higher, Git
+    - No external database required (H2 embedded)
+- **Desktop Application**
+    - Windows 10/11 (64-bit)
+    - Java 17 or higher installed
+    - API keys can be configured when running the app
 
 ---
 
-## 🔑 API Key 발급
+## 🔑 API Key Setup
 
 ### 1. Steam Web API Key
 
-1. [Steam API Key 등록 페이지](https://steamcommunity.com/dev/apikey) 접속 후 Steam 계정 로그인
-2. Domain Name에 임의 주소 입력 (예: `localhost`)
-3. "I agree" 체크 후 "Register" 클릭
-4. 발급된 API Key 복사 및 보관
+1. Visit [Steam API Key Registration Page](https://steamcommunity.com/dev/apikey) and log in with your Steam account
+2. Enter any domain name (e.g., `localhost`)
+3. Check "I agree" and click "Register"
+4. Copy and save the generated API Key
 
-> Steam Guard 미인증 또는 커뮤니티 제한 계정은 발급 불가
+> Note: Steam Guard verification required. Community-restricted accounts cannot obtain API keys.
 >
 
 ### 2. Google Gemini API Key
 
-1. [Google AI Studio](https://aistudio.google.com/app/apikey) 접속 및 로그인
-2. "Create API Key" 클릭
-3. 생성된 API Key 복사 및 보관
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and log in
+2. Click "Create API Key"
+3. Copy and save the generated API Key
 
 ---
 
-## 🚀 실행 방법
+## 🖥️ How to Run
 
-### 방법 1: 데스크톱 앱 사용 (권장)
+### Method 1: Desktop Application (Recommended)
 
-1. **다운로드 & 설치**
-  - [Releases 페이지](https://github.com/tember8003/SteamGame_Recommend/releases)에서 최신 버전 다운로드
-  - `Steam-Game-Recommend-Setup-x.x.x.exe` 실행
-2. **앱 실행**
-  - 첫 실행 시 API 키 설정 화면 자동 표시
-  - Steam API Key 및 Gemini API Key 입력
-  - `Skip for Now` 클릭 시 API 키 없이 태그 검색 가능
-3. **기능 이용**
-  - 모든 기능이 하나의 앱으로 실행
-  - 별도 서버 환경 변수 설정 불필요
+1. **Download & Install**
+    - Download the latest version from the [Releases page](https://github.com/tember8003/SteamGame_Recommend/releases)
+    - Run `Steam-Game-Recommend-Setup-x.x.x.exe`
 
+2. **Launch Application**
+    - API key configuration screen appears automatically on first run
+    - Enter your Steam API Key and Gemini API Key
+    - Click `Skip for Now` to use tag search without API keys
+    - API keys are stored locally at: `%AppData%\steam-game-recommend\api-keys.json`
+
+3. **Use Features**
+    - All features run in a single application
+    - No separate server environment variable setup required
 
 ---
 
-### 방법 2: 개발자/서버 실행
+### Method 2: Developer/Server Execution
 
-1. **프로젝트 클론**
+1. **Clone Project**
 
     ```bash
     git clone https://github.com/tember8003/SteamGame_Recommend.git
     cd SteamGame_Recommend
     ```
 
-2. **MySQL 컨테이너 실행**
+2. **Set Environment Variables** (Optional)
+    - macOS/Linux (bash, zsh)
 
-    ```bash
-    docker-compose up -d
-    ```
+       ```bash
+       export STEAM_API_KEY=YOUR_STEAM_API_KEY
+       export GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+       ```
 
-  - `testdb` 데이터베이스 자동 생성
+    - Windows (PowerShell)
 
-3. **환경 변수 설정**
-  - macOS/Linux (bash, zsh)
+       ```powershell
+       $Env:STEAM_API_KEY = "YOUR_STEAM_API_KEY"
+       $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+       ```
 
-      ```bash
-      export STEAM_API_KEY=YOUR_STEAM_API_KEY
-      export GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-      ```
-
-  - Windows (PowerShell)
-
-      ```powershell
-      $Env:STEAM_API_KEY = "YOUR_STEAM_API_KEY"
-      $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-      ```
-
-4. **서버 실행**
+3. **Start Server**
 
     ```bash
     ./gradlew clean bootRun
     ```
 
-  - 기본 서버: [http://localhost:8080](http://localhost:8080/)
-  - Swagger-UI: http://localhost:8080/swagger-ui/index.html
-  - OpenAPI JSON: http://localhost:8080/v3/api-docs
-
+    - Default server: [http://localhost:8888](http://localhost:8888/)
+    - H2 Console: http://localhost:8888/h2-console (for database management)
+    - Swagger-UI: http://localhost:8888/docs
+    - OpenAPI JSON: http://localhost:8888/v3/api-docs
 
 ---
 
-## 🖥️ UI 페이지
+## 🖥️ UI Pages
 
-| 기능 설명 | 경로 |
+| Feature Description | Path |
 | --- | --- |
-| 홈 (기능 선택) | `/` |
-| 태그 기반 추천 | `/random.html` |
-| 직접 입력 태그 추천 | `/input.html` |
-| 프로필 기반 추천 | `/profile.html` |
-| 최근 2주 플레이 추천 | `/recent.html` |
-| 비슷한 태그 추천 | `/similar.html` |
+| Home (Feature selection) | `/` |
+| Tag-based recommendations | `/random.html` |
+| Direct input tag recommendations | `/input.html` |
+| Profile-based recommendations | `/profile.html` |
+| Recent 2-week play recommendations | `/recent.html` |
+| Similar tag recommendations | `/similar.html` |
 
 ---
 
-## 📦 Electron 앱 빌드 (개발자용)
+## 📦 Electron App Build (For Developers)
 
-1. **준비**
+1. **Setup**
 
     ```bash
     cd electron
     npm install
     ```
 
-2. **JAR 파일 준비**
+2. **Prepare JAR File**
 
     ```bash
-    # 메인 프로젝트에서 JAR 빌드
+    # Build JAR from main project
     cd ..
     ./gradlew clean bootJar
     
-    # JAR 파일 복사
+    # Copy JAR file
     cp build/libs/recommend-0.0.1-SNAPSHOT.jar electron/resources/
     ```
 
-3. **앱 빌드**
+3. **Build Application**
 
     ```bash
     cd electron
-    npm run build-win  # Windows 빌드
+    npm run build-win  # Windows build
     ```
 
-  - 빌드 결과: `electron/dist/`
-
+    - Build output: `electron/dist/`
 
 ---
 
-## ⚙️ 설정 예시
+## ⚙️ Configuration Example
 
-```
+```properties
+# API Keys
 steam.api.key=${STEAM_API_KEY}
 spring.ai.google.api-key=${GEMINI_API_KEY}
-spring.datasource.url=jdbc:mysql://localhost:3307/testdb?serverTimezone=UTC
+
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:file:./data/gamedb;DB_CLOSE_DELAY=-1;MODE=MySQL;AUTO_SERVER=TRUE;DATABASE_TO_LOWER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;CHARSET=UTF-8
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# H2 Console
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# Server Configuration
+server.port=8888
 ```
 
 ---
 
-## 🎯 주요 기능
+## 📖 Key Features
 
-- **🔍 태그 기반 추천**
-  - 랜덤 추천: 태그 기반 랜덤 게임 추천
-  - 비슷한 태그: 특정 게임과 유사한 태그 게임 추천
-- **👤 프로필 기반 추천**
-  - Steam ID 라이브러리 분석
-- **⏰ 최근 플레이 기반 추천**
-  - 최근 2주 플레이 게임 분석
-  - 현재 관심사 기반 추천
-
----
-
-## 🆘 문제 해결
-
-### 데스크톱 앱
-
-- **Java 오류**: Java 17 이상 설치 확인
-- **API 키 오류**: 올바른 API 키 입력 확인
-- **포트 충돌**: 8080 포트 사용 여부 확인
-
-### 서버 실행
-
-- **MySQL 연결 오류**: Docker 컨테이너 실행 확인
-- **환경 변수 오류**: API 키 설정 확인
+- **🔍 Tag-based Recommendations**
+    - Random recommendations: Random game suggestions based on tags
+    - Similar tags: Game recommendations with tags similar to specific games
+- **😊 Profile-based Recommendations**
+    - Steam ID library analysis
+- **⏰ Recent Play-based Recommendations**
+    - Analysis of games played in the last 2 weeks
+    - Recommendations based on current interests
 
 ---
 
-## 문의
+## 🆘 Troubleshooting
 
-프로젝트 관련 이슈는 [Issues 페이지](https://github.com/tember8003/SteamGame_Recommend/issues)에 등록해 주세요.
+### Desktop Application
+
+- **Java Error**: Verify Java 17 or higher is installed
+- **API Key Error**: Verify correct API keys are entered
+- **Port Conflict**: Check if port 8888 is in use
+
+### Server Execution
+
+- **Port Conflict**: Verify port 8888 is not in use by other applications
+- **Environment Variable Error**: Verify API keys are set correctly (optional for basic functionality)
+- **Database Error**: H2 database files are automatically created in `./data/` directory
+
+---
+
+## 📁 API Key Storage Location
+
+The desktop application stores API keys locally at:
+- **Windows**: `%AppData%\steam-game-recommend\api-keys.json`
+- **Full path example**: `C:\Users\[Username]\AppData\Roaming\steam-game-recommend\api-keys.json`
+
+This ensures your API keys remain private and are not shared with others.
+
+---
+
+## 💾 Database
+
+The application uses **H2 embedded database** with the following features:
+- **Automatic initialization**: Database and tables are created automatically on first run
+- **Data persistence**: Game data persists between application restarts stored in `./data/gamedb` files
+- **Special character support**: Proper handling of Unicode characters including ®, ™ symbols
+- **MySQL compatibility mode**: Ensures compatibility with MySQL syntax
+- **H2 Console**: Built-in web interface for database management at `/h2-console`
+- **No external dependencies**: No need for separate database server installation
+
+---
+
+## 🌐 API Endpoints
+
+### Game Recommendations
+- `POST /api/recommend/random` - Tag-based random recommendations
+- `POST /api/recommend/input` - Text input-based recommendations
+- `POST /api/recommend/profile` - Profile-based recommendations
+- `POST /api/recommend/recent-play` - Recent play-based recommendations
+- `POST /api/recommend/similar` - Similar game recommendations
+
+### Game Data
+- `GET /api/games/appid?appid={id}` - Get game by AppID
+- `GET /api/games/tags` - Get all available tags
+- `GET /api/games/search?query={name}` - Search games by name
+
+### Interactive Features
+- `POST /api/choice/start` - Start game choice session
+- `POST /api/choice/select` - Submit choice selection
+- `POST /api/choice/result` - Get choice recommendations
+
+### Review Guess Game
+- `POST /api/review-guess/start` - Start review guess game
+- `POST /api/review-guess/answer` - Submit answer
+- `GET /api/review-guess/{sessionId}/result` - Get game results
+
+---
+
+## 🛠️ Technology Stack
+
+- **Backend**: Spring Boot 3.x, Java 17
+- **Database**: H2 (embedded, production) / MySQL (development)
+- **Frontend**: HTML, CSS, JavaScript
+- **Desktop**: Electron
+- **AI Integration**: Google Gemini API
+- **External API**: Steam Web API
+- **Build**: Gradle
+- **Database Console**: H2 Console (built-in web interface)
+
+---
+
+## 📄 License
+
+This project is available under the MIT License.
+
+---
+
+## 📞 Support
+
+For project-related issues, please register them on the [Issues page](https://github.com/tember8003/SteamGame_Recommend/issues).
