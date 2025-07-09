@@ -20,7 +20,7 @@ public class InMemoryCacheService {
     public InMemoryCacheService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
 
-        // 만료된 캐시 정리 스케줄러 (5분마다)
+        // Expired Cache Cleanup Scheduler (every 5 minutes)
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -30,7 +30,7 @@ public class InMemoryCacheService {
         }, 300000, 300000); // 5분마다 실행
     }
 
-    // 문자열 저장/조회
+    // Save/Enquire String
     public void set(String key, String value, Duration ttl) {
         LocalDateTime expireTime = ttl != null ? LocalDateTime.now().plus(ttl) : null;
         cache.put(key, new CacheItem(value, expireTime, CacheType.STRING));
@@ -49,7 +49,7 @@ public class InMemoryCacheService {
         return (String) item.getValue();
     }
 
-    // 객체 저장/조회 (JSON 직렬화)
+    // Save/Enquire Objects (JSON Serialization)
     public <T> void setObject(String key, T object, Duration ttl) {
         try {
             String json = objectMapper.writeValueAsString(object);
@@ -75,12 +75,12 @@ public class InMemoryCacheService {
             return Optional.of(object);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize object from cache: key={}, type={}", key, type.getSimpleName(), e);
-            cache.remove(key); // 손상된 캐시 제거
+            cache.remove(key); // Remove corrupted cache
             return Optional.empty();
         }
     }
 
-    // 리스트 저장/조회
+    // Save/Changing List
     public void setList(String key, List<String> list, Duration ttl) {
         LocalDateTime expireTime = ttl != null ? LocalDateTime.now().plus(ttl) : null;
         cache.put(key, new CacheItem(new ArrayList<>(list), expireTime, CacheType.LIST));
@@ -99,7 +99,7 @@ public class InMemoryCacheService {
         return new ArrayList<>((List<String>) item.getValue());
     }
 
-    // 키 존재 여부 확인
+    // Check key presence
     public boolean hasKey(String key) {
         CacheItem item = cache.get(key);
         if (item != null && item.isExpired()) {
@@ -109,7 +109,7 @@ public class InMemoryCacheService {
         return item != null;
     }
 
-    // 캐시 삭제
+    // delete cache
     public boolean delete(String key) {
         boolean existed = cache.containsKey(key);
         cache.remove(key);
@@ -117,7 +117,7 @@ public class InMemoryCacheService {
         return existed;
     }
 
-    // 만료 시간 조회 (초)
+    // Expiration Time Inquiry (seconds)
     public long getExpire(String key) {
         CacheItem item = cache.get(key);
         if (item == null || item.getExpireTime() == null) {
@@ -128,7 +128,7 @@ public class InMemoryCacheService {
         return Math.max(secondsUntilExpiry, -1);
     }
 
-    // 만료된 캐시 정리
+    // Expired Cache Cleanup
     private void cleanupExpiredCache() {
         int beforeSize = cache.size();
         cache.entrySet().removeIf(entry -> entry.getValue().isExpired());
@@ -140,7 +140,7 @@ public class InMemoryCacheService {
         }
     }
 
-    // 캐시 통계
+    // Cache Statistics
     public Map<String, Object> getCacheStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalKeys", cache.size());
@@ -150,7 +150,7 @@ public class InMemoryCacheService {
         return stats;
     }
 
-    // 캐시 아이템 클래스
+    // Cache Item Class
     private static class CacheItem {
         private final Object value;
         private final LocalDateTime expireTime;

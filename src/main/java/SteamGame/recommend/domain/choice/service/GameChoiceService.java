@@ -54,7 +54,7 @@ public class GameChoiceService {
         final Boolean KOREAN_CHECK = null;
         final Boolean FREE_CHECK = null;
 
-        // 랜덤 게임 선택 (14개 - 7라운드를 위해)
+        // Select random games (14 games for 7 rounds)
         List<Game> randomGames = getRandomGamesForChoice(CHOICE_ROUNDS * 2, FIXED_REVIEW_COUNT, KOREAN_CHECK, FREE_CHECK);
 
         if (randomGames.size() < CHOICE_ROUNDS * 2) {
@@ -62,7 +62,7 @@ public class GameChoiceService {
                     "Not enough games found for choice session");
         }
 
-        // 라운드 생성 (리뷰 정보 포함)
+        // Generate rounds (including review information)
         List<ChoiceRoundDTO> rounds = new ArrayList<>();
         for (int i = 0; i < CHOICE_ROUNDS; i++) {
             Game game1 = randomGames.get(i * 2);
@@ -70,12 +70,12 @@ public class GameChoiceService {
 
             rounds.add(new ChoiceRoundDTO(
                     i,
-                    convertToRecommendationResult(game1),  // 리뷰 정보 포함
-                    convertToRecommendationResult(game2)   // 리뷰 정보 포함
+                    convertToRecommendationResult(game1),  // Including review information
+                    convertToRecommendationResult(game2)   // Including review information
             ));
         }
 
-        // 선택 세션 생성 및 저장
+        // Create and save choice session
         String sessionId = UUID.randomUUID().toString();
         ChoiceSession session = new ChoiceSession(
                 sessionId,
@@ -91,13 +91,13 @@ public class GameChoiceService {
 
     private RecommendationResultDTO convertToRecommendationResult(Game game) {
         try {
-            // 1. SteamAppDTO 변환
+            // 1. Convert to SteamAppDTO
             SteamAppDTO steamAppDTO = GameMapper.convertToSteamDTO(game);
 
-            // 2. 리뷰 정보 조회
+            // 2. Query review information
             List<ReviewResponseDTO> reviews = gameService.ResponseList(List.of(steamAppDTO));
 
-            // 3. 게임의 태그 조회 (선택사항 - 빈 리스트로도 가능)
+            // 3. Query game tags (optional - can be empty list)
             List<String> gameTags = new ArrayList<>();
             try {
                 gameTags = tagRepository.findTagNamesByAppIds(List.of(game.getAppid()));
@@ -106,20 +106,20 @@ public class GameChoiceService {
             }
 
             return new RecommendationResultDTO(
-                    gameTags,                    // 게임의 태그들
-                    List.of(steamAppDTO),        // 단일 게임
-                    reviews                      // 리뷰 정보
+                    gameTags,                    // Game tags
+                    List.of(steamAppDTO),        // Single game
+                    reviews                      // Review information
             );
 
         } catch (Exception e) {
             log.error("Failed to convert game {} to RecommendationResultDTO: {}", game.getAppid(), e.getMessage());
 
-            // 실패 시 기본 정보만으로 생성
+            // Create with basic information only on failure
             SteamAppDTO steamAppDTO = GameMapper.convertToSteamDTO(game);
             return new RecommendationResultDTO(
-                    new ArrayList<>(),           // 빈 태그 리스트
-                    List.of(steamAppDTO),        // 게임 정보
-                    new ArrayList<>()            // 빈 리뷰 리스트
+                    new ArrayList<>(),           // Empty tag list
+                    List.of(steamAppDTO),        // Game information
+                    new ArrayList<>()            // Empty review list
             );
         }
     }
@@ -127,8 +127,8 @@ public class GameChoiceService {
 
     private Map<Long, List<String>> getGameTagsMap(List<Long> gameIds) {
         try {
-            // 태그 저장소에서 배치로 조회하는 방법이 있다면 사용
-            // 여기서는 간단히 개별 조회로 구현
+            // Use batch query method if available from tag repository
+            // Here implemented with simple individual queries
             Map<Long, List<String>> tagMap = new HashMap<>();
 
             for (Long gameId : gameIds) {
@@ -166,7 +166,7 @@ public class GameChoiceService {
 
         ChoiceRoundDTO round = session.getRounds().get(roundIndex);
 
-        // 선택된 게임이 유효한지 확인 (RecommendationResultDTO에서 게임 ID 추출)
+        // Verify if selected game is valid (extract game ID from RecommendationResultDTO)
         Long game1Id = round.getGame1().getRecommendedGame().get(0).getAppid();
         Long game2Id = round.getGame2().getRecommendedGame().get(0).getAppid();
 
@@ -174,10 +174,10 @@ public class GameChoiceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid game selection");
         }
 
-        // 선택 저장
+        // Save selection
         session.getSelections().add(selectedGameId);
 
-        // 마지막 라운드인지 확인
+        // Check if this is the last round
         boolean isComplete = session.getSelections().size() == CHOICE_ROUNDS;
         session.setCompleted(isComplete);
 
@@ -205,7 +205,7 @@ public class GameChoiceService {
         try {
             log.info("Analyzing choice result for {} selected games: {}", session.getSelections().size(), session.getSelections());
 
-            // 태그 수집
+            // Collect tags
             List<String> allTags = collectTagsFromSelectedGames(session.getSelections());
 
             if (allTags.isEmpty()) {
@@ -213,16 +213,24 @@ public class GameChoiceService {
                 return createFallbackResult(sessionId, session.getSelections(), review, koreanCheck, freeCheck);
             }
 
-            // 태그 분석 및 최적화
+            // Analyze and optimize tags
             List<String> optimizedTags = analyzeAndOptimizeTags(allTags);
             log.info("Final optimized tags ({}): {}", optimizedTags.size(), optimizedTags);
 
-            // 추천 게임 생성 (강건한 방식)
+            // Generate recommended games (robust approach)
             Set<Long> excludedGameIds = new HashSet<>(session.getSelections());
             List<SteamAppDTO> recommendedGames = getRecommendedGamesExcluding(
                     optimizedTags, excludedGameIds, review, koreanCheck, freeCheck);
 
             log.info("Generated {} recommended games", recommendedGames.size());
+
+            log.info("=== Parameter Debug ===");
+            log.info("review: {}", review);
+            log.info("koreanCheck: {}", koreanCheck);
+            log.info("freeCheck: {}", freeCheck);
+            log.info("optimizedTags: {}", optimizedTags);
+            log.info("excludedGameIds: {}", excludedGameIds);
+            log.info("========================");
 
             return new ChoiceResultDTO(
                     sessionId,
@@ -259,13 +267,13 @@ public class GameChoiceService {
     }
 
     private List<String> analyzeAndOptimizeTags(List<String> allTags) {
-        // 태그 빈도 계산
+        // Calculate tag frequency
         Map<String, Long> tagFrequency = allTags.stream()
                 .collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
 
         log.info("Tag frequency analysis: {}", tagFrequency);
 
-        // 상위 태그 선별 (최대 8개)
+        // Select top tags (maximum 8)
         List<String> topTags = tagFrequency.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(8)
@@ -274,7 +282,7 @@ public class GameChoiceService {
 
         log.info("Top {} tags before optimization: {}", topTags.size(), topTags);
 
-        // 태그 조합 최적화
+        // Optimize tag combinations
         return findOptimalTagCombination(topTags);
     }
 
@@ -361,21 +369,21 @@ public class GameChoiceService {
     private List<String> findOptimalTagCombination(List<String> topTags) {
         log.info("Finding optimal tag combination from {} tags: {}", topTags.size(), topTags);
 
-        // 실용적 접근: 최대 6개 태그까지만 사용
+        // Practical approach: use only up to 6 tags
         int maxTags = Math.min(6, topTags.size());
 
         try {
-            // Cooccurrence 서비스로 최적의 태그 쌍 찾기 시도
+            // Try to find optimal tag pairs using Cooccurrence service
             var optimalPair = cooccurrenceService.findOptimalPairKey(topTags, 5);
 
             if (optimalPair.isPresent()) {
                 List<String> result = new ArrayList<>();
 
-                // 최적 태그 쌍 추가
+                // Add optimal tag pair
                 result.add(optimalPair.get().getFirstTag());
                 result.add(optimalPair.get().getSecondTag());
 
-                // 추가 태그를 조심스럽게 추가 (최대 6개까지)
+                // Carefully add additional tags (up to 6 maximum)
                 for (String tag : topTags) {
                     if (!result.contains(tag) && result.size() < maxTags) {
                         result.add(tag);
@@ -389,7 +397,7 @@ public class GameChoiceService {
             log.warn("Cooccurrence optimization failed: {}", e.getMessage());
         }
 
-        // Cooccurrence 실패 시: 상위 3-6개 태그만 사용
+        // If Cooccurrence fails: use only top 3-6 tags
         List<String> result = topTags.subList(0, Math.min(3, topTags.size()));
         log.info("Using top {} tags without cooccurrence: {}", result.size(), result);
 
@@ -400,42 +408,42 @@ public class GameChoiceService {
                                                            int review, Boolean koreanCheck, Boolean freeCheck) {
         log.info("Starting recommendation with {} tags: {}", tags.size(), tags);
 
-        // 전략 1: 원본 태그로 시도 (최대 6개까지만)
+        // Strategy 1: Try with original tags (up to 6 maximum)
         List<String> primaryTags = tags.subList(0, Math.min(6, tags.size()));
         List<SteamAppDTO> games = tryRecommendation(primaryTags, excludedGameIds, review, koreanCheck, freeCheck, "primary");
         if (!games.isEmpty()) return games;
 
-        // 전략 2: 상위 3개 태그로 시도
+        // Strategy 2: Try with top 3 tags
         if (tags.size() >= 3) {
             List<String> topThreeTags = tags.subList(0, 3);
             games = tryRecommendation(topThreeTags, excludedGameIds, review, koreanCheck, freeCheck, "top-3");
             if (!games.isEmpty()) return games;
         }
 
-        // 전략 3: 상위 2개 태그로 시도
+        // Strategy 3: Try with top 2 tags
         if (tags.size() >= 2) {
             List<String> topTwoTags = tags.subList(0, 2);
             games = tryRecommendation(topTwoTags, excludedGameIds, review, koreanCheck, freeCheck, "top-2");
             if (!games.isEmpty()) return games;
         }
 
-        // 전략 4: 가장 빈도 높은 단일 태그로 시도
+        // Strategy 4: Try with most frequent single tag
         if (!tags.isEmpty()) {
             List<String> singleTag = List.of(tags.get(0));
             games = tryRecommendation(singleTag, excludedGameIds, review, koreanCheck, freeCheck, "single");
             if (!games.isEmpty()) return games;
         }
 
-        // 전략 5: Cooccurrence 기반 추천 시도
+        // Strategy 5: Try Cooccurrence-based recommendation
         games = tryCooccurrenceRecommendation(tags, excludedGameIds, review, koreanCheck, freeCheck);
         if (!games.isEmpty()) return games;
 
-        // 전략 6: 폴백 태그 사용
+        // Strategy 6: Use fallback tags
         List<String> fallbackTags = List.of("Singleplayer", "Action");
         games = tryRecommendation(fallbackTags, excludedGameIds, review, koreanCheck, freeCheck, "fallback");
         if (!games.isEmpty()) return games;
 
-        // 전략 7: 최종 폴백 - 조건 완화
+        // Strategy 7: Final fallback - relax conditions
         log.warn("All recommendation strategies failed, trying with relaxed conditions");
         return tryRelaxedRecommendation(excludedGameIds, review, koreanCheck, freeCheck);
     }
@@ -474,9 +482,9 @@ public class GameChoiceService {
         try {
             log.info("Trying cooccurrence-based recommendation");
 
-            // RecommendService의 로직 활용
+            // Utilize RecommendService logic
             List<SteamAppDTO> games = gameService.findNonDuplicate(
-                    new String[]{tags.get(0)}, // 첫 번째 태그만 사용
+                    new String[]{tags.get(0)}, // Use only first tag
                     review,
                     koreanCheck,
                     freeCheck,
@@ -500,10 +508,10 @@ public class GameChoiceService {
     private List<SteamAppDTO> tryRelaxedRecommendation(Set<Long> excludedGameIds,
                                                        int review, Boolean koreanCheck, Boolean freeCheck) {
         try {
-            // 가장 완화된 조건으로 게임 검색
+            // Search games with most relaxed conditions
             List<SteamAppDTO> games = gameService.findNonDuplicate(
                     new String[]{"Singleplayer"},
-                    Math.max(10, review / 2), // 리뷰 수 절반으로 완화
+                    Math.max(10, review / 2), // Relax review count to half
                     koreanCheck,
                     freeCheck,
                     false,
@@ -512,7 +520,7 @@ public class GameChoiceService {
 
             List<SteamAppDTO> filteredGames = games.stream()
                     .filter(game -> !excludedGameIds.contains(game.getAppid()))
-                    .limit(10) // 최소 10개라도 반환
+                    .limit(10) // Return at least 10 games
                     .collect(Collectors.toList());
 
             log.info("Relaxed strategy found {} games", filteredGames.size());

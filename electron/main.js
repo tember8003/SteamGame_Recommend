@@ -16,26 +16,26 @@ console.log('App path:', app.getAppPath());
 console.log('Is packaged:', app.isPackaged);
 console.log('Working directory:', process.cwd());
 
-// 올바른 앱 루트 경로 얻기 (asar 문제 해결)
+// Get correct app root path (fixes asar issue)
 const getAppRootPath = () => {
     if (app.isPackaged) {
-        // 빌드된 exe에서는 process.resourcesPath 사용
+        // Use process.resourcesPath for built exe
         return process.resourcesPath;
     } else {
-        // 개발 환경에서는 process.cwd() 사용
+        // Use process.cwd() for development environment
         return process.cwd();
     }
 };
 
 console.log('App root path:', getAppRootPath());
 
-// API 키 파일 경로
+// API keys file path
 const getApiKeysPath = () => {
     const userDataPath = app.getPath('userData');
     return path.join(userDataPath, 'api-keys.json');
 };
 
-// API 키 로드
+// Load API keys
 function loadApiKeys() {
     try {
         const apiKeysPath = getApiKeysPath();
@@ -55,7 +55,7 @@ function loadApiKeys() {
     }
 }
 
-// API 키 저장
+// Save API keys
 function saveApiKeys(keys) {
     try {
         const apiKeysPath = getApiKeysPath();
@@ -75,7 +75,7 @@ function saveApiKeys(keys) {
     }
 }
 
-// Steam API 키 유효성 검증
+// Steam API key validation
 async function validateSteamApiKey(apiKey) {
     if (!apiKey || apiKey.length !== 32) {
         return { valid: false, message: 'Steam API key must be 32 characters long' };
@@ -100,7 +100,7 @@ async function validateSteamApiKey(apiKey) {
     }
 }
 
-// Gemini API 키 유효성 검증
+// Gemini API key validation
 async function validateGeminiApiKey(apiKey) {
     if (!apiKey || apiKey.length < 20) {
         return { valid: false, message: 'Gemini API key appears to be too short' };
@@ -124,7 +124,7 @@ async function validateGeminiApiKey(apiKey) {
     }
 }
 
-// API 키 자동 검증 함수
+// Auto validate all API keys
 async function validateAllApiKeys() {
     console.log('Starting API key validation...');
 
@@ -135,7 +135,7 @@ async function validateAllApiKeys() {
         allValid: false
     };
 
-    // API 키가 존재하는지 확인
+    // Check if API keys exist
     if (!apiKeys.steamApiKey && !apiKeys.geminiApiKey) {
         console.log('No API keys found');
         validationResults.hasKeys = false;
@@ -144,7 +144,7 @@ async function validateAllApiKeys() {
 
     validationResults.hasKeys = true;
 
-    // Steam API 키 검증
+    // Validate Steam API key
     if (apiKeys.steamApiKey) {
         console.log('Validating Steam API key...');
         try {
@@ -158,7 +158,7 @@ async function validateAllApiKeys() {
         validationResults.steam = { valid: false, message: 'Steam API key not provided' };
     }
 
-    // Gemini API 키 검증
+    // Validate Gemini API key
     if (apiKeys.geminiApiKey) {
         console.log('Validating Gemini API key...');
         try {
@@ -172,14 +172,14 @@ async function validateAllApiKeys() {
         validationResults.gemini = { valid: false, message: 'Gemini API key not provided' };
     }
 
-    // 전체 결과 확인
+    // Check overall result
     validationResults.allValid = validationResults.steam.valid && validationResults.gemini.valid;
 
     console.log(`API validation complete. All valid: ${validationResults.allValid ? 'YES' : 'NO'}`);
     return validationResults;
 }
 
-// API 키 검증 결과 화면 표시
+// Show API key validation result screen
 function showValidationResultScreen(validationResults) {
     try {
         const steamStatus = validationResults.steam.valid ?
@@ -233,7 +233,7 @@ function showValidationResultScreen(validationResults) {
                     ipcRenderer.invoke('start-main-app');
                 }
 
-                // 자동으로 계속 진행 (유효한 키가 있는 경우)
+                // Auto continue if valid keys exist
                 ${validationResults.allValid ? 'setTimeout(continueWithValidKeys, 3000);' : ''}
             </script>
         `;
@@ -245,7 +245,7 @@ function showValidationResultScreen(validationResults) {
     }
 }
 
-// 검증 진행 화면 표시
+// Show validating screen
 function showValidatingScreen() {
     try {
         const validatingHtml = `
@@ -263,7 +263,7 @@ function showValidatingScreen() {
     }
 }
 
-// 앱 메뉴 생성
+// Create application menu
 function createApplicationMenu() {
     try {
         const template = [
@@ -340,7 +340,7 @@ function createApplicationMenu() {
     }
 }
 
-// About 다이얼로그 표시
+// Show About dialog
 function showAboutDialog() {
     try {
         const aboutHtml = `
@@ -372,7 +372,7 @@ function showAboutDialog() {
     }
 }
 
-// IPC 핸들러들
+// IPC handlers
 ipcMain.handle('get-api-keys', () => {
     console.log('IPC: get-api-keys called');
     return apiKeys;
@@ -398,26 +398,26 @@ ipcMain.handle('start-main-app', () => {
     startMainApp();
 });
 
-// 설정 화면 표시 IPC 핸들러
+// Show config screen IPC handler
 ipcMain.handle('show-config-screen', () => {
     console.log('IPC: show-config-screen called');
     showConfigScreen();
 });
 
-// API 키 재검증 IPC 핸들러
+// Revalidate API keys IPC handler
 ipcMain.handle('revalidate-api-keys', async () => {
     console.log('IPC: revalidate-api-keys called');
     return await validateAllApiKeys();
 });
 
-// 메인 앱 시작
+// Start main application
 function startMainApp() {
     console.log('Starting main application...');
     try {
-        // 로딩 화면 표시
+        // Show loading screen
         showLoadingScreen();
 
-        // Java 앱 시작
+        // Start Java app
         setTimeout(() => {
             startJavaApp();
         }, 1000);
@@ -427,17 +427,17 @@ function startMainApp() {
     }
 }
 
-// 로딩 화면 표시
+// Show loading screen
 function showLoadingScreen() {
     try {
         const appRoot = getAppRootPath();
         let loadingPath;
 
         if (app.isPackaged) {
-            // 빌드된 exe에서는 extraResources 경로 사용
+            // Use extraResources path for built exe
             loadingPath = path.join(process.resourcesPath, 'resources', 'html', 'loading.html');
         } else {
-            // 개발 환경
+            // Development environment
             loadingPath = path.join(appRoot, 'resources', 'html', 'loading.html');
         }
 
@@ -451,7 +451,7 @@ function showLoadingScreen() {
             const loadingHtml = `
                 <div style="text-align:center;padding:50px;font-family:Arial;background:#1a1a2e;color:white;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">
                     <h2 style="color:#00d4ff;margin-bottom:20px;">Steam Game Recommend</h2>
-                    <p style="margin-bottom:30px;">서버를 시작하고 있습니다...</p>
+                    <p style="margin-bottom:30px;">Starting server...</p>
                     <div style="border:4px solid #333;border-top:4px solid #00d4ff;border-radius:50%;width:40px;height:40px;animation:spin 2s linear infinite;margin:20px auto;"></div>
                     <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
                 </div>
@@ -464,17 +464,17 @@ function showLoadingScreen() {
     }
 }
 
-// 설정 화면 표시
+// Show configuration screen
 function showConfigScreen() {
     try {
         const appRoot = getAppRootPath();
         let configPath;
 
         if (app.isPackaged) {
-            // 빌드된 exe에서는 extraResources 경로 사용
+            // Use extraResources path for built exe
             configPath = path.join(process.resourcesPath, 'resources', 'html', 'config.html');
         } else {
-            // 개발 환경
+            // Development environment
             configPath = path.join(appRoot, 'resources', 'html', 'config.html');
         }
 
@@ -516,7 +516,7 @@ function showConfigScreen() {
                 <script>
                     const { ipcRenderer } = require('electron');
                     
-                    // 기존 API 키 로드
+                    // Load existing API keys
                     window.addEventListener('DOMContentLoaded', () => {
                         ipcRenderer.invoke('get-api-keys').then(keys => {
                             if (keys.steamApiKey) document.getElementById('steamApiKey').value = keys.steamApiKey;
@@ -557,7 +557,7 @@ function showConfigScreen() {
     }
 }
 
-// 데이터베이스 초기화 파일들 존재 확인 및 로깅
+// Check database initialization files existence and logging
 function checkDatabaseFiles(workingDirectory) {
     console.log('=== Checking Database Files ===');
 
@@ -576,29 +576,28 @@ function checkDatabaseFiles(workingDirectory) {
     console.log(`data.sql exists: ${dataExists ? 'YES' : 'NO'}`);
 
     if (initExists) {
-        console.log('✓ Found init.sql - 테이블 스키마가 생성됩니다');
+        console.log('✓ Found init.sql - Table schema will be created');
     } else {
-        console.log('⚠ init.sql not found - 테이블 스키마가 생성되지 않을 수 있습니다');
+        console.log('⚠ init.sql not found - Table schema may not be created');
     }
 
     if (dataExists) {
-        console.log('✓ Found data.sql - 초기 데이터가 삽입됩니다');
+        console.log('✓ Found data.sql - Initial data will be inserted');
     } else {
-        console.log('⚠ data.sql not found - 초기 데이터가 삽입되지 않을 수 있습니다');
+        console.log('⚠ data.sql not found - Initial data will not be inserted');
     }
 
     return { initExists, dataExists };
 }
 
-// Java 앱 시작 - 수정된 경로 처리 및 데이터베이스 파일 확인
-// Java 앱 시작 함수 수정
+// Start Java app - Modified path handling and database file check
 function startJavaApp() {
     console.log('=== Starting Java App ===');
 
     try {
         const appRoot = getAppRootPath();
 
-        // JAR 파일 경로 찾기 (기존 코드와 동일)
+        // Find JAR file path
         const possiblePaths = [
             path.join(process.resourcesPath, 'resources', 'recommend-0.0.1-SNAPSHOT.jar'),
             path.join(process.resourcesPath, 'recommend-0.0.1-SNAPSHOT.jar'),
@@ -623,11 +622,11 @@ function startJavaApp() {
             return;
         }
 
-        // 수정: 작업 디렉토리를 JAR 파일이 있는 디렉토리로 설정
+        // Set working directory to JAR file directory
         const workingDirectory = path.dirname(jarPath);
         console.log('Working directory:', workingDirectory);
 
-        // 데이터베이스 관련 경로 확인
+        // Check database-related paths
         const possibleDataPaths = [
             path.join(workingDirectory, 'data'),
             path.join(workingDirectory, '..', 'data'),
@@ -645,7 +644,7 @@ function startJavaApp() {
             }
         }
 
-        // 데이터베이스 파일 존재 여부 확인
+        // Check database file existence
         let shouldInitializeData = false;
         if (dataPath) {
             const dbPath = path.join(dataPath, 'gamedb.mv.db');
@@ -654,35 +653,30 @@ function startJavaApp() {
             console.log(`Database file exists: ${dbExists ? 'YES' : 'NO'}`);
 
             if (dbExists) {
-                console.log('✓ 기존 데이터베이스 파일 발견 - 기존 데이터 사용');
+                console.log('✓ Existing database file found - Using existing data');
                 shouldInitializeData = false;
             } else {
-                console.log('ℹ 데이터베이스 파일 없음 - 초기 데이터 생성 필요');
+                console.log('ℹ No database file found - Initial data creation needed');
                 shouldInitializeData = true;
 
-                // data 폴더가 없으면 생성
+                // Create data folder if it doesn't exist
                 if (!fs.existsSync(dataPath)) {
                     fs.mkdirSync(dataPath, { recursive: true });
                     console.log(`Created data directory: ${dataPath}`);
                 }
             }
         } else {
-            // data 폴더 생성
             dataPath = path.join(workingDirectory, 'data');
             fs.mkdirSync(dataPath, { recursive: true });
             console.log(`Created data directory: ${dataPath}`);
             shouldInitializeData = true;
         }
 
-        // 환경변수 설정
         const env = {
             ...process.env,
             STEAM_API_KEY: apiKeys.steamApiKey || '',
             GEMINI_API_KEY: apiKeys.geminiApiKey || '',
-            SPRING_PROFILES_ACTIVE: 'h2',
-            // 데이터베이스 경로 명시적 설정
             SPRING_DATASOURCE_URL: `jdbc:h2:file:${dataPath ? path.join(dataPath, 'gamedb') : './data/gamedb'}`,
-            // 데이터 초기화 여부 설정
             INIT_DB: shouldInitializeData ? 'always' : 'never'
         };
 
@@ -694,16 +688,15 @@ function startJavaApp() {
             INIT_DB: env.INIT_DB
         });
 
-        // 기존 프로세스 종료
+        // Terminate existing process
         if (javaProcess) {
             console.log('Terminating existing Java process...');
             javaProcess.kill();
         }
 
-        // Java 실행 인자 수정
+        // Java execution arguments
         const javaArgs = [
             '-jar', jarPath,
-            '--spring.profiles.active=h2',
             `--spring.sql.init.mode=${shouldInitializeData ? 'always' : 'never'}`,
             '--spring.jpa.defer-datasource-initialization=true',
             '--logging.level.org.springframework.jdbc=DEBUG',
@@ -719,56 +712,56 @@ function startJavaApp() {
             env: env
         });
 
-        // 출력 모니터링 강화
+        // Enhanced output monitoring
         javaProcess.stdout.on('data', (data) => {
             const output = data.toString();
             console.log('Java stdout:', output);
 
-            // 데이터베이스 초기화 관련 로그 모니터링
+            // Monitor database initialization related logs
             if (output.includes('HikariPool')) {
-                console.log('✓ 데이터베이스 연결 풀 초기화됨');
+                console.log('✓ Database connection pool initialized');
             }
             if (output.includes('H2 database') || output.includes('Starting embedded database')) {
-                console.log('✓ H2 데이터베이스 연결됨');
+                console.log('✓ H2 database connected');
             }
             if (output.includes('Executing SQL script') || output.includes('ScriptUtils')) {
-                console.log('✓ SQL 스크립트 실행 중:', output.trim());
+                console.log('✓ Executing SQL script:', output.trim());
             }
             if (output.includes('schema.sql')) {
-                console.log('✓ 스키마 파일 실행됨 - 테이블 생성');
+                console.log('✓ Schema file executed - Tables created');
             }
             if (output.includes('data.sql')) {
-                console.log('✓ 데이터 파일 실행됨 - 초기 데이터 삽입');
+                console.log('✓ Data file executed - Initial data inserted');
             }
             if (output.includes('Hibernate: create table') || output.includes('Hibernate: drop table')) {
-                console.log('✓ Hibernate DDL 실행:', output.trim());
+                console.log('✓ Hibernate DDL executed:', output.trim());
             }
             if (output.includes('Hibernate: insert into') || output.includes('Hibernate: select')) {
-                console.log('✓ 데이터베이스 쿼리 실행:', output.trim());
+                console.log('✓ Database query executed:', output.trim());
             }
             if (output.includes('DataInitializer')) {
-                console.log('✓ 데이터 초기화 컴포넌트 실행:', output.trim());
+                console.log('✓ Data initialization component executed:', output.trim());
             }
-            if (output.includes('이미') && output.includes('게임이 있습니다')) {
-                console.log('✓ 기존 데이터 발견 - 초기화 건너뜀');
+            if (output.includes('already') && output.includes('games exist')) {
+                console.log('✓ Existing data found - Skipping initialization');
             }
-            if (output.includes('게임 데이터를 삽입합니다')) {
-                console.log('✓ 약 8000개 게임 데이터 삽입 시작... (시간이 걸릴 수 있습니다)');
+            if (output.includes('Inserting game data')) {
+                console.log('✓ Starting insertion of ~8000 game data... (This may take some time)');
             }
-            if (output.includes('데이터 삽입 진행중')) {
-                console.log('✓ 데이터 삽입 진행:', output.trim());
+            if (output.includes('Data insertion in progress')) {
+                console.log('✓ Data insertion progress:', output.trim());
             }
-            if (output.includes('데이터 삽입 완료')) {
-                console.log('✓ 모든 게임 데이터 삽입 완료!');
+            if (output.includes('Data insertion completed')) {
+                console.log('✓ All game data insertion completed!');
             }
-            if (output.includes('외래키 체크')) {
-                console.log('✓ 외래키 설정:', output.trim());
+            if (output.includes('Foreign key check')) {
+                console.log('✓ Foreign key setup:', output.trim());
             }
 
-            // 서버 시작 확인
+            // Check server startup
             if (output.includes('Started RecommendApplication') ||
                 output.includes('Tomcat started on port 8888')) {
-                console.log('✓ Java 서버 시작 완료!');
+                console.log('✓ Java server startup completed!');
                 isJavaServerReady = true;
                 setTimeout(() => checkServerAndConnect(), 2000);
             }
@@ -778,11 +771,11 @@ function startJavaApp() {
             const errorOutput = data.toString();
             console.error('Java stderr:', errorOutput);
 
-            // 데이터베이스 관련 에러 특별 처리
+            // Special handling for database-related errors
             if (errorOutput.includes('SQLException') ||
                 errorOutput.includes('DataAccessException') ||
                 errorOutput.includes('JdbcTemplate')) {
-                console.error('!!! 데이터베이스 관련 오류 발생 !!!');
+                console.error('!!! Database-related error occurred !!!');
             }
         });
 
@@ -810,7 +803,7 @@ function startJavaApp() {
     }
 }
 
-// 서버 연결 확인 및 index.html 로드
+// Check server connection and load index.html
 async function checkServerAndConnect() {
     console.log('=== Checking Server Connection ===');
 
@@ -843,7 +836,7 @@ async function checkServerAndConnect() {
     showErrorScreen('Failed to connect to server after maximum attempts.');
 }
 
-// 에러 화면 표시
+// Show error screen
 function showErrorScreen(message) {
     try {
         const errorHtml = `
@@ -866,7 +859,7 @@ function showErrorScreen(message) {
     }
 }
 
-// 수정된 createWindow 함수 - API 키 검증 로직 추가
+// Modified createWindow function - Added API key validation logic
 function createWindow() {
     console.log('=== Creating Window ===');
 
@@ -881,7 +874,7 @@ function createWindow() {
             }
         });
 
-        // 애플리케이션 메뉴 생성
+        // Create application menu
         createApplicationMenu();
 
         mainWindow.once('ready-to-show', () => {
@@ -889,13 +882,13 @@ function createWindow() {
             mainWindow.show();
             mainWindow.focus();
 
-            // 개발 중에는 DevTools 열기
+            // Open DevTools during development
             if (!app.isPackaged) {
                 mainWindow.webContents.openDevTools();
             }
         });
 
-        // API 키 로드 및 검증 프로세스
+        // API key loading and validation process
         initializeApiKeys();
 
     } catch (error) {
@@ -904,12 +897,12 @@ function createWindow() {
     }
 }
 
-// API 키 초기화 및 검증 프로세스
+// API key initialization and validation process
 async function initializeApiKeys() {
     console.log('Initializing API keys...');
 
     try {
-        // API 키 로드 시도
+        // Attempt to load API keys
         const hasApiKeys = loadApiKeys();
 
         if (!hasApiKeys || !apiKeys.steamApiKey || !apiKeys.geminiApiKey) {
@@ -920,16 +913,16 @@ async function initializeApiKeys() {
 
         console.log('API keys found - starting validation...');
 
-        // 검증 진행 화면 표시
+        // Show validation progress screen
         showValidatingScreen();
 
-        // API 키 검증 실행
+        // Execute API key validation
         const validationResults = await validateAllApiKeys();
 
-        // 검증 결과에 따른 처리
+        // Process based on validation results
         if (validationResults.allValid) {
             console.log('All API keys are valid - starting main app');
-            // 잠시 결과 화면을 보여준 후 메인 앱 시작
+            // Show result screen briefly then start main app
             showValidationResultScreen(validationResults);
         } else {
             console.log('Some API keys are invalid - showing validation results');
@@ -942,7 +935,7 @@ async function initializeApiKeys() {
     }
 }
 
-// 앱 이벤트 핸들러
+// App event handlers
 app.whenReady().then(() => {
     console.log('=== App Ready ===');
     createWindow();
@@ -952,7 +945,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
     console.log('=== All Windows Closed ===');
-    // Java 프로세스 종료
+    // Terminate Java process
     if (javaProcess) {
         console.log('Terminating Java process...');
         javaProcess.kill();
@@ -970,7 +963,7 @@ app.on('activate', () => {
     }
 });
 
-// 앱 종료 시 Java 프로세스 정리
+// Clean up Java process when app quits
 app.on('before-quit', () => {
     console.log('=== App Before Quit ===');
     if (javaProcess) {

@@ -63,7 +63,7 @@ public class GuessService {
 
         saveSession(session);
 
-        // 클라이언트로 보낼 때는 정답 ID 제거
+        // Remove correct answer ID when sending to client
         List<ReviewGuessRoundDTO> clientRounds = rounds.stream()
                 .map(this::sanitizeRoundForClient)
                 .collect(Collectors.toList());
@@ -90,20 +90,20 @@ public class GuessService {
         ReviewGuessRoundDTO round = session.getRounds().get(roundIndex);
         boolean isCorrect = selectedGameId.equals(round.getCorrectAnswerId());
 
-        // 답안 저장
+        // Save answer
         session.getUserAnswers().add(selectedGameId);
 
         if (isCorrect) {
             session.setCurrentScore(session.getCurrentScore() + 1);
         }
 
-        // 게임 완료 여부 확인
+        // Check if game is completed
         boolean gameCompleted = session.getUserAnswers().size() == TOTAL_ROUNDS;
         session.setCompleted(gameCompleted);
 
         saveSession(session);
 
-        // 정답 게임 이름 찾기
+        // Find correct game name
         String correctGameName = round.getGameOptions().stream()
                 .filter(game -> game.getAppid().equals(round.getCorrectAnswerId()))
                 .map(ReviewGuessGameDTO::getName)
@@ -131,7 +131,7 @@ public class GuessService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Game not completed yet");
         }
 
-        // 라운드별 결과 생성
+        // Generate round-by-round results
         List<ReviewGuessRoundResultDTO> roundResults = new ArrayList<>();
         for (int i = 0; i < session.getRounds().size(); i++) {
             ReviewGuessRoundDTO round = session.getRounds().get(i);
@@ -189,7 +189,7 @@ public class GuessService {
         );
     }
 
-    // 7라운드 생성
+    // Generate 7 rounds
     private List<ReviewGuessRoundDTO> generateGameRounds() {
         List<ReviewGuessRoundDTO> rounds = new ArrayList<>();
         Set<Long> usedGameIds = new HashSet<>();
@@ -199,7 +199,7 @@ public class GuessService {
                 ReviewGuessRoundDTO round = generateSingleRound(usedGameIds);
                 if (round != null) {
                     rounds.add(round);
-                    // 사용된 게임들을 기록
+                    // Record used games
                     round.getGameOptions().forEach(game -> usedGameIds.add(game.getAppid()));
                 }
             } catch (Exception e) {
@@ -210,15 +210,15 @@ public class GuessService {
         return rounds;
     }
 
-    // 단일 라운드 생성
+    // Generate single round
     private ReviewGuessRoundDTO generateSingleRound(Set<Long> usedGameIds) {
-        // 1. 정답 게임 선택 (리뷰 3500개 이상, 아직 사용되지 않은 게임)
+        // 1. Select correct game (games with 3500+ reviews, not yet used)
         Game correctGame = selectCorrectGame(usedGameIds);
         if (correctGame == null) {
             return null;
         }
 
-        // 2. 정답 게임의 리뷰 가져오기
+        // 2. Get reviews for the correct game
         Review correctReview = reviewRepository.findByAppidIn(List.of(correctGame.getAppid()))
                 .stream().findFirst().orElse(null);
 
@@ -228,22 +228,22 @@ public class GuessService {
             return null;
         }
 
-        // 3. 비슷한 태그를 가진 게임 2개 선택
+        // 3. Select 2 games with similar tags
         List<Game> similarGames = selectSimilarGames(correctGame, usedGameIds);
         if (similarGames.size() < 2) {
             return null;
         }
 
-        // 4. 게임 옵션 생성 (정답 + 2개 비슷한 게임)
+        // 4. Create game options (correct answer + 2 similar games)
         List<ReviewGuessGameDTO> gameOptions = new ArrayList<>();
         gameOptions.add(convertToGameDTO(correctGame));
         similarGames.forEach(game -> gameOptions.add(convertToGameDTO(game)));
 
-        // 순서 섞기
+        // Shuffle order
         Collections.shuffle(gameOptions);
 
         return new ReviewGuessRoundDTO(
-                0, // roundIndex는 나중에 설정
+                0, // roundIndex will be set later
                 correctReview.getPositiveReviewText(),
                 correctReview.getNegativeReviewText(),
                 gameOptions,
@@ -251,7 +251,7 @@ public class GuessService {
         );
     }
 
-    // 정답 게임 선택 (리뷰 3500개 이상)
+    // Select correct game (games with 3500+ reviews)
     private Game selectCorrectGame(Set<Long> usedGameIds) {
         List<Game> candidateGames = gameRepository.findRandomGamesWithoutTags(MIN_REVIEW_COUNT, null, null);
 
@@ -261,13 +261,13 @@ public class GuessService {
                 .orElse(null);
     }
 
-    // 비슷한 태그를 가진 게임들 선택
+    // Select games with similar tags
     private List<Game> selectSimilarGames(Game correctGame, Set<Long> usedGameIds) {
-        // 정답 게임의 태그들 가져오기
+        // Get tags of the correct game
         List<String> correctGameTags = tagRepository.findTagNamesByAppIds(List.of(correctGame.getAppid()));
 
         if (correctGameTags.isEmpty()) {
-            // 태그가 없으면 랜덤으로 선택
+            // If no tags, select randomly
             return gameRepository.findRandomGamesWithoutTags(MIN_REVIEW_COUNT, null, null)
                     .stream()
                     .filter(game -> !usedGameIds.contains(game.getAppid()) &&
@@ -276,14 +276,14 @@ public class GuessService {
                     .collect(Collectors.toList());
         }
 
-        // 태그 기반으로 비슷한 게임 찾기 (최대 3개 태그 사용)
+        // Find similar games based on tags (use up to 3 tags)
         List<String> tagsToUse = correctGameTags.stream()
                 .limit(3)
                 .collect(Collectors.toList());
 
         List<Game> similarGames = gameRepository.findRandomGameByTags(
                 tagsToUse,
-                Math.min(tagsToUse.size(), 2), // 최소 2개 태그 일치
+                Math.min(tagsToUse.size(), 2), // Minimum 2 tags match
                 MIN_REVIEW_COUNT,
                 null,
                 null,
@@ -307,14 +307,14 @@ public class GuessService {
         );
     }
 
-    // 클라이언트용으로 정답 ID 제거
+    // Remove correct answer ID for client
     private ReviewGuessRoundDTO sanitizeRoundForClient(ReviewGuessRoundDTO round) {
         ReviewGuessRoundDTO clientRound = new ReviewGuessRoundDTO();
         clientRound.setRoundIndex(round.getRoundIndex());
         clientRound.setPositiveReview(round.getPositiveReview());
         clientRound.setNegativeReview(round.getNegativeReview());
         clientRound.setGameOptions(round.getGameOptions());
-        // correctAnswerId는 설정하지 않음
+        // Do not set correctAnswerId
         return clientRound;
     }
 
@@ -326,7 +326,7 @@ public class GuessService {
         return "D";
     }
 
-    // Redis 세션 저장/로드
+    // Redis session save/load
     private void saveSession(ReviewGuessSession session) {
         String key = SESSION_KEY_PREFIX + session.getSessionId();
         cacheService.setObject(key, session, SESSION_TTL);

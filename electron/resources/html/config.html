@@ -152,7 +152,7 @@
 <script>
     const { ipcRenderer, shell } = require('electron');
 
-    // 페이지 로드시 기존 설정 불러오기
+    //Importing existing settings when loading pages
     window.addEventListener('DOMContentLoaded', () => {
         ipcRenderer.invoke('get-api-keys').then(keys => {
             if (keys.steamApiKey) {
@@ -164,12 +164,12 @@
         });
     });
 
-    // 외부 링크 열기
+    // Open an external link
     function openExternal(url) {
         shell.openExternal(url);
     }
 
-    // 폼 제출
+    // Submit Form
     document.getElementById('apiForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -199,7 +199,7 @@
         }
     });
 
-    // 설정 건너뛰기
+    // Skip Settings
     function skipConfig() {
         ipcRenderer.invoke('start-main-app');
     }

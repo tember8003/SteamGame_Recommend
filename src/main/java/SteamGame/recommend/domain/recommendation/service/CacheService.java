@@ -15,12 +15,12 @@ public class CacheService {
         this.cacheService = cacheService;
     }
 
-    // 중복 추천 방지
+    // Prevent duplicate recommendations
     public boolean isAlreadyRecommended(long appid) {
         return "true".equals(cacheService.get(keyForRecommended(appid)));
     }
 
-    // 게임 추천 설정
+    // Game Recommendation Settings
     public void setRecommended(long appid) {
         cacheService.set(keyForRecommended(appid), "true", RECOMMEND_TTL);
     }

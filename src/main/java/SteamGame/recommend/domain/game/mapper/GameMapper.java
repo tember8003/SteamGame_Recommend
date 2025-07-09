@@ -35,6 +35,8 @@ public class GameMapper {
         if (name == null) return null;
 
         return name
+                .replace("??","™")
+                .replace("?","®")
                 .replace("짰","®")
                 .replace("Â®", "®")
                 .replace("â„¢", "™")

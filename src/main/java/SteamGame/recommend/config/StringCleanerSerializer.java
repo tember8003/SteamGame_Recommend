@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class StringCleanerSerializer extends JsonSerializer<String> {
@@ -17,14 +18,34 @@ public class StringCleanerSerializer extends JsonSerializer<String> {
             return;
         }
 
-        String cleanedValue = cleanSpecialCharacters(value);
+        String cleanedValue = fixEncodingIssues(value);
         generator.writeString(cleanedValue);
     }
 
-    private String cleanSpecialCharacters(String text) {
+    private String fixEncodingIssues(String text) {
         if(text == null) return null;
 
-        return text.replace("짰","®")
+        try {
+            // Attempt to convert incorrect encoding to UTF-8
+            byte[] bytes = text.getBytes(StandardCharsets.ISO_8859_1);
+            String utf8String = new String(bytes, StandardCharsets.UTF_8);
+
+            // Direct mapping if there are still broken characters
+            return cleanKnownIssues(utf8String);
+        } catch (Exception e) {
+            // Direct mapping in case of conversion failure
+            return cleanKnownIssues(text);
+        }
+    }
+
+    private String cleanKnownIssues(String text) {
+        if(text == null) return null;
+
+        return text
+                .replace("??","™")
+                .replace("?","®")
+                .replace("�", "®")
+                .replace("짰","®")
                 .replace("Â®", "®")
                 .replace("â„¢", "™")
                 .replace("Â©", "©")

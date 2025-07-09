@@ -7,7 +7,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.InputStreamReader;
@@ -22,43 +21,43 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // 데이터가 이미 있는지 확인
+        // Check if data already exists
         try {
             Integer gameCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM games", Integer.class);
 
             if (gameCount != null && gameCount > 0) {
-                log.info("데이터베이스에 이미 {}개의 게임이 있습니다. 초기화를 건너뜁니다.", gameCount);
+                log.info("Database already contains {} games. Skipping initialization.", gameCount);
                 return;
             }
         } catch (Exception e) {
-            log.info("게임 테이블이 존재하지 않습니다. 스키마를 생성합니다.");
+            log.info("Games table does not exist. Creating schema.");
         }
 
-        log.info("데이터베이스가 비어있습니다. 초기 데이터를 로드합니다...");
+        log.info("Database is empty. Loading initial data...");
 
         try {
-            // 기존 데이터 완전 삭제 (혹시 남아있을 수 있는 데이터)
+            // Completely clean existing data (in case there might be leftover data)
             cleanupExistingData();
 
-            // 스키마 실행
+            // Execute schema
             executeSchemaIfNeeded();
 
-            // 데이터 실행 (트랜잭션 처리)
+            // Execute data script (with transaction handling)
             executeDataScript();
 
-            // 최종 확인
+            // Final verification
             Integer finalCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM games", Integer.class);
-            log.info("데이터베이스 초기화 완료! 총 {}개 게임 로드됨", finalCount);
+            log.info("Database initialization completed! Total {} games loaded", finalCount);
 
         } catch (Exception e) {
-            log.error("데이터베이스 초기화 중 오류 발생", e);
+            log.error("Error occurred during database initialization", e);
             throw e;
         }
     }
 
     private void cleanupExistingData() {
         try {
-            log.info("기존 데이터 정리 중...");
+            log.info("Cleaning up existing data...");
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS FALSE");
             jdbcTemplate.execute("DELETE FROM game_tags");
             jdbcTemplate.execute("DELETE FROM tag_cooccurrence");
@@ -66,60 +65,61 @@ public class DataInitializer implements ApplicationRunner {
             jdbcTemplate.execute("DELETE FROM tags");
             jdbcTemplate.execute("DELETE FROM games");
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS TRUE");
-            log.info("기존 데이터 정리 완료");
+            log.info("Existing data cleanup completed");
         } catch (Exception e) {
-            log.warn("기존 데이터 정리 중 오류 (무시): {}", e.getMessage());
+            log.warn("Error during existing data cleanup (ignored): {}", e.getMessage());
         }
     }
 
     private void executeSchemaIfNeeded() throws Exception {
         try {
-            // games 테이블이 있는지 확인
+            // Check if games table exists
             jdbcTemplate.queryForObject("SELECT 1 FROM games LIMIT 1", Integer.class);
-            log.info("테이블이 이미 존재합니다.");
+            log.info("Tables already exist.");
         } catch (Exception e) {
-            log.info("테이블을 생성합니다...");
+            log.info("Creating tables...");
             executeScript("schema.sql");
         }
     }
 
     private void executeDataScript() throws Exception {
-        log.info("게임 데이터를 삽입합니다... (약 8000개 게임, 시간이 걸릴 수 있습니다)");
+        log.info("Inserting game data... (approximately 8000 games, this may take some time)");
         long startTime = System.currentTimeMillis();
 
         try {
-            // H2 설정 - MySQL 호환 모드
+            // H2 configuration - MySQL compatibility mode
             jdbcTemplate.execute("SET MODE MySQL");
             jdbcTemplate.execute("SET AUTOCOMMIT FALSE");
+            jdbcTemplate.execute("SET CHARSET UTF8");
 
-            // H2에서는 AUTO_INCREMENT 컬럼을 제외한 INSERT가 자동으로 처리됨
-            // 별도의 IDENTITY_INSERT 설정 불필요
+            // In H2, INSERT excluding AUTO_INCREMENT columns is handled automatically
+            // No need for separate IDENTITY_INSERT settings
 
             executeScript("data.sql");
 
-            // 명시적 커밋
+            // Explicit commit
             jdbcTemplate.execute("COMMIT");
-            log.info("트랜잭션 커밋 완료");
+            log.info("Transaction commit completed");
 
         } catch (Exception e) {
-            // 오류 시 롤백
+            // Rollback on error
             try {
                 jdbcTemplate.execute("ROLLBACK");
-                log.error("트랜잭션 롤백됨");
+                log.error("Transaction rolled back");
             } catch (Exception rollbackException) {
-                log.error("롤백 중 오류: {}", rollbackException.getMessage());
+                log.error("Error during rollback: {}", rollbackException.getMessage());
             }
             throw e;
         } finally {
             try {
                 jdbcTemplate.execute("SET AUTOCOMMIT TRUE");
             } catch (Exception finallyException) {
-                log.error("Finally 블록 오류: {}", finallyException.getMessage());
+                log.error("Finally block error: {}", finallyException.getMessage());
             }
         }
 
         long endTime = System.currentTimeMillis();
-        log.info("데이터 삽입 완료! 소요시간: {}초", (endTime - startTime) / 1000.0);
+        log.info("Data insertion completed! Time taken: {} seconds", (endTime - startTime) / 1000.0);
     }
 
     private void executeScript(String scriptPath) throws Exception {
@@ -128,77 +128,33 @@ public class DataInitializer implements ApplicationRunner {
                 new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)
         );
 
-        // 외래키 체크 비활성화 (data.sql 실행 전)
+        // Disable foreign key checks (before executing data.sql)
         if ("data.sql".equals(scriptPath)) {
-            log.info("외래키 체크 비활성화");
+            log.info("Disabling foreign key checks");
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS FALSE");
         }
 
-        // SQL 스크립트를 세미콜론으로 분할하여 실행
-        String[] statements = script.split(";");
+        // Use Spring Boot's default script execution (safe)
+        try {
+            log.info("Executing script: {}", scriptPath);
 
-        int executedCount = 0;
-        int errorCount = 0;
-        String currentTable = "";
+            // Execute script all at once (Spring handles parsing automatically)
+            jdbcTemplate.execute(script);
 
-        for (String statement : statements) {
-            statement = statement.trim();
-            if (!statement.isEmpty() && !statement.startsWith("--")) {
+            log.info("{} script execution completed", scriptPath);
 
-                // 현재 처리 중인 테이블 파악
-                if (statement.toUpperCase().contains("INSERT INTO")) {
-                    String tableName = statement.substring(statement.toUpperCase().indexOf("INSERT INTO") + 12);
-                    tableName = tableName.substring(0, tableName.indexOf(" ")).trim();
-                    if (!tableName.equals(currentTable)) {
-                        currentTable = tableName;
-                        log.info("테이블 처리 시작: {}", currentTable);
-                    }
-                }
-
-                try {
-                    jdbcTemplate.execute(statement);
-                    executedCount++;
-
-                    // 진행상황 로깅
-                    if (statement.toUpperCase().startsWith("INSERT") && executedCount % 500 == 0) {
-                        log.info("[{}] 데이터 삽입 진행중... {}개 완료", currentTable, executedCount);
-                    }
-
-                } catch (Exception e) {
-                    errorCount++;
-
-                    // 첫 번째 오류는 상세 로그
-                    if (errorCount <= 3) {
-                        log.error("=== SQL 실행 실패 상세 정보 ===");
-                        log.error("테이블: {}", currentTable);
-                        log.error("실행 문장: {}", statement.substring(0, Math.min(200, statement.length())));
-                        log.error("오류 메시지: {}", e.getMessage());
-                        log.error("=====================================");
-                    }
-
-                    // games나 reviews 테이블 오류는 치명적
-                    if (currentTable.equals("games") || currentTable.equals("reviews")) {
-                        log.error("핵심 테이블 ({}) 데이터 삽입 실패! 초기화 중단", currentTable);
-                        throw new RuntimeException("핵심 데이터 삽입 실패: " + currentTable, e);
-                    }
-
-                    // tag_cooccurrence 중복은 정상 (무시)
-                    if (!currentTable.equals("tag_cooccurrence")) {
-                        log.warn("[{}] SQL 실행 실패 ({}번째): {}", currentTable, errorCount, e.getMessage());
-                    }
-                }
-            }
+        } catch (Exception e) {
+            log.error("Script execution failed: {}", scriptPath, e);
+            throw e;
         }
 
-        // 외래키 체크 복원 (data.sql 실행 후)
+        // Restore foreign key checks (after executing data.sql)
         if ("data.sql".equals(scriptPath)) {
-            log.info("외래키 체크 복원");
+            log.info("Restoring foreign key checks");
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS TRUE");
         }
 
-        log.info("{} 스크립트 실행 완료 - {}개 성공, {}개 실패", scriptPath, executedCount, errorCount);
-
-        // 핵심 테이블 데이터 확인
+        // Verify core table data
         if ("data.sql".equals(scriptPath)) {
             checkCoreTableData();
         }
@@ -209,18 +165,18 @@ public class DataInitializer implements ApplicationRunner {
             Integer games = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM games", Integer.class);
             Integer reviews = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM reviews", Integer.class);
 
-            log.info("핵심 테이블 데이터 확인 - games: {}개, reviews: {}개", games, reviews);
+            log.info("Core table data verification - games: {} entries, reviews: {} entries", games, reviews);
 
             if (games == 0) {
-                throw new RuntimeException("games 테이블에 데이터가 없습니다!");
+                throw new RuntimeException("No data in games table!");
             }
             if (reviews == 0) {
-                throw new RuntimeException("reviews 테이블에 데이터가 없습니다!");
+                throw new RuntimeException("No data in reviews table!");
             }
 
         } catch (Exception e) {
-            log.error("핵심 테이블 데이터 확인 실패", e);
-            throw new RuntimeException("핵심 데이터 검증 실패", e);
+            log.error("Core table data verification failed", e);
+            throw new RuntimeException("Core data validation failed", e);
         }
     }
 }

@@ -13,7 +13,7 @@ public class ReviewGuessAnswerResponseDTO {
     private boolean correct;
     private boolean gameCompleted;
     private int nextRoundIndex;
-    private Long correctAnswerId;  // 정답 공개
+    private Long correctAnswerId;  // reveal the answer
     private String correctGameName;
     private int currentScore;
 }

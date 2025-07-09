@@ -15,6 +15,6 @@ public class ReviewGuessRoundDTO {
     private int roundIndex;
     private String positiveReview;
     private String negativeReview;
-    private List<ReviewGuessGameDTO> gameOptions;  // 3개 선택지 (정답 + 2개)
-    private Long correctAnswerId;   // 정답 게임 ID (클라이언트에서는 숨김)
+    private List<ReviewGuessGameDTO> gameOptions;  // 3 options (answer and 2 not correct)
+    private Long correctAnswerId;   // Answer Game ID (Hidden by Client)
 }
