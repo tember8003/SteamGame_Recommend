@@ -4,11 +4,11 @@ name: Build and Release Steam Game Recommend
 on:
   push:
     tags:
-      - 'v*'  # v1.0.0, v1.1.0 등의 태그가 푸시될 때 실행
+      - 'v*'  # Triggers when tags like v1.0.0, v1.1.0 are pushed
 
 jobs:
   build-and-release:
-    runs-on: windows-latest  # Windows에서 테스트했으므로 Windows 환경 사용
+    runs-on: windows-latest  # Using Windows environment as it was tested on Windows
     permissions:
       contents: write
 
@@ -29,43 +29,41 @@ jobs:
           cache: 'npm'
           cache-dependency-path: electron/package-lock.json
 
-      # Spring Boot JAR 파일 빌드
+      # Build Spring Boot JAR file
       - name: Build Spring Boot JAR
         run: |
           ./gradlew clean bootJar
         shell: cmd
 
-      # JAR 파일을 Electron resources 폴더로 복사
+      # Copy JAR file to Electron resources folder
       - name: Copy JAR to Electron resources
         run: |
           if not exist "electron\resources" mkdir "electron\resources"
           copy "build\libs\recommend-0.0.1-SNAPSHOT.jar" "electron\resources\"
         shell: cmd
 
-      # Electron 의존성 설치
+      # Install Electron dependencies
       - name: Install Electron dependencies
         run: npm install
         working-directory: electron
 
-      # Electron 앱 빌드
+      # Build Electron app
       - name: Build Electron App
         run: npm run dist
         working-directory: electron
 
-      # 빌드 결과물 확인
+      # Check build artifacts
       - name: List build artifacts
         run: |
-          echo "=== JAR 파일 ==="
+          echo "=== JAR Files ==="
           dir build\libs\
-          echo "=== Electron 빌드 결과물 ==="
+          echo "=== Electron Build Results ==="
           dir electron\dist\
         shell: cmd
 
-      # GitHub Release 생성
+      # Create GitHub Release
       - name: Create Release
         uses: softprops/action-gh-release@v1
-        permissions:
-          contents: write
         with:
           files: |
             electron/dist/*.exe
@@ -133,7 +131,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 빌드 실패 시 로그 출력
+      # Upload build logs on failure
       - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
