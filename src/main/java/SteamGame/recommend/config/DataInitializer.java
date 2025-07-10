@@ -90,7 +90,6 @@ public class DataInitializer implements ApplicationRunner {
             // H2 configuration - MySQL compatibility mode
             jdbcTemplate.execute("SET MODE MySQL");
             jdbcTemplate.execute("SET AUTOCOMMIT FALSE");
-            jdbcTemplate.execute("SET CHARSET UTF8");
 
             // In H2, INSERT excluding AUTO_INCREMENT columns is handled automatically
             // No need for separate IDENTITY_INSERT settings

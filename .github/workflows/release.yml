@@ -1,0 +1,141 @@
+# .github/workflows/release.yml
+name: Build and Release Steam Game Recommend
+
+on:
+  push:
+    tags:
+      - 'v*'  # v1.0.0, v1.1.0 등의 태그가 푸시될 때 실행
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest  # Windows에서 테스트했으므로 Windows 환경 사용
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: electron/package-lock.json
+
+      # Spring Boot JAR 파일 빌드
+      - name: Build Spring Boot JAR
+        run: |
+          ./gradlew clean bootJar
+        shell: cmd
+
+      # JAR 파일을 Electron resources 폴더로 복사
+      - name: Copy JAR to Electron resources
+        run: |
+          if not exist "electron\resources" mkdir "electron\resources"
+          copy "build\libs\recommend-0.0.1-SNAPSHOT.jar" "electron\resources\"
+        shell: cmd
+
+      # Electron 의존성 설치
+      - name: Install Electron dependencies
+        run: npm install
+        working-directory: electron
+
+      # Electron 앱 빌드
+      - name: Build Electron App
+        run: npm run dist
+        working-directory: electron
+
+      # 빌드 결과물 확인
+      - name: List build artifacts
+        run: |
+          echo "=== JAR 파일 ==="
+          dir build\libs\
+          echo "=== Electron 빌드 결과물 ==="
+          dir electron\dist\
+        shell: cmd
+
+      # GitHub Release 생성
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            electron/dist/*.exe
+            electron/dist/*.zip
+            electron/dist/*.7z
+            electron/dist/*.nsis.7z
+            build/libs/recommend-0.0.1-SNAPSHOT.jar
+          body: |
+            ## 🎮 Steam Game Recommend ${{ github.ref_name }}
+            
+            A new version of the Steam Game Recommendation desktop application has been released!
+            
+            ### 📥 Download Options
+            
+            **For Windows Users:**
+            - `Steam-Game-Recommend-1.0.0-Setup.exe` - Installer (Recommended)
+            - `Steam-Game-Recommend-1.0.0-win.zip` - Portable version
+            
+            **For Developers/Server Deployment:**
+            - `recommend-0.0.1-SNAPSHOT.jar` - Spring Boot server only
+            
+            ### 🚀 Installation Instructions
+            
+            1. Download the `Steam-Game-Recommend-1.0.0-Setup.exe` file
+            2. Run the file to start the installation process
+            3. After installation, launch the app from desktop or start menu
+            4. Configure Steam API key and Gemini API key on first run
+            
+            ### 📋 System Requirements
+            
+            - Windows 10/11 (64-bit)
+            - Java 17+ (for direct JAR execution)
+            - Internet connection (for Steam API and AI recommendation features)
+            
+            ### 🔧 Key Features
+            
+            - 🎯 Tag-based random game recommendations
+            - 👤 Steam profile-based recommendations
+            - 🎮 Recent play history recommendations
+            - 🔍 Similar tag game recommendations
+            - 🤔 Game choice helper
+            - 🎲 Review guessing game
+            
+            ### 🐛 Known Issues
+            
+            - Windows Defender may show warnings (unsigned application)
+            - API key configuration required on first launch
+            
+            ### 📞 Support
+            
+            If you encounter any issues or have suggestions, please create an issue on GitHub!
+            
+            ---
+            
+            ### 🔄 Changelog
+            
+            #### New Features
+            - Add your new features here
+            
+            #### Bug Fixes
+            - Add your bug fixes here
+            
+            #### Improvements
+            - Add your improvements here
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 빌드 실패 시 로그 출력
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            electron/dist/
+            build/
+            *.log

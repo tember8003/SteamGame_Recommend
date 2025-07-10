@@ -38,8 +38,45 @@ public class StringCleanerSerializer extends JsonSerializer<String> {
         }
     }
 
+    /**
+     * check if it is a URL
+     */
+    private boolean isUrl(String text) {
+        if (text == null) return false;
+        return text.startsWith("http://") || text.startsWith("https://");
+    }
+
+    /**
+     * Method to determine if it is an image_url field (if the current field name is known)
+     */
+    private boolean isImageUrlField(SerializerProvider serializers) {
+        try {
+            String currentFieldName = serializers.getGenerator().getOutputContext().getCurrentName();
+            return "imageUrl".equals(currentFieldName) ||
+                    "image_url".equals(currentFieldName) ||
+                    "url".equals(currentFieldName);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private String cleanKnownIssues(String text) {
         if(text == null) return null;
+
+        if (isUrl(text)) {
+            return text
+                    .replace("�", "®")
+                    .replace("짰","®")
+                    .replace("Â®", "®")
+                    .replace("â„¢", "™")
+                    .replace("Â©", "©")
+                    .replace("Â", "")
+                    .replace("â€™", "'")
+                    .replace("â€œ", "\"")
+                    .replace("â€", "\"")
+                    .replace("�꽓","™")
+                    .trim();
+        }
 
         return text
                 .replace("??","™")
