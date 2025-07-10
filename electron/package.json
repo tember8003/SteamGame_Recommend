@@ -46,7 +46,6 @@
         "target": "nsis",
         "arch": ["x64"]
       },
-      "icon": "icon.ico",
       "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
@@ -54,8 +53,6 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "installerIcon": "icon.ico",
-      "uninstallerIcon": "icon.ico",
       "displayLanguageSelector": false,
       "installerLanguages": ["en"],
       "license": null,
