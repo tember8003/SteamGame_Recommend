@@ -1,13 +1,14 @@
+# .github/workflows/release.yml
 name: Build and Release Steam Game Recommend
 
 on:
   push:
     tags:
-      - 'v*'  # Triggers when tags like v1.0.0, v1.1.0 are pushed
+      - 'v*'  # v1.0.0, v1.1.0 등의 태그가 푸시될 때 실행
 
 jobs:
   build-and-release:
-    runs-on: windows-latest  # Using Windows environment as it was tested on Windows
+    runs-on: windows-latest  # Windows에서 테스트했으므로 Windows 환경 사용
     permissions:
       contents: write
 
@@ -28,39 +29,39 @@ jobs:
           cache: 'npm'
           cache-dependency-path: electron/package-lock.json
 
-      # Build Spring Boot JAR file
+      # Spring Boot JAR 파일 빌드
       - name: Build Spring Boot JAR
         run: |
           ./gradlew clean bootJar
         shell: cmd
 
-      # Copy JAR file to Electron resources folder
+      # JAR 파일을 Electron resources 폴더로 복사
       - name: Copy JAR to Electron resources
         run: |
           if not exist "electron\resources" mkdir "electron\resources"
           copy "build\libs\recommend-0.0.1-SNAPSHOT.jar" "electron\resources\"
         shell: cmd
 
-      # Install Electron dependencies
+      # Electron 의존성 설치
       - name: Install Electron dependencies
         run: npm install
         working-directory: electron
 
-      # Build Electron app
+      # Electron 앱 빌드
       - name: Build Electron App
         run: npm run dist
         working-directory: electron
 
-      # Check build artifacts
+      # 빌드 결과물 확인
       - name: List build artifacts
         run: |
-          echo "=== JAR Files ==="
+          echo "=== JAR 파일 ==="
           dir build\libs\
-          echo "=== Electron Build Results ==="
+          echo "=== Electron 빌드 결과물 ==="
           dir electron\dist\
         shell: cmd
 
-      # Create GitHub Release
+      # GitHub Release 생성
       - name: Create Release
         uses: softprops/action-gh-release@v1
         permissions:
@@ -132,7 +133,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Upload build logs on failure
+      # 빌드 실패 시 로그 출력
       - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
