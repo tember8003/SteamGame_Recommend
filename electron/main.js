@@ -874,6 +874,33 @@ function createWindow() {
             }
         });
 
+        // Handle external links - open in system browser
+        mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+            console.log('External link clicked:', url);
+
+            // Open URL in default system browser
+            shell.openExternal(url);
+
+            // Prevent opening in Electron
+            return { action: 'deny' };
+        });
+
+        // Handle navigation to external links
+        mainWindow.webContents.on('will-navigate', (event, url) => {
+            // Allow navigation to localhost (our app)
+            if (url.startsWith('http://localhost:8888') ||
+                url.startsWith('data:text/html') ||
+                url.startsWith('file://')) {
+                console.log('Internal navigation allowed:', url);
+                return;
+            }
+
+            // Block navigation and open in external browser instead
+            console.log('External navigation blocked, opening in browser:', url);
+            event.preventDefault();
+            shell.openExternal(url);
+        });
+
         // Create application menu
         createApplicationMenu();
 

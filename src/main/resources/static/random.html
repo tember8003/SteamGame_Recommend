@@ -675,6 +675,72 @@
         grid-template-columns: repeat(2, 1fr);
       }
     }
+
+    .tag-search-container {
+        position: relative;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0 10px;
+        transition: all 0.3s ease;
+    }
+
+    .tag-search-container:focus-within {
+        border-color: var(--primary);
+        background: var(--bg-tertiary);
+    }
+
+    .tag-search-container i.fa-search {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-right: 8px;
+    }
+
+    .tag-search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        padding: 8px 0;
+    }
+
+    .tag-search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .clear-search-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .clear-search-btn:hover {
+        color: var(--primary);
+    }
+
+    /* 숨겨진 태그 아이템 */
+    .tag-item.hidden {
+        display: none;
+    }
+
+    /* 검색 결과 없음 메시지 */
+    .no-tags-found {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -715,6 +781,19 @@
               <i class="fas fa-minus"></i> Exclude
             </button>
           </div>
+
+            <div class="tag-search-container">
+                <i class="fas fa-search"></i>
+                <input
+                        type="text"
+                        id="tag-search-input"
+                        class="tag-search-input"
+                        placeholder="Search tags..."
+                />
+                <button id="clear-search" class="clear-search-btn" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
           <div class="tab-content active" id="selected-tags">
             <div class="tag-grid" id="random-tags-container"></div>
@@ -785,48 +864,112 @@
   const baseUrl = '';
 
   document.addEventListener('DOMContentLoaded', () => {
-    const selectedContainer = document.getElementById('random-tags-container');
-    const excludedContainer = document.getElementById('excluded-tags-container');
+      const searchInput = document.getElementById('tag-search-input');
+      const clearBtn = document.getElementById('clear-search');
+      const selectedContainer = document.getElementById('random-tags-container');
+      const excludedContainer = document.getElementById('excluded-tags-container');
 
-    // Create tags for both containers
-    tagsList.forEach(tag => {
-      // Selected tags
-      const tagItem1 = document.createElement('div');
-      tagItem1.className = 'tag-item';
-      tagItem1.innerHTML = `
-        <input type="checkbox" name="tags" value="${tag}" id="tag-${tag}" />
-        <label for="tag-${tag}" class="tag-label">${tag}</label>
-      `;
-      selectedContainer.append(tagItem1);
+      // Create tags for both containers
+      tagsList.forEach(tag => {
+          // Selected tags
+          const tagItem1 = document.createElement('div');
+          tagItem1.className = 'tag-item';
+          tagItem1.innerHTML = `
+      <input type="checkbox" name="tags" value="${tag}" id="tag-${tag}" />
+      <label for="tag-${tag}" class="tag-label">${tag}</label>
+    `;
+          selectedContainer.append(tagItem1);
 
-      // Excluded tags (same styling)
-      const tagItem2 = document.createElement('div');
-      tagItem2.className = 'tag-item';
-      tagItem2.innerHTML = `
-        <input type="checkbox" name="excludedTags" value="${tag}" id="excluded-${tag}" />
-        <label for="excluded-${tag}" class="tag-label">${tag}</label>
-      `;
-      excludedContainer.append(tagItem2);
-    });
-
-    // Tab switching functionality
-    document.querySelectorAll('.tag-type-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.dataset.type;
-
-        // Update button states
-        document.querySelectorAll('.tag-type-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        if (type === 'selected') {
-          document.getElementById('selected-tags').classList.add('active');
-        } else {
-          document.getElementById('excluded-tags').classList.add('active');
-        }
+          // Excluded tags (same styling)
+          const tagItem2 = document.createElement('div');
+          tagItem2.className = 'tag-item';
+          tagItem2.innerHTML = `
+      <input type="checkbox" name="excludedTags" value="${tag}" id="excluded-${tag}" />
+      <label for="excluded-${tag}" class="tag-label">${tag}</label>
+    `;
+          excludedContainer.append(tagItem2);
       });
-    });
+
+      // Tab switching functionality
+      document.querySelectorAll('.tag-type-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              const type = btn.dataset.type;
+
+              // Update button states
+              document.querySelectorAll('.tag-type-btn').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+
+              // Update tab content
+              document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+              if (type === 'selected') {
+                  document.getElementById('selected-tags').classList.add('active');
+              } else {
+                  document.getElementById('excluded-tags').classList.add('active');
+              }
+
+              // Retain search terms when switching tabs and re-apply filters
+              filterTags(searchInput.value);
+          });
+      });
+
+      // Tag search filtering function
+      function filterTags(searchTerm) {
+          const term = searchTerm.toLowerCase().trim();
+          const activeTab = document.querySelector('.tag-type-btn.active').dataset.type;
+          const container = activeTab === 'selected' ? selectedContainer : excludedContainer;
+          const tagItems = container.querySelectorAll('.tag-item');
+
+          let visibleCount = 0;
+
+          tagItems.forEach(item => {
+              const label = item.querySelector('.tag-label');
+              const tagName = label.textContent.toLowerCase();
+
+              if (tagName.includes(term)) {
+                  item.classList.remove('hidden');
+                  visibleCount++;
+              } else {
+                  item.classList.add('hidden');
+              }
+          });
+
+          // No Search Results Message
+          let noResultsMsg = container.querySelector('.no-tags-found');
+          if (visibleCount === 0 && term !== '') {
+              if (!noResultsMsg) {
+                  noResultsMsg = document.createElement('div');
+                  noResultsMsg.className = 'no-tags-found';
+                  noResultsMsg.innerHTML = '<i class="fas fa-search"></i><br>No tags found';
+                  container.appendChild(noResultsMsg);
+              }
+          } else {
+              if (noResultsMsg) {
+                  noResultsMsg.remove();
+              }
+          }
+
+          // Clear Show/Hide buttons
+          clearBtn.style.display = term ? 'flex' : 'none';
+      }
+
+      // Search Input Event
+      searchInput.addEventListener('input', (e) => {
+          filterTags(e.target.value);
+      });
+
+      // clear button
+      clearBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          filterTags('');
+          searchInput.focus();
+      });
+
+      // Search with Enter key (prevent form submission)
+      searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+          }
+      });
   });
 
   document.getElementById('btn-random').addEventListener('click', async () => {
