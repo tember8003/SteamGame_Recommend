@@ -1,3 +1,5 @@
+🌐 [한국어](README.ko.md) | **English**
+
 # 🎮 Steam Game Recommend API & UI
 
 Steam game recommendation system that uses tag information, user profiles, recent play history
