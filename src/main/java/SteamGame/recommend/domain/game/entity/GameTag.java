@@ -15,11 +15,14 @@ import lombok.Setter;
 public class GameTag {
     @Id
     @ManyToOne
-    @JoinColumn(name="game_id",nullable = false)
+    @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
     @Id
     @ManyToOne
-    @JoinColumn(name="tag_id",nullable = false)
+    @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
+
+    @Column(name = "votes", nullable = false)
+    private int votes;
 }

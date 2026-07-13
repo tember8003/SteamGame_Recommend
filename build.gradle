@@ -30,8 +30,12 @@ repositories {
 }
 
 dependencies {
-	// Database - H2로 변경
-	implementation 'com.h2database:h2'
+	// Database - PostgreSQL
+	runtimeOnly 'org.postgresql:postgresql'
+
+	// Flyway (schema migrations)
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 
 	// Spring AI
 	implementation 'org.springframework.ai:spring-ai-core:0.8.1'
@@ -61,6 +65,9 @@ dependencies {
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'

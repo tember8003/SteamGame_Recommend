@@ -3,6 +3,9 @@ package SteamGame.recommend.domain.game.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+
 @Entity
 @Table(name = "games")
 @NoArgsConstructor
@@ -31,4 +34,25 @@ public class Game {
 
     @Column(name = "review_count")
     private Integer reviewCount;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "owners_estimate")
+    private Long ownersEstimate;
+
+    @Column(name = "genres", length = 500)
+    private String genres;
+
+    @Column(name = "price")
+    private Integer price;
+
+    @Column(name = "developer")
+    private String developer;
+
+    @Column(name = "publisher")
+    private String publisher;
+
+    @Column(name = "last_crawled_at")
+    private OffsetDateTime lastCrawledAt;
 }

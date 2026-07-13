@@ -1,32 +1,15 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql-local
-    restart: always
+  postgres:
+    image: postgres:16
+    container_name: steamgames-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: test
-      MYSQL_DATABASE: testdb
+      POSTGRES_DB: steamgames
+      POSTGRES_USER: steam
+      POSTGRES_PASSWORD: steam
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
-      - ./db/init:/docker-entrypoint-initdb.d
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  redis:
-    image: redis:latest
-    container_name: redis-local
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+      - steamgames_pgdata:/var/lib/postgresql/data
 
 volumes:
-  db_data:
-  redis_data:
+  steamgames_pgdata:
