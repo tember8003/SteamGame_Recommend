@@ -100,7 +100,7 @@ public class SeedCrawlerService {
         return new SeedResult(pagesFetched, gamesUpserted, capped);
     }
 
-    /** "100,000,000 .. 200,000,000" → 100000000L (하한). 파싱 실패 시 null. */
+    // "100,000,000 .. 200,000,000" → 100000000L(하한), 파싱 실패 시 null
     static Long parseOwnersLowerBound(String owners) {
         if (owners == null || owners.isBlank()) return null;
         String lower = owners.split("\\.\\.")[0].replaceAll("[^0-9]", "");

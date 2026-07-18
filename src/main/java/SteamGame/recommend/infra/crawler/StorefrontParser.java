@@ -16,7 +16,7 @@ import java.util.StringJoiner;
 @Component
 public class StorefrontParser {
 
-    // cc=us&l=english → "Jul 9, 2013"
+    // cc=us&l=english 응답의 날짜 포맷, 예: "Jul 9, 2013"
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
 
@@ -78,7 +78,7 @@ public class StorefrontParser {
         String date = releaseDate.path("date").asText("");
         if (date.isBlank()) return null;
         try { return LocalDate.parse(date, DATE_FMT); }
-        catch (Exception e) { return null; }   // "Q1 2027", "2013", localized variants → null
+        catch (Exception e) { return null; }   // "Q1 2027", "2013" 등 비정형/로컬라이즈 포맷은 null 처리
     }
 
     private static String firstOf(JsonNode arr) {

@@ -16,7 +16,7 @@ public class DetailUpsertRepository {
         this.jdbc = jdbc;
     }
 
-    /** appid → games.id, 없으면 null. */
+    // appid → games.id, 없으면 null
     public Long findGameId(long appid) {
         try {
             return jdbc.queryForObject("SELECT id FROM games WHERE appid = ?", Long.class, appid);
@@ -25,7 +25,7 @@ public class DetailUpsertRepository {
         }
     }
 
-    /** 게임의 game_tags 를 주어진 가중 태그로 전량 교체(멱등). 시드 안 된 appid 는 no-op. */
+    // 게임의 game_tags 를 주어진 가중 태그로 전량 교체(멱등), 시드 안 된 appid 는 no-op
     public void upsertTags(long appid, List<AppTag> tags) {
         Long gameId = findGameId(appid);
         if (gameId == null) return;
@@ -39,7 +39,7 @@ public class DetailUpsertRepository {
         }
     }
 
-    /** tags 를 name 유니크로 업서트하고 id 반환. DO UPDATE SET name=EXCLUDED.name 은 RETURNING 을 위한 no-op. */
+    // tags 를 name 유니크로 업서트하고 id 반환, DO UPDATE SET name=EXCLUDED.name 은 RETURNING 용 no-op
     private Long upsertTag(String name) {
         return jdbc.queryForObject("""
             INSERT INTO tags (name) VALUES (?)
@@ -47,7 +47,7 @@ public class DetailUpsertRepository {
             RETURNING id""", Long.class, name);
     }
 
-    /** 스토어페이지 확정 데이터를 games 행에 반영(appid 기준 UPDATE). 게임 행은 이미 존재해야 함. */
+    // 스토어페이지 확정 데이터를 games 행에 반영(appid 기준 UPDATE), 게임 행은 이미 존재해야 함
     public void upsertStorefront(SteamGame.recommend.infra.crawler.dto.StorefrontDetail d) {
         jdbc.update("""
             UPDATE games SET
@@ -59,7 +59,7 @@ public class DetailUpsertRepository {
             d.developer(), d.publisher(), d.appid());
     }
 
-    /** 리뷰 요약 + 샘플 텍스트를 reviews 에 업서트(appid UNIQUE 기준 ON CONFLICT). */
+    // 리뷰 요약 + 샘플 텍스트를 reviews 에 업서트(appid UNIQUE 기준 ON CONFLICT)
     public void upsertReviewDetail(SteamGame.recommend.infra.crawler.dto.ReviewDetail d) {
         jdbc.update("""
             INSERT INTO reviews (appid, total_reviews, positive_percentage, review_score,
@@ -75,7 +75,7 @@ public class DetailUpsertRepository {
             d.positiveText(), d.negativeText());
     }
 
-    /** 다음 크롤링 대상 appid n개: 미크롤링 우선, 그 다음 오래된 순 → 인기 순. */
+    // 다음 크롤링 대상 appid n개: 미크롤링 우선, 그 다음 오래된 순 → 인기 순
     public java.util.List<Long> selectNextToCrawl(int n) {
         return jdbc.queryForList("""
             SELECT appid FROM games
@@ -83,7 +83,7 @@ public class DetailUpsertRepository {
             LIMIT ?""", Long.class, n);
     }
 
-    /** appid 의 last_crawled_at 을 갱신. */
+    // appid 의 last_crawled_at 을 갱신
     public void markCrawled(long appid, java.time.OffsetDateTime at) {
         jdbc.update("UPDATE games SET last_crawled_at = ? WHERE appid = ?", at, appid);
     }

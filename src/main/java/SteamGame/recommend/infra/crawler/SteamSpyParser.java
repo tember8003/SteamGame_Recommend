@@ -20,7 +20,7 @@ public class SteamSpyParser {
         this.objectMapper = objectMapper;
     }
 
-    /** SteamSpy ?request=all 응답(appid 키 맵)을 엔트리 리스트로 파싱. 파싱 실패 시 빈 리스트. */
+    // SteamSpy ?request=all 응답(appid 키 맵)을 엔트리 리스트로 파싱, 파싱 실패 시 빈 리스트
     public List<SteamSpyAllEntry> parseAllPage(String json) {
         if (json == null || json.isBlank()) {
             return List.of();

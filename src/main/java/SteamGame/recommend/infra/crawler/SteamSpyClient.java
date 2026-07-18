@@ -18,7 +18,7 @@ public class SteamSpyClient {
         this.props = props;
     }
 
-    /** {baseUrl}?request=all&page={page} 의 원본 JSON 본문을 반환한다. */
+    // {baseUrl}?request=all&page={page} 의 원본 JSON 본문 반환
     public String fetchAllPage(int page) {
         return webClient.get()
                 .uri(props.getSteamspyBaseUrl() + "?request=all&page=" + page)
@@ -28,7 +28,7 @@ public class SteamSpyClient {
                 .block();
     }
 
-    /** {baseUrl}?request=appdetails&appid={appid} 의 원본 JSON 본문을 반환한다. */
+    // {baseUrl}?request=appdetails&appid={appid} 의 원본 JSON 본문 반환
     public String fetchAppDetails(long appid) {
         return webClient.get()
                 .uri(props.getSteamspyBaseUrl() + "?request=appdetails&appid=" + appid)

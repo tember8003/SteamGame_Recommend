@@ -21,7 +21,7 @@ public class SteamSpyAppDetailsParser {
         this.objectMapper = objectMapper;
     }
 
-    /** SteamSpy appdetails 응답의 tags(객체=태그맵, 빈배열=태그없음)를 안전하게 파싱. 실패 시 빈 리스트. */
+    // SteamSpy appdetails 응답의 tags(객체=태그맵, 빈배열=태그없음)를 안전 파싱, 실패 시 빈 리스트
     public List<AppTag> parseTags(String json) {
         if (json == null || json.isBlank()) return List.of();
         try {
