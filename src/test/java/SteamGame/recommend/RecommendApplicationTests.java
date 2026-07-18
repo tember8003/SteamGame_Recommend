@@ -1,15 +1,16 @@
 package SteamGame.recommend;
 
+import SteamGame.recommend.support.PostgresTestBase;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@ExtendWith(MockitoExtension.class)
-public class RecommendApplicationTests {
+@SpringBootTest(properties = {
+        "steam.api.key=test",
+        "spring.ai.google.api-key=test"
+})
+class RecommendApplicationTests extends PostgresTestBase {
 
-	@Test
-	public void selectInfoTest() {
-	}
-
+    @Test
+    void contextLoads() {
+    }
 }

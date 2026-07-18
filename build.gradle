@@ -1,11 +1,22 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.3'
+	id 'org.springframework.boot' version '3.4.13'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'SteamGame'
 version = '0.0.1-SNAPSHOT'
+
+// Security: promote transitive versions past the Spring Boot 3.4.13 BOM defaults
+// to clear residual CVEs. All are same-minor patch bumps (low risk).
+//   netty 4.1.130 -> 4.1.136  (CVE-2026-44249/45416/50010, 45674/47691 — netty-handler/resolver-dns)
+//   jackson 2.18.5 -> 2.18.9  (CVE-2026-54512/54513 — jackson-databind)
+//   spring-framework 6.2.15 -> 6.2.19  (CVE-2026-22735/22737/22740/22741/22745 — spring-webflux)
+ext['netty.version'] = '4.1.136.Final'
+ext['jackson-bom.version'] = '2.18.9'
+ext['spring-framework.version'] = '6.2.19'
+ext['commons-lang3.version'] = '3.18.0'   // CVE-2025-48924 (via springdoc/swagger-core)
+ext['assertj.version'] = '3.27.7'          // CVE-2026-24400 (test-only)
 
 java {
 	toolchain {
@@ -21,21 +32,15 @@ configurations {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
-	maven { url 'https://repo.spring.io/snapshot' }
-	maven {
-		name = 'Central Portal Snapshots'
-		url = 'https://central.sonatype.com/repository/maven-snapshots/'
-	}
 }
 
 dependencies {
-	// Database - H2로 변경
-	implementation 'com.h2database:h2'
+	// Database - PostgreSQL
+	runtimeOnly 'org.postgresql:postgresql'
 
-	// Spring AI
-	implementation 'org.springframework.ai:spring-ai-core:0.8.1'
-	implementation 'org.springframework.ai:spring-ai-vertex-ai-spring-boot-starter:0.8.0-SNAPSHOT'
+	// Flyway (schema migrations)
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 
 	// Spring Boot Core
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -61,15 +66,13 @@ dependencies {
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:0.8.1"
-	}
+	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 
 tasks.named('test') {

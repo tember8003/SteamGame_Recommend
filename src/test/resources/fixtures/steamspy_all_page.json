@@ -1,0 +1,20 @@
+{
+  "570": {
+    "appid": 570,
+    "name": "Dota 2",
+    "developer": "Valve",
+    "publisher": "Valve",
+    "positive": 1200000,
+    "negative": 250000,
+    "owners": "100,000,000 .. 200,000,000"
+  },
+  "999999": {
+    "appid": 999999,
+    "name": "Tiny Unknown Game",
+    "developer": "Solo Dev",
+    "publisher": "",
+    "positive": 10,
+    "negative": 5,
+    "owners": "0 .. 20,000"
+  }
+}
