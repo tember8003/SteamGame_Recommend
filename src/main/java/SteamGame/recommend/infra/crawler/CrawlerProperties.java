@@ -19,4 +19,18 @@ public class CrawlerProperties {
     public void setMaxPages(int maxPages) { this.maxPages = maxPages; }
     public int getMinReviews() { return minReviews; }
     public void setMinReviews(int minReviews) { this.minReviews = minReviews; }
+
+    private String storeBaseUrl = "https://store.steampowered.com";
+    private long detailDelayMs = 1500;
+    private int dailyDetailBatchSize = 200;
+    private int reviewSampleMaxChars = 2000;
+
+    public String getStoreBaseUrl() { return storeBaseUrl; }
+    public void setStoreBaseUrl(String storeBaseUrl) { this.storeBaseUrl = storeBaseUrl; }
+    public long getDetailDelayMs() { return detailDelayMs; }
+    public void setDetailDelayMs(long detailDelayMs) { this.detailDelayMs = detailDelayMs; }
+    public int getDailyDetailBatchSize() { return dailyDetailBatchSize; }
+    public void setDailyDetailBatchSize(int dailyDetailBatchSize) { this.dailyDetailBatchSize = dailyDetailBatchSize; }
+    public int getReviewSampleMaxChars() { return reviewSampleMaxChars; }
+    public void setReviewSampleMaxChars(int reviewSampleMaxChars) { this.reviewSampleMaxChars = reviewSampleMaxChars; }
 }

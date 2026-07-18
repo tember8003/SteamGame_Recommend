@@ -27,4 +27,14 @@ public class SteamSpyClient {
                 .timeout(Duration.ofSeconds(30))
                 .block();
     }
+
+    /** {baseUrl}?request=appdetails&appid={appid} 의 원본 JSON 본문을 반환한다. */
+    public String fetchAppDetails(long appid) {
+        return webClient.get()
+                .uri(props.getSteamspyBaseUrl() + "?request=appdetails&appid=" + appid)
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
+                .block();
+    }
 }
