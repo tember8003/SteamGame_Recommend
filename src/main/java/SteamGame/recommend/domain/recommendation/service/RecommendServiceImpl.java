@@ -64,8 +64,8 @@ public class RecommendServiceImpl implements RecommendService {
     // Find games based on tags, reviews, Korean support, free status, etc.
     @Override
     @Transactional(readOnly=true)
-    public RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag) {
-        List<SteamAppDTO> steamAppDTOS= gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag);
+    public RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag, Set<Long> excludeAppids) {
+        List<SteamAppDTO> steamAppDTOS= gameService.findNonDuplicate(tags,review,koreanCheck,freeCheck,excluded_check,excludedTag, excludeAppids);
         if(steamAppDTOS.isEmpty()){
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "No games found matching the specified tags."
@@ -78,7 +78,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     // Extract game tags using Gemini API and find games
     @Override
-    public RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck) {
+    public RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids) {
         if (input == null || input.length() < MAX_SEARCH_ITERATIONS) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "The input sentence is too short.");
@@ -88,7 +88,7 @@ public class RecommendServiceImpl implements RecommendService {
         String shaInput = EncryptUtils.sha256(input);
         List<String> cachingTags = cacheService.getCachedTags(shaInput);
         if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamAppDTO> game = gameService.findNonDuplicate(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+            List<SteamAppDTO> game = gameService.findNonDuplicate(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null, excludeAppids);
             List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
             return new RecommendationResultDTO(cachingTags, game,reviewResponseDTOS);
         }
@@ -106,7 +106,7 @@ public class RecommendServiceImpl implements RecommendService {
         cacheService.cacheTags(shaInput,tags);
 
         // Final recommendation
-        List<SteamAppDTO> game = gameService.findNonDuplicate(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null);
+        List<SteamAppDTO> game = gameService.findNonDuplicate(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null, excludeAppids);
 
         List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
         return new RecommendationResultDTO(tags, game,reviewResponseDTOS);
@@ -114,7 +114,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     // Extract tags from a Steam user profile games list
     @Override
-    public RecommendationResultDTO recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck){
+    public RecommendationResultDTO recommendByProfile(String steamId,int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids){
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
         List<String> topTags = tagService.getTopTagsByProfile(steamId,TOP_TAGS_COUNT);
 
@@ -145,7 +145,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (int attempt = 0; attempt < MAX_RECOMMENDATION_ATTEMPTS; attempt++) {
             tags = tagService.shuffleTag(topTags,5,7);
-            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
+            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck, excludeAppids);
 
             List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
@@ -169,7 +169,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     // Find games based on tags extracted from a user profile
     @Override
-    public List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck) {
+    public List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags,int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids) {
         Optional<TagPairKey> optKey = cooccurrenceService.findOptimalPairKey(topTags, CO_THRESHOLD);
 
         if (optKey.isPresent()) {
@@ -180,7 +180,8 @@ public class RecommendServiceImpl implements RecommendService {
                     koreanCheck,
                     freeCheck,
                     false,
-                    null
+                    null,
+                    excludeAppids
             );
         }
 
@@ -192,7 +193,8 @@ public class RecommendServiceImpl implements RecommendService {
                         koreanCheck,
                         freeCheck,
                         false,
-                        null);
+                        null,
+                        excludeAppids);
             } catch (ResponseStatusException ignored) { }
         }
 
@@ -204,7 +206,7 @@ public class RecommendServiceImpl implements RecommendService {
     // Extract tags from recently played (2 weeks) games and find games
     @Override
     @Transactional(readOnly = true)
-    public RecommendationResultDTO recommendByRecentPlay(String steamId,int review, Boolean koreanCheck, Boolean freeCheck) {
+    public RecommendationResultDTO recommendByRecentPlay(String steamId,int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids) {
         List<Long> recentAppIds = steamApiService.getRecentPlayedGameIds(steamId);
         Set<Long> ownedAppIds  = new HashSet<>(steamApiService.getOwnedGameIds(steamId));
 
@@ -222,7 +224,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (int attempt = 0; attempt < 5; attempt++) {
             tags = tagService.shuffleTag(topTags,4,7);
-            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck);
+            List<SteamAppDTO> games = recommendWithCooccurrence(tags,review,koreanCheck,freeCheck, excludeAppids);
 
             List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !ownedAppIds.contains(app.getAppid()))
@@ -245,7 +247,7 @@ public class RecommendServiceImpl implements RecommendService {
     }
 
     @Override
-    public RecommendationResultDTO recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck){
+    public RecommendationResultDTO recommendBySimilarGame(String gameName,int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids){
         List<String> selectedTags = tagService.getTagsByGame(gameName);
         Optional<Game> selectedGame = gameRepository.findByNameIgnoreCase(gameName);
         long selectedAppId = selectedGame.orElseThrow().getAppid();
@@ -263,7 +265,7 @@ public class RecommendServiceImpl implements RecommendService {
         List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {
-            List<SteamAppDTO> games =recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck);
+            List<SteamAppDTO> games =recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, excludeAppids);
 
             List<SteamAppDTO> filteredGames = games.stream()
                     .filter(app -> !app.getAppid().equals(selectedAppId))

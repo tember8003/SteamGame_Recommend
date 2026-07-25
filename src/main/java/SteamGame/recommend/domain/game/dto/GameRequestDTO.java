@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 public class GameRequestDTO {
@@ -13,4 +15,5 @@ public class GameRequestDTO {
     private Boolean korean_check;
     private Boolean free_check;
     private String[] excludedTag;
+    private Set<Long> excludeAppids;
 }

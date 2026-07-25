@@ -459,7 +459,8 @@ public class GameChoiceService {
                     koreanCheck,
                     freeCheck,
                     false,
-                    null
+                    null,
+                    excludedGameIds
             );
 
             List<SteamAppDTO> filteredGames = allGames.stream()
@@ -489,7 +490,8 @@ public class GameChoiceService {
                     koreanCheck,
                     freeCheck,
                     false,
-                    null
+                    null,
+                    excludedGameIds
             );
 
             List<SteamAppDTO> filteredGames = games.stream()
@@ -515,7 +517,8 @@ public class GameChoiceService {
                     koreanCheck,
                     freeCheck,
                     false,
-                    null
+                    null,
+                    excludedGameIds
             );
 
             List<SteamAppDTO> filteredGames = games.stream()

@@ -4,23 +4,24 @@ import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RecommendService {
     // Find games based on tags, review count, Korean language support, free status, etc.
-    RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag);
+    RecommendationResultDTO findGame(String[] tags, int review, Boolean koreanCheck, Boolean freeCheck, Boolean excluded_check, String[] excludedTag, Set<Long> excludeAppids);
 
     // Extract game tags using Gemini API and provide recommendations
-    RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck);
+    RecommendationResultDTO selectInfo(String input, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids);
 
     // Recommend based on Steam user profile
-    RecommendationResultDTO recommendByProfile(String steamId, int review, Boolean koreanCheck, Boolean freeCheck);
+    RecommendationResultDTO recommendByProfile(String steamId, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids);
 
     // Recommend based on recently played games (past 2 weeks)
-    RecommendationResultDTO recommendByRecentPlay(String steamId, int review, Boolean koreanCheck, Boolean freeCheck);
+    RecommendationResultDTO recommendByRecentPlay(String steamId, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids);
 
     // Find games based on tags extracted from the user's profile
-    List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags, int review, Boolean koreanCheck, Boolean freeCheck);
+    List<SteamAppDTO> recommendWithCooccurrence(List<String> topTags, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids);
 
     // Find games similar to the specified game
-    RecommendationResultDTO recommendBySimilarGame(String game, int review, Boolean koreanCheck, Boolean freeCheck);
+    RecommendationResultDTO recommendBySimilarGame(String game, int review, Boolean koreanCheck, Boolean freeCheck, Set<Long> excludeAppids);
 }

@@ -3,6 +3,7 @@ package SteamGame.recommend.domain.recommendation.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,15 +20,6 @@ public class InMemoryCacheService {
 
     public InMemoryCacheService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-
-        // Expired Cache Cleanup Scheduler (every 5 minutes)
-        Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                cleanupExpiredCache();
-            }
-        }, 300000, 300000); // 5분마다 실행
     }
 
     // Save/Enquire String
@@ -128,8 +120,9 @@ public class InMemoryCacheService {
         return Math.max(secondsUntilExpiry, -1);
     }
 
-    // Expired Cache Cleanup
-    private void cleanupExpiredCache() {
+    // 만료 캐시 청소 (5분 주기)
+    @Scheduled(fixedRate = 300000)
+    public void cleanupExpiredCache() {
         int beforeSize = cache.size();
         cache.entrySet().removeIf(entry -> entry.getValue().isExpired());
         int afterSize = cache.size();
