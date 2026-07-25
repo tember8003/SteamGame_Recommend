@@ -9,6 +9,8 @@ import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.tag.service.TagService;
+import SteamGame.recommend.infra.embedding.VectorLiterals;
+import SteamGame.recommend.infra.embedding.VectorSampler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -78,6 +80,37 @@ public class GameService {
         else{
             return appList;
         }
+    }
+
+    // 임베딩 코사인 최근접 상위 poolK 후보를 뽑아 need 개를 균일 샘플. 임베딩된 후보가 없으면 빈 리스트(호출부가 폴백)
+    @Transactional(readOnly = true)
+    public List<SteamAppDTO> findNearestSampled(float[] qvec,
+                                                int review,
+                                                Boolean korean_check,
+                                                Boolean free_check,
+                                                boolean excluded_check,
+                                                String[] excludedTag,
+                                                Set<Long> excludeAppids,
+                                                int poolK,
+                                                int need) {
+        String qLiteral = VectorLiterals.toPgVector(qvec);
+
+        // 빈 집합이면 sentinel [-1] 바인딩 + excludeCount=0 으로 NOT IN 무력화
+        List<Long> excludeList = (excludeAppids == null || excludeAppids.isEmpty())
+                ? List.of(-1L)
+                : new ArrayList<>(excludeAppids);
+        int excludeCount = (excludeAppids != null) ? excludeAppids.size() : 0;
+
+        List<String> excludedList = (excludedTag != null)
+                ? Arrays.asList(excludedTag)
+                : Collections.emptyList();
+
+        List<Game> pool = gameRepository.findNearestByVector(qLiteral, review, korean_check, free_check,
+                excludeList, excludeCount, excluded_check, excludedList, poolK);
+
+        return VectorSampler.sample(pool, need, new Random()).stream()
+                .map(GameMapper::convertToSteamDTO)
+                .collect(Collectors.toList());
     }
 
     public List<ReviewResponseDTO> ResponseList(List<SteamAppDTO> games){

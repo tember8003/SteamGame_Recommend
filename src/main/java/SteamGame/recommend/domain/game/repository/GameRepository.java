@@ -75,4 +75,37 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                                           @Param("korean_check") Boolean korean_check,
                                           @Param("free") Boolean free);
 
+    // 코사인 유사도 최근접 상위 k개. 하드 필터는 태그 매칭 대신 임베딩 유사도로 정렬.
+    // 빈 exclude 집합은 excludeCount=0 가드로 NOT IN 을 무력화(sentinel [-1] 바인딩)
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid
+    WHERE g.embedding IS NOT NULL
+        AND r.total_reviews >= :review
+        AND (:korean_check IS NULL OR g.korean_support = :korean_check)
+        AND (:free IS NULL OR g.is_free = :free)
+        AND (:excludeCount = 0 OR g.appid NOT IN (:excludeAppids))
+        AND (
+            :excluded_check = false
+            OR NOT EXISTS (
+                SELECT 1
+                FROM game_tags gt2
+                JOIN tags t2 ON t2.id = gt2.tag_id
+                WHERE gt2.game_id = g.id
+                  AND t2.name IN (:excludedTag)
+            )
+        )
+    ORDER BY g.embedding <=> CAST(:qvec AS vector)
+    LIMIT :k
+""", nativeQuery = true)
+    List<Game> findNearestByVector(@Param("qvec") String qvec,
+                                   @Param("review") int review,
+                                   @Param("korean_check") Boolean korean_check,
+                                   @Param("free") Boolean free,
+                                   @Param("excludeAppids") List<Long> excludeAppids,
+                                   @Param("excludeCount") int excludeCount,
+                                   @Param("excluded_check") boolean excluded_check,
+                                   @Param("excludedTag") List<String> excludedTag,
+                                   @Param("k") int k);
+
 }
