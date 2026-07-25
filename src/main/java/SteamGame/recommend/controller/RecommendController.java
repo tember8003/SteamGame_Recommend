@@ -42,7 +42,8 @@ public class RecommendController {
                     request.getKorean_check(),
                     request.getFree_check(),
                     excludedCheck,
-                    request.getExcludedTag()
+                    request.getExcludedTag(),
+                    request.getExcludeAppids()
             );
 
             log.info("Tag-based random recommendation successful: found {} games", recommendServiceGame.getRecommendedGame().size());
@@ -66,7 +67,8 @@ public class RecommendController {
                     dto.getText(),
                     dto.getReview(),
                     dto.getKorean_check(),
-                    dto.getFree_check()
+                    dto.getFree_check(),
+                    dto.getExcludeAppids()
             );
 
             log.info("Text input-based recommendation successful: extracted tags={}, found {} games",
@@ -91,7 +93,8 @@ public class RecommendController {
                     dto.getSteamId(),
                     dto.getReview(),
                     dto.getKorean_check(),
-                    dto.getFree_check()
+                    dto.getFree_check(),
+                    dto.getExcludeAppids()
             );
 
             log.info("Profile-based recommendation successful: steamId={}, extracted tags={}, found {} games",
@@ -116,7 +119,8 @@ public class RecommendController {
                     dto.getSteamId(),
                     dto.getReview(),
                     dto.getKorean_check(),
-                    dto.getFree_check()
+                    dto.getFree_check(),
+                    dto.getExcludeAppids()
             );
 
             log.info("Recent play-based recommendation successful: steamId={}, extracted tags={}, found {} games",
@@ -141,7 +145,8 @@ public class RecommendController {
                     dto.getGameName(),
                     dto.getReview(),
                     dto.getKorean_check(),
-                    dto.getFree_check()
+                    dto.getFree_check(),
+                    dto.getExcludeAppids()
             );
 
             log.info("Similar game recommendation successful: gameName={}, extracted tags={}, found {} games\"",

@@ -8,7 +8,6 @@ import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
-import SteamGame.recommend.domain.recommendation.service.CacheService;
 import SteamGame.recommend.domain.tag.service.TagService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -25,14 +24,12 @@ import java.util.stream.Collectors;
 @Service
 public class GameService {
     private final GameRepository gameRepository;
-    private final CacheService cacheService;
     private final TagService tagService;
     private final ReviewRepository reviewRepository;
 
-    public GameService(GameRepository gameRepository,TagService tagService, CacheService cacheService, ReviewRepository reviewRepository){
+    public GameService(GameRepository gameRepository, TagService tagService, ReviewRepository reviewRepository){
         this.gameRepository = gameRepository;
         this.tagService = tagService;
-        this.cacheService = cacheService;
         this.reviewRepository = reviewRepository;
     }
 
@@ -42,13 +39,17 @@ public class GameService {
                                                     Boolean korean_check,
                                                     Boolean free_check,
                                                     Boolean excluded_check,
-                                                    String[] excludedTag) {
+                                                    String[] excludedTag,
+                                                    Set<Long> excludeAppids) {
         List<SteamAppDTO> appList= new ArrayList<>();
         List<String> tagList = Arrays.asList(tags);
 
         List<String> excludedList = (excludedTag != null)
                 ? Arrays.asList(excludedTag)
                 : Collections.emptyList();
+
+        // 클라 주도 제외 + 호출 내부 로컬 dedup(전역 상태 없음)
+        Set<Long> seen = (excludeAppids != null) ? new HashSet<>(excludeAppids) : new HashSet<>();
 
         int count = 0;
 
@@ -61,8 +62,7 @@ public class GameService {
                     excluded_check,
                     excludedList);
             for (Game g : Games) {
-                if (!cacheService.isAlreadyRecommended(g.getAppid())) {
-                    cacheService.setRecommended(g.getAppid());
+                if (seen.add(g.getAppid())) {
                     appList.add(GameMapper.convertToSteamDTO(g));
                     if (appList.size() == 4) {
                         break;
