@@ -830,7 +830,12 @@
 
                 ${renderReviewSection(review)}
 
-                <a href="${game.steamStore}" target="_blank" class="steam-link">
+                <div class="feedback-row" style="display:flex;gap:8px;margin:8px 0">
+                  <button type="button" class="fb-up" onclick="sgrFeedback(${game.appid},'UP','PROFILE',${index},(document.getElementById('profile-id')||{}).value||null);this.style.opacity=1;this.nextElementSibling.style.opacity=0.4">👍</button>
+                  <button type="button" class="fb-down" onclick="sgrFeedback(${game.appid},'DOWN','PROFILE',${index},(document.getElementById('profile-id')||{}).value||null);this.style.opacity=1;this.previousElementSibling.style.opacity=0.4">👎</button>
+                </div>
+
+                <a href="${game.steamStore}" target="_blank" class="steam-link" onclick="sgrFeedback(${game.appid},'CLICK','PROFILE',${index},(document.getElementById('profile-id')||{}).value||null)">
                   <i class="fab fa-steam"></i>
                   View on Steam
                 </a>
@@ -921,5 +926,6 @@
         }, 200);
     });
 </script>
+<script src="/feedback.js"></script>
 </body>
 </html>

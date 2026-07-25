@@ -27,7 +27,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final Map<String, String> PATH_TO_KEY = Map.of(
             "/api/recommend/input", "input",
             "/api/recommend/profile", "profile",
-            "/api/recommend/recent-play", "recent-play"
+            "/api/recommend/recent-play", "recent-play",
+            "/api/recommend/feedback", "feedback"
     );
 
     private final RateLimitProperties props;
