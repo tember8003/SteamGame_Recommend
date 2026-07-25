@@ -1,8 +1,11 @@
 package SteamGame.recommend.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -83,6 +86,22 @@ public class GlobalExceptionHandler {
                 .message(e.getMessage())
                 .timestamp(LocalDateTime.now())
                 .details(Map.of("appId", e.getAppId()))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    //request validation (@Valid 바디 / 역직렬화 / @Validated 파라미터 위반) → 400
+    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class,
+            ConstraintViolationException.class})
+    public ResponseEntity<ErrorResponse> handleValidation(Exception e) {
+        log.warn("Validation error: {}", e.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .errorCode("VALIDATION_ERROR")
+                .message("Invalid request")
+                .timestamp(LocalDateTime.now())
+                .details(Map.of("exceptionType", e.getClass().getSimpleName()))
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
