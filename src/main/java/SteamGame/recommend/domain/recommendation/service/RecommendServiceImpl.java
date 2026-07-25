@@ -9,8 +9,12 @@ import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiApiService;
+import SteamGame.recommend.infra.api.GeminiEmbeddingService;
 import SteamGame.recommend.infra.api.SteamApiService;
 import SteamGame.recommend.domain.tag.service.TagService;
+import SteamGame.recommend.infra.embedding.EmbeddingProperties;
+import SteamGame.recommend.infra.embedding.EmbeddingRepository;
+import SteamGame.recommend.infra.embedding.VectorLiterals;
 import SteamGame.recommend.infra.utils.EncryptUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,6 +45,9 @@ public class RecommendServiceImpl implements RecommendService {
     private final GameService gameService;
     private final GameRepository gameRepository;
     private final CooccurrenceService cooccurrenceService;
+    private final GeminiEmbeddingService geminiEmbeddingService;
+    private final EmbeddingRepository embeddingRepository;
+    private final EmbeddingProperties embeddingProperties;
 
     public RecommendServiceImpl(
             SteamApiService steamApiService,
@@ -49,7 +57,10 @@ public class RecommendServiceImpl implements RecommendService {
             CacheService cacheService,
             GameService gameService,
             GameRepository gameRepository,
-            CooccurrenceService cooccurrenceService
+            CooccurrenceService cooccurrenceService,
+            GeminiEmbeddingService geminiEmbeddingService,
+            EmbeddingRepository embeddingRepository,
+            EmbeddingProperties embeddingProperties
     ) {
         this.steamApiService = steamApiService;
         this.geminiApiService = geminiApiService;
@@ -59,6 +70,36 @@ public class RecommendServiceImpl implements RecommendService {
         this.cacheService = cacheService;
         this.gameService = gameService;
         this.cooccurrenceService = cooccurrenceService;
+        this.geminiEmbeddingService = geminiEmbeddingService;
+        this.embeddingRepository = embeddingRepository;
+        this.embeddingProperties = embeddingProperties;
+    }
+
+    // 벡터 결과가 목표 수(resultSize)보다 적으면 태그 폴백으로 슬롯을 채운다.
+    // filler 는 이미 뽑힌 appid 집합을 받아 그 밖의 후보를 반환(폴백이 비면 예외 → 벡터 결과 유지)
+    private List<SteamAppDTO> topUp(List<SteamAppDTO> ranked,
+                                    Function<Set<Long>, List<SteamAppDTO>> filler) {
+        int need = embeddingProperties.getResultSize();
+        if (ranked.size() >= need) {
+            return ranked;
+        }
+        Set<Long> picked = new HashSet<>();
+        ranked.forEach(dto -> picked.add(dto.getAppid()));
+        try {
+            List<SteamAppDTO> extra = filler.apply(picked);
+            List<SteamAppDTO> merged = new ArrayList<>(ranked);
+            for (SteamAppDTO f : extra) {
+                if (merged.size() >= need) {
+                    break;
+                }
+                if (picked.add(f.getAppid())) {
+                    merged.add(f);
+                }
+            }
+            return merged;
+        } catch (ResponseStatusException e) {
+            return ranked;
+        }
     }
 
     // Find games based on tags, reviews, Korean support, free status, etc.
@@ -84,32 +125,48 @@ public class RecommendServiceImpl implements RecommendService {
                     HttpStatus.BAD_REQUEST, "The input sentence is too short.");
         }
 
-        // Cache check
+        // usedTags 표시용 태그 확보 (캐시 우선, 없으면 Gemini 추출)
         String shaInput = EncryptUtils.sha256(input);
-        List<String> cachingTags = cacheService.getCachedTags(shaInput);
-        if (cachingTags != null && !cachingTags.isEmpty()) {
-            List<SteamAppDTO> game = gameService.findNonDuplicate(cachingTags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null, excludeAppids);
-            List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
-            return new RecommendationResultDTO(cachingTags, game,reviewResponseDTOS);
+        List<String> tags = cacheService.getCachedTags(shaInput);
+        if (tags == null || tags.isEmpty()) {
+            tags = geminiApiService.getGeminiTags(input);
+            if (tags.isEmpty()) {
+                log.warn("Failed to extract tags. Using default tags instead.");
+                tags = new ArrayList<>(FALLBACK_TAGS);
+            }
+            cacheService.cacheTags(shaInput, tags);
         }
 
-        boolean hit = cachingTags != null && !cachingTags.isEmpty();
-        log.info("... Cache hit: {}", hit);
-
-        List<String> tags = geminiApiService.getGeminiTags(input);
-        if (tags.isEmpty()) {
-            log.warn("Failed to extract tags. Using default tags instead.");
-            tags = new ArrayList<>(FALLBACK_TAGS);
+        // 벡터 랭킹 우선: 입력 문장을 직접 임베딩(태그 추출 손실 우회), 재추천 대비 캐시
+        final List<String> finalTags = tags;
+        float[] qvec;
+        String cachedLit = cacheService.getCachedEmbedding(shaInput);
+        if (cachedLit != null) {
+            qvec = VectorLiterals.parse(cachedLit);
+        } else {
+            qvec = geminiEmbeddingService.embed(input);
+            if (qvec != null) {
+                cacheService.cacheEmbedding(shaInput, VectorLiterals.toPgVector(qvec));
+            }
+        }
+        if (qvec != null) {
+            List<SteamAppDTO> ranked = gameService.findNearestSampled(qvec, review, koreanCheck, freeCheck,
+                    false, null, excludeAppids,
+                    embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
+            if (!ranked.isEmpty()) {
+                ranked = topUp(ranked, picked -> {
+                    Set<Long> ex = new HashSet<>(picked);
+                    if (excludeAppids != null) ex.addAll(excludeAppids);
+                    return gameService.findNonDuplicate(finalTags.toArray(new String[0]),
+                            review, koreanCheck, freeCheck, false, null, ex);
+                });
+                return new RecommendationResultDTO(tags, ranked, gameService.ResponseList(ranked));
+            }
         }
 
-        // Save to cache
-        cacheService.cacheTags(shaInput,tags);
-
-        // Final recommendation
-        List<SteamAppDTO> game = gameService.findNonDuplicate(tags.toArray(new String[0]), review, koreanCheck,freeCheck,false,null, excludeAppids);
-
-        List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(game);
-        return new RecommendationResultDTO(tags, game,reviewResponseDTOS);
+        // 폴백: 태그 매칭
+        List<SteamAppDTO> game = gameService.findNonDuplicate(tags.toArray(new String[0]), review, koreanCheck, freeCheck, false, null, excludeAppids);
+        return new RecommendationResultDTO(tags, game, gameService.ResponseList(game));
     }
 
     // Extract tags from a Steam user profile games list
@@ -122,6 +179,22 @@ public class RecommendServiceImpl implements RecommendService {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "No played games found or no tags could be extracted."
             );
+        }
+
+        // 벡터 우선: 보유작 평균 taste 벡터로 최근접 추천(보유작 제외)
+        float[] taste = embeddingRepository.findMeanEmbeddingByAppids(new ArrayList<>(ownedAppIds));
+        if (taste != null) {
+            List<SteamAppDTO> ranked = gameService.findNearestSampled(taste, review, koreanCheck, freeCheck,
+                    false, null, ownedAppIds,
+                    embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
+            if (!ranked.isEmpty()) {
+                ranked = topUp(ranked, picked -> {
+                    Set<Long> ex = new HashSet<>(picked);
+                    ex.addAll(ownedAppIds);
+                    return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
+                });
+                return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
+            }
         }
 
         /* Top 2 tags + 2 random tags logics applied.
@@ -219,6 +292,22 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> topTags = tagService.getTopTags(allTags,TOP_TAGS_COUNT);
 
+        // 벡터 우선: 최근플레이 평균 taste 벡터로 최근접 추천(보유작 제외)
+        float[] taste = embeddingRepository.findMeanEmbeddingByAppids(recentAppIds);
+        if (taste != null) {
+            List<SteamAppDTO> ranked = gameService.findNearestSampled(taste, review, koreanCheck, freeCheck,
+                    false, null, ownedAppIds,
+                    embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
+            if (!ranked.isEmpty()) {
+                ranked = topUp(ranked, picked -> {
+                    Set<Long> ex = new HashSet<>(picked);
+                    ex.addAll(ownedAppIds);
+                    return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
+                });
+                return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
+            }
+        }
+
         List<String> tags = null;
         List<SteamAppDTO> resultGames = null;
 
@@ -262,6 +351,25 @@ public class RecommendServiceImpl implements RecommendService {
         log.info(selectedTags.toString());
 
         List<String> topTags = tagService.getTopTags(selectedTags,TOP_TAGS_COUNT);
+
+        // 벡터 우선: 시드 게임 임베딩으로 최근접 추천(시드 제외)
+        float[] seedVec = embeddingRepository.findEmbeddingByAppid(selectedAppId);
+        if (seedVec != null) {
+            Set<Long> exclude = (excludeAppids != null) ? new HashSet<>(excludeAppids) : new HashSet<>();
+            exclude.add(selectedAppId);
+            List<SteamAppDTO> ranked = gameService.findNearestSampled(seedVec, review, koreanCheck, freeCheck,
+                    false, null, exclude,
+                    embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
+            if (!ranked.isEmpty()) {
+                ranked = topUp(ranked, picked -> {
+                    Set<Long> ex = new HashSet<>(picked);
+                    ex.addAll(exclude);
+                    return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
+                });
+                return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
+            }
+        }
+
         List<SteamAppDTO> resultGames = null;
 
         for (int attempt = 0; attempt < 5; attempt++) {

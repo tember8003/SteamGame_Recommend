@@ -3,6 +3,7 @@ package SteamGame.recommend.support;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Singleton-container base for DB tests.
@@ -19,7 +20,10 @@ public abstract class PostgresTestBase {
     static final PostgreSQLContainer<?> POSTGRES;
 
     static {
-        POSTGRES = new PostgreSQLContainer<>("postgres:16");
+        // pgvector 확장이 포함된 이미지 사용 (V2 CREATE EXTENSION vector 가 stock postgres:16 에선 실패)
+        POSTGRES = new PostgreSQLContainer<>(
+                DockerImageName.parse("pgvector/pgvector:pg16")
+                        .asCompatibleSubstituteFor("postgres"));
         POSTGRES.start();
     }
 
