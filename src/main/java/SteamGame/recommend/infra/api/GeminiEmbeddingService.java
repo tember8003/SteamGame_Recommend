@@ -27,7 +27,7 @@ import java.util.Map;
 @Service
 public class GeminiEmbeddingService {
     private final ObjectMapper objectMapper;
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
     private final EmbeddingProperties props;
     private final String gemini_api_key;
 
@@ -35,9 +35,13 @@ public class GeminiEmbeddingService {
                                   EmbeddingProperties props,
                                   @Value("${spring.ai.google.api-key}") String gemini_api_key) {
         this.objectMapper = objectMapper;
-        this.webClientBuilder = webClientBuilder;
         this.props = props;
         this.gemini_api_key = gemini_api_key;
+        // 배치 임베딩 응답(최대 batchSize × dimension floats)이 WebClient 기본 256KB 버퍼를 초과 → 16MB 로 상향.
+        // 공유 빌더를 clone 해 다른 서비스(Steam/Gemini 태그)에는 영향을 주지 않음
+        this.webClient = webClientBuilder.clone()
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+                .build();
     }
 
     // 단건 임베딩 (질의 텍스트용). 실패 시 null 반환 -> 호출부가 구경로로 degrade
@@ -97,7 +101,7 @@ public class GeminiEmbeddingService {
     }
 
     private String post(String pathAndMethod, Map<String, Object> body) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri(props.getBaseUrl() + "/" + pathAndMethod + "?key=" + gemini_api_key)
                 .bodyValue(body)
