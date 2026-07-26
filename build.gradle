@@ -49,6 +49,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
+	// Actuator (health 엔드포인트)
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 	// Resilience4j
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.1.0'
 
