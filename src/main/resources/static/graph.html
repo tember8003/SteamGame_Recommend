@@ -92,9 +92,10 @@
                 { selector: 'node', style: {
                     'label': 'data(name)', 'color': '#fff', 'font-size': '10px',
                     'text-valign': 'bottom', 'text-margin-y': 5, 'text-wrap': 'ellipsis', 'text-max-width': '90px',
-                    'width': 42, 'height': 42, 'background-color': '#1e1e2e',
-                    'background-image': 'data(image)', 'background-fit': 'cover',
+                    'width': 42, 'height': 42, 'background-color': '#1e1e2e', 'background-fit': 'cover',
                     'border-width': 1, 'border-color': '#4a4a6a' } },
+                // 빈 문자열 image 면 cytoscape style 파서가 죽으므로 이미지 있는 노드만 적용함
+                { selector: 'node[image]', style: { 'background-image': 'data(image)' } },
                 { selector: 'node.center', style: { 'border-color': '#00d4ff', 'border-width': 3, 'width': 60, 'height': 60 } },
                 { selector: 'edge', style: {
                     'width': 'mapData(similarity, 0, 1, 1, 7)',
@@ -142,7 +143,9 @@
         cy.elements().remove();
         loaded.clear();
         hintEl.style.display = 'none';
-        cy.add({ group: 'nodes', data: { id: String(appid), name, image: image || '' }, classes: 'center' });
+        const data = { id: String(appid), name };
+        if (image) data.image = image;
+        cy.add({ group: 'nodes', data, classes: 'center', position: { x: 0, y: 0 } });
         await expand(String(appid));
     }
 
@@ -152,18 +155,25 @@
             const res = await fetch(`${baseUrl}/api/graph/neighbors?appid=${id}&k=8`);
             if (!res.ok) return;
             const data = await res.json();
+            const src = cy.getElementById(id).position();
             const add = [];
             (data.neighbors || []).forEach(nb => {
                 const nid = String(nb.appid);
                 if (cy.getElementById(nid).empty()) {
-                    add.push({ group: 'nodes', data: { id: nid, name: nb.name, image: nb.image || '' } });
+                    const nodeData = { id: nid, name: nb.name };
+                    if (nb.image) nodeData.image = nb.image;
+                    // 새 노드가 전부 (0,0)이면 cose 가 못 펼치므로 소스 주변에 흩어 배치함
+                    add.push({ group: 'nodes', data: nodeData, position: { x: src.x + (Math.random() - 0.5) * 300, y: src.y + (Math.random() - 0.5) * 300 } });
                 }
                 if (cy.getElementById(`${id}-${nid}`).empty() && cy.getElementById(`${nid}-${id}`).empty()) {
                     add.push({ group: 'edges', data: { id: `${id}-${nid}`, source: id, target: nid, similarity: nb.similarity } });
                 }
             });
             cy.add(add);
-            cy.layout({ name: 'cose', animate: false }).run();
+            // fit 없으면 노드가 화면 밖에 그려지므로 layoutstop 후 뷰포트를 그래프에 맞춤
+            const layout = cy.layout({ name: 'cose', animate: false, randomize: false, padding: 60 });
+            layout.one('layoutstop', () => cy.fit(cy.elements(), 60));
+            layout.run();
             loaded.add(id);
         } catch (e) { console.error(e); }
     }
