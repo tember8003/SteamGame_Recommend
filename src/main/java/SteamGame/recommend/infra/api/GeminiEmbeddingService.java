@@ -55,7 +55,7 @@ public class GeminiEmbeddingService {
                 "outputDimensionality", props.getDimension()
         );
 
-        String raw = post(props.getModel() + ":embedContent", body);
+        String raw = post(props.getModel() + ":embedContent", body, Duration.ofSeconds(5));
 
         try {
             JsonNode values = objectMapper.readTree(raw).path("embedding").path("values");
@@ -85,7 +85,8 @@ public class GeminiEmbeddingService {
         }
         Map<String, Object> body = Map.of("requests", requests);
 
-        String raw = post(props.getModel() + ":batchEmbedContents", body);
+        // 배치는 응답이 커서 단건보다 오래 걸림 → 배치 전용 타임아웃 사용
+        String raw = post(props.getModel() + ":batchEmbedContents", body, Duration.ofMillis(props.getBatchTimeoutMs()));
 
         try {
             JsonNode embeddings = objectMapper.readTree(raw).path("embeddings");
@@ -100,7 +101,7 @@ public class GeminiEmbeddingService {
         }
     }
 
-    private String post(String pathAndMethod, Map<String, Object> body) {
+    private String post(String pathAndMethod, Map<String, Object> body, Duration timeout) {
         return webClient
                 .post()
                 .uri(props.getBaseUrl() + "/" + pathAndMethod + "?key=" + gemini_api_key)
@@ -110,7 +111,7 @@ public class GeminiEmbeddingService {
                         Mono.error(new ResponseStatusException(resp.statusCode(), "Gemini Embedding API 오류"))
                 )
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(5))
+                .timeout(timeout)
                 .block();
     }
 

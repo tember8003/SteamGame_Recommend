@@ -19,6 +19,8 @@ public class EmbeddingProperties {
     // 배치 임베딩이 429(rate limit)로 실패하면 백오프 후 재시도하는 최대 횟수·대기시간
     private int maxBatchRetries = 3;
     private long retryBackoffMs = 60000;
+    // 배치 임베딩은 응답이 커서 단건(5s)보다 오래 걸림 → 전용 타임아웃
+    private long batchTimeoutMs = 60000;
 
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
@@ -42,4 +44,6 @@ public class EmbeddingProperties {
     public void setMaxBatchRetries(int maxBatchRetries) { this.maxBatchRetries = maxBatchRetries; }
     public long getRetryBackoffMs() { return retryBackoffMs; }
     public void setRetryBackoffMs(long retryBackoffMs) { this.retryBackoffMs = retryBackoffMs; }
+    public long getBatchTimeoutMs() { return batchTimeoutMs; }
+    public void setBatchTimeoutMs(long batchTimeoutMs) { this.batchTimeoutMs = batchTimeoutMs; }
 }
