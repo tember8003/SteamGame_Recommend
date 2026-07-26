@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Game Similarity Graph</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.33.2/cytoscape.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root {
+            --primary: #00d4ff; --secondary: #7c3aed;
+            --bg-primary: #0a0a0f; --bg-secondary: #1a1a2e; --bg-tertiary: #16213e;
+            --bg-card: #1e1e2e; --border: #333344; --border-hover: #4a4a6a;
+            --text-primary: #fff; --text-secondary: #b4b4c8; --text-muted: #8b8ba3;
+            --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+            --gradient-card: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100vh; overflow: hidden; }
+        body {
+            background: var(--bg-primary);
+            font-family: 'Inter', sans-serif; color: var(--text-primary);
+        }
+        .app-container { height: 100vh; display: flex; flex-direction: column; }
+        .header {
+            height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 15px;
+            padding: 0 16px; background: var(--gradient-card); border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            font-size: 1.2rem; font-weight: 700;
+            background: var(--gradient-primary); background-clip: text;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .back-button {
+            display: inline-flex; align-items: center; gap: 6px; background: var(--bg-card);
+            color: var(--primary); text-decoration: none; padding: 6px 12px; border-radius: 6px;
+            border: 1px solid var(--border); font-size: 0.8rem;
+        }
+        .search-bar { position: relative; margin-left: auto; width: 320px; }
+        .search-bar input {
+            width: 100%; padding: 8px 12px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;
+        }
+        .search-bar input:focus { outline: none; border-color: var(--primary); }
+        .autocomplete {
+            position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card);
+            border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px;
+            max-height: 320px; overflow-y: auto; z-index: 1000;
+        }
+        .ac-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .ac-item:hover { background: var(--bg-tertiary); }
+        .ac-item img { width: 40px; height: 19px; object-fit: cover; border-radius: 2px; }
+        .ac-item span { font-size: 0.8rem; color: var(--text-secondary); }
+        #cy { flex: 1; min-height: 0; background:
+            radial-gradient(circle at 30% 30%, rgba(124,58,237,0.08) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(0,212,255,0.08) 0%, transparent 50%), var(--bg-primary); }
+        .hint {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            color: var(--text-muted); font-size: 0.75rem; background: rgba(0,0,0,0.4);
+            padding: 6px 12px; border-radius: 6px; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <header class="header">
+        <a href="index.html" class="back-button"><i class="fas fa-arrow-left"></i> Home</a>
+        <h1><i class="fas fa-diagram-project"></i> Similarity Graph</h1>
+        <div class="search-bar">
+            <input id="q" type="text" placeholder="게임 검색 후 선택" autocomplete="off" />
+            <div id="ac" class="autocomplete"></div>
+        </div>
+    </header>
+    <div id="cy"></div>
+    <div class="hint" id="hint">게임을 검색해 시작하세요. 노드를 클릭하면 이웃이 펼쳐집니다.</div>
+</div>
+
+<script>
+    const baseUrl = '';
+    const qEl = document.getElementById('q');
+    const acEl = document.getElementById('ac');
+    const hintEl = document.getElementById('hint');
+    const loaded = new Set();
+    let debounce = null;
+    let cy;
+
+    function initCy() {
+        cy = cytoscape({
+            container: document.getElementById('cy'),
+            style: [
+                { selector: 'node', style: {
+                    'label': 'data(name)', 'color': '#fff', 'font-size': '10px',
+                    'text-valign': 'bottom', 'text-margin-y': 5, 'text-wrap': 'ellipsis', 'text-max-width': '90px',
+                    'width': 42, 'height': 42, 'background-color': '#1e1e2e',
+                    'background-image': 'data(image)', 'background-fit': 'cover',
+                    'border-width': 1, 'border-color': '#4a4a6a' } },
+                { selector: 'node.center', style: { 'border-color': '#00d4ff', 'border-width': 3, 'width': 60, 'height': 60 } },
+                { selector: 'edge', style: {
+                    'width': 'mapData(similarity, 0, 1, 1, 7)',
+                    'line-color': '#3a3a55', 'opacity': 0.7, 'curve-style': 'straight' } }
+            ],
+            layout: { name: 'cose', animate: false },
+            wheelSensitivity: 0.2
+        });
+        cy.on('tap', 'node', e => expand(e.target.id()));
+    }
+
+    // 검색 자동완성
+    qEl.addEventListener('input', function () {
+        const q = this.value.trim();
+        clearTimeout(debounce);
+        if (q.length < 2) { acEl.innerHTML = ''; return; }
+        debounce = setTimeout(async () => {
+            try {
+                const res = await fetch(`${baseUrl}/api/graph/search?q=${encodeURIComponent(q)}`);
+                if (!res.ok) throw new Error('search failed');
+                renderAc(await res.json());
+            } catch (e) { console.error(e); acEl.innerHTML = ''; }
+        }, 300);
+    });
+
+    function renderAc(items) {
+        acEl.innerHTML = '';
+        (items || []).forEach(it => {
+            const div = document.createElement('div');
+            div.className = 'ac-item';
+            div.innerHTML = `<img src="${it.image || ''}" alt=""/><span>${it.name}</span>`;
+            div.addEventListener('click', () => {
+                acEl.innerHTML = '';
+                qEl.value = it.name;
+                startGraph(it.appid, it.name, it.image);
+            });
+            acEl.appendChild(div);
+        });
+    }
+
+    document.addEventListener('click', e => { if (!e.target.closest('.search-bar')) acEl.innerHTML = ''; });
+
+    async function startGraph(appid, name, image) {
+        if (!cy) initCy();
+        cy.elements().remove();
+        loaded.clear();
+        hintEl.style.display = 'none';
+        cy.add({ group: 'nodes', data: { id: String(appid), name, image: image || '' }, classes: 'center' });
+        await expand(String(appid));
+    }
+
+    async function expand(id) {
+        if (loaded.has(id)) return;
+        try {
+            const res = await fetch(`${baseUrl}/api/graph/neighbors?appid=${id}&k=8`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const add = [];
+            (data.neighbors || []).forEach(nb => {
+                const nid = String(nb.appid);
+                if (cy.getElementById(nid).empty()) {
+                    add.push({ group: 'nodes', data: { id: nid, name: nb.name, image: nb.image || '' } });
+                }
+                if (cy.getElementById(`${id}-${nid}`).empty() && cy.getElementById(`${nid}-${id}`).empty()) {
+                    add.push({ group: 'edges', data: { id: `${id}-${nid}`, source: id, target: nid, similarity: nb.similarity } });
+                }
+            });
+            cy.add(add);
+            cy.layout({ name: 'cose', animate: false }).run();
+            loaded.add(id);
+        } catch (e) { console.error(e); }
+    }
+
+    initCy();
+</script>
+</body>
+</html>

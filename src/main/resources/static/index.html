@@ -190,11 +190,6 @@
             align-content: start;
         }
 
-        .recommendations-grid .feature-card:nth-child(5) {
-            grid-column: 2;
-            grid-row: 2;
-        }
-
         .games-grid {
             flex: 1;
             display: grid;
@@ -435,13 +430,8 @@
             }
 
             .recommendations-grid {
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(6, 1fr);
                 grid-template-rows: 1fr;
-            }
-
-            .recommendations-grid .feature-card:nth-child(5) {
-                grid-column: 5;
-                grid-row: 1;
             }
 
             .games-grid {
@@ -461,12 +451,7 @@
 
             .recommendations-grid {
                 grid-template-columns: 1fr;
-                grid-template-rows: repeat(5, 1fr);
-            }
-
-            .recommendations-grid .feature-card:nth-child(5) {
-                grid-column: auto;
-                grid-row: auto;
+                grid-template-rows: repeat(6, 1fr);
             }
 
             .games-grid {
@@ -581,6 +566,22 @@
                             <h3 class="feature-title">Similar Games</h3>
                             <p class="feature-description">
                                 Discover games with similar tags to your favorites
+                            </p>
+                        </div>
+                        <div class="feature-button">
+                            <i class="fas fa-arrow-right"></i>
+                            Start
+                        </div>
+                    </a>
+
+                    <a href="graph.html" class="feature-card secondary fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-diagram-project"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Similarity Graph</h3>
+                            <p class="feature-description">
+                                Explore games as a network connected by embedding similarity
                             </p>
                         </div>
                         <div class="feature-button">
