@@ -19,7 +19,8 @@ import java.util.Set;
 /**
  * games 임베딩 백필 배치. DetailCrawlerService 의 게이트형 배치 패턴을 따른다.
  * 성공 행은 임베딩이 채워져 큐에서 빠지고, 실패 행은 이번 run 동안 재선택되지 않도록 제외한다.
- * 배치 전체 실패(응답 수 불일치)는 API 다운으로 보고 run 을 중단한다.
+ * 배치 전체 실패는 주로 Gemini 429(rate limit)이므로 백오프 후 재시도하고,
+ * 최대 재시도 후에도 실패하면 API 다운으로 보고 run 을 중단한다.
  */
 @Slf4j
 @Service
@@ -85,9 +86,10 @@ public class EmbeddingBackfillService {
                 break;
             }
 
-            List<float[]> vectors = geminiEmbeddingService.embedBatch(docs);
+            List<float[]> vectors = embedBatchWithBackoff(docs);
             if (vectors.size() != docs.size()) {
-                log.warn("임베딩 배치 실패 (API 다운 추정): 요청 {} 응답 {} — 백필 중단", docs.size(), vectors.size());
+                log.warn("임베딩 배치가 재시도 {}회 후에도 실패 — 백필 중단 (요청 {} 응답 {})",
+                        props.getMaxBatchRetries(), docs.size(), vectors.size());
                 apiDown = true;
                 break;
             }
@@ -127,6 +129,20 @@ public class EmbeddingBackfillService {
             map.computeIfAbsent(appid, k -> new ArrayList<>()).add(tagName);
         }
         return map;
+    }
+
+    // 배치 실패(주로 Gemini 429 rate limit)면 백오프 후 같은 배치를 재시도해 분당 한도가 리셋될 시간을 준다
+    private List<float[]> embedBatchWithBackoff(List<String> docs) {
+        List<float[]> vectors = geminiEmbeddingService.embedBatch(docs);
+        int attempts = 0;
+        while (vectors.size() != docs.size() && attempts < props.getMaxBatchRetries()) {
+            attempts++;
+            log.info("임베딩 배치 실패 (rate limit 추정) — {}s 대기 후 재시도 {}/{}",
+                    props.getRetryBackoffMs() / 1000, attempts, props.getMaxBatchRetries());
+            sleep(props.getRetryBackoffMs());
+            vectors = geminiEmbeddingService.embedBatch(docs);
+        }
+        return vectors;
     }
 
     private void sleep(long ms) {
