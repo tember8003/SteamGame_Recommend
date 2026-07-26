@@ -16,6 +16,9 @@ public class EmbeddingProperties {
     private int descriptionMaxChars = 1000;
     private int candidatePoolK = 40;
     private int resultSize = 4;
+    // 배치 임베딩이 429(rate limit)로 실패하면 백오프 후 재시도하는 최대 횟수·대기시간
+    private int maxBatchRetries = 3;
+    private long retryBackoffMs = 60000;
 
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
@@ -35,4 +38,8 @@ public class EmbeddingProperties {
     public void setCandidatePoolK(int candidatePoolK) { this.candidatePoolK = candidatePoolK; }
     public int getResultSize() { return resultSize; }
     public void setResultSize(int resultSize) { this.resultSize = resultSize; }
+    public int getMaxBatchRetries() { return maxBatchRetries; }
+    public void setMaxBatchRetries(int maxBatchRetries) { this.maxBatchRetries = maxBatchRetries; }
+    public long getRetryBackoffMs() { return retryBackoffMs; }
+    public void setRetryBackoffMs(long retryBackoffMs) { this.retryBackoffMs = retryBackoffMs; }
 }
