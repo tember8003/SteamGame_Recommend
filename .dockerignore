@@ -1,0 +1,15 @@
+# 빌드에 불필요한 대용량·비관련 경로 제외함
+.git
+.gitignore
+.gradle
+build
+**/build
+electron
+docs
+.superpowers
+.github
+.idea
+.vscode
+*.log
+*.jar
+.env
