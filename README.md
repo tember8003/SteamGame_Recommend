@@ -119,6 +119,7 @@ recommend/
 3. **Start Server**
 
     ```bash
+    cd backend
     ./gradlew clean bootRun
     ```
 
@@ -147,7 +148,7 @@ recommend/
 1. **Setup**
 
     ```bash
-    cd electron
+    cd backend/electron
     npm install
     ```
 

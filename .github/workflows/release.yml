@@ -27,38 +27,39 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: electron/package-lock.json
+          cache-dependency-path: backend/electron/package-lock.json
 
       # Build Spring Boot JAR file
       - name: Build Spring Boot JAR
         run: |
           ./gradlew clean bootJar
         shell: cmd
+        working-directory: backend
 
       # Copy JAR file to Electron resources folder
       - name: Copy JAR to Electron resources
         run: |
-          if not exist "electron\resources" mkdir "electron\resources"
-          copy "build\libs\recommend-0.0.1-SNAPSHOT.jar" "electron\resources\"
+          if not exist "backend\electron\resources" mkdir "backend\electron\resources"
+          copy "backend\build\libs\recommend-0.0.1-SNAPSHOT.jar" "backend\electron\resources\"
         shell: cmd
 
       # Install Electron dependencies
       - name: Install Electron dependencies
         run: npm install
-        working-directory: electron
+        working-directory: backend/electron
 
       # Build Electron app
       - name: Build Electron App
         run: npm run dist
-        working-directory: electron
+        working-directory: backend/electron
 
       # Check build artifacts
       - name: List build artifacts
         run: |
           echo "=== JAR Files ==="
-          dir build\libs\
+          dir backend\build\libs\
           echo "=== Electron Build Results ==="
-          dir electron\dist\
+          dir backend\electron\dist\
         shell: cmd
 
       # Create GitHub Release
@@ -66,11 +67,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            electron/dist/*.exe
-            electron/dist/*.zip
-            electron/dist/*.7z
-            electron/dist/*.nsis.7z
-            build/libs/recommend-0.0.1-SNAPSHOT.jar
+            backend/electron/dist/*.exe
+            backend/electron/dist/*.zip
+            backend/electron/dist/*.7z
+            backend/electron/dist/*.nsis.7z
+            backend/build/libs/recommend-0.0.1-SNAPSHOT.jar
           body: |
             ## 🎮 Steam Game Recommend ${{ github.ref_name }}
             
@@ -138,6 +139,6 @@ jobs:
         with:
           name: build-logs
           path: |
-            electron/dist/
-            build/
+            backend/electron/dist/
+            backend/build/
             *.log

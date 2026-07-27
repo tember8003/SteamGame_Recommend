@@ -118,6 +118,7 @@ recommend/
 3. **서버 시작**
 
     ```bash
+    cd backend
     ./gradlew clean bootRun
     ```
 
@@ -146,7 +147,7 @@ recommend/
 1. **설정**
 
     ```bash
-    cd electron
+    cd backend/electron
     npm install
     ```
 
