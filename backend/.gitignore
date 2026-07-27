@@ -1,0 +1,60 @@
+HELP.md
+.gradle
+build/
+BOOT-INF/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.env
+
+### Exclude build deliverables and executables ###
+*.jar
+*.exe
+
+# exclude building electron
+electron/dist/
+electron/out/
+electron/node_modules/
+!gradle/wrapper/gradle-wrapper.jar
+
+# OS/IDE directory
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+.DS_Store
+Thumbs.db
+
+.idea
+.idea/
+*.iws
+*.iml
+*.ipr
+*.log
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+__pycache__/
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# H2 Database files
+data/
+*.mv.db
+*.trace.db
+
+# API Keys
+api-keys.json
