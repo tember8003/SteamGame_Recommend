@@ -1,0 +1,67 @@
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(180deg, #070a14 0%, #0a0e1a 55%, #0c1120 100%);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 28% 68%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1px 1px at 46% 34%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.6px 1.6px at 63% 14%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.1px 1.1px at 74% 52%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.3px 1.3px at 88% 28%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 54% 80%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.2px 1.2px at 36% 88%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 92% 72%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.1px 1.1px at 18% 54%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 8% 82%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1.2px 1.2px at 68% 88%, rgba(255, 255, 255, 0.5), transparent);
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.75; }
+  to { opacity: 1; }
+}
+
+.meteor {
+  position: absolute;
+  width: 160px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+  border-radius: 999px;
+  opacity: 0;
+  animation-name: shoot;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes shoot {
+  0% { opacity: 0; transform: rotate(-30deg) translateX(0); }
+  6% { opacity: 0.9; }
+  34% { opacity: 0; }
+  100% { opacity: 0; transform: rotate(-30deg) translateX(-560px); }
+}
+
+.m1 { top: 6%; left: 72%; animation-duration: 7s; animation-delay: 0s; }
+.m2 { top: 14%; left: 44%; animation-duration: 9s; animation-delay: 3s; }
+.m3 { top: 3%; left: 90%; animation-duration: 8s; animation-delay: 5.5s; }
+.m4 { top: 22%; left: 24%; animation-duration: 11s; animation-delay: 8s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stars { animation: none; }
+  .meteor { display: none; }
+}

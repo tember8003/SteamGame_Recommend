@@ -1,0 +1,220 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 40px) 64px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 52px 0 40px;
+}
+
+.title {
+  font-size: clamp(2.6rem, 6.5vw, 4.6rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 18px auto 0;
+  color: var(--text-secondary);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.6;
+}
+
+/* Mode cards */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 380px;
+  padding: 36px 32px 28px;
+  border-radius: var(--radius-card);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  overflow: hidden;
+}
+
+.steamCard {
+  border-color: rgba(74, 158, 255, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.mcCard {
+  border-color: rgba(123, 191, 74, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.cardBody {
+  text-align: center;
+}
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+
+.steamMark {
+  border-radius: 50%;
+  background: #14202e;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.steamMark svg {
+  width: 34px;
+  height: 34px;
+}
+
+.mcMark {
+  overflow: hidden;
+  background: none;
+}
+
+.mcMark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cardTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.steamAccent { color: var(--accent-steam); }
+.mcAccent { color: var(--accent-minecraft); }
+
+.cardDesc {
+  max-width: 320px;
+  margin: 12px auto 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.tag {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.cardCta {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.comingSoon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+/* Bottom: concierge + mascot */
+.bottom {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  margin-top: 28px;
+  align-items: stretch;
+}
+
+.mascotPanel {
+  position: relative;
+  padding: 20px;
+  border-radius: var(--radius-card);
+  background: var(--glass-fill);
+  border: 1px solid rgba(155, 124, 240, 0.35);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.mascotHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.spark { color: var(--accent-violet); }
+
+.mascotInner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+
+.bubble {
+  align-self: flex-start;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.bubble p + p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.mascotArt {
+  flex: 1;
+  min-width: 120px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 44px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 860px) {
+  .modes { grid-template-columns: 1fr; }
+  .bottom { grid-template-columns: 1fr; }
+}
