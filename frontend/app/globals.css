@@ -1,0 +1,56 @@
+:root {
+  /* 배경: 깊은 우주 네이비 + 성운 글로우 */
+  --bg-base: #0a0e1a;
+  --nebula-violet: rgba(120, 100, 200, 0.05);
+  --nebula-blue: rgba(60, 110, 190, 0.045);
+
+  /* 텍스트 */
+  --text-primary: #ffffff;
+  --text-secondary: #b4b8cc;
+  --text-muted: #8b90ad;
+
+  /* 액센트: 블루=Steam, 잔디 그린=Minecraft, 바이올렛=콘시어지 (솔리드) */
+  --accent-steam: #4a9eff;
+  --accent-minecraft: #7bbf4a;
+  --accent-violet: #9b7cf0;
+
+  /* 글래스 표면 */
+  --glass-fill: rgba(255, 255, 255, 0.035);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-blur: 10px;
+
+  /* 버튼 솔리드 (그라데이션 제거) */
+  --btn-steam: #2f7de0;
+  --btn-minecraft: #4f8f38;
+  --btn-violet: #6e56d6;
+
+  /* 반경 */
+  --radius-card: 18px;
+  --radius-btn: 12px;
+  --radius-pill: 999px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  font-family: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
