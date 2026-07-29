@@ -1,0 +1,210 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 40px) 64px;
+}
+
+/* 상단 소개 */
+.intro {
+  text-align: center;
+  padding: 40px 0 36px;
+}
+
+.title {
+  font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 16px auto 0;
+  color: var(--text-secondary);
+  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  line-height: 1.6;
+}
+
+/* 섹션 */
+.section {
+  margin-top: 40px;
+}
+
+.sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.gridTwo {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .grid,
+  .gridTwo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 카드, 표면은 GlassPanel 이 맡고 이 모듈은 레이아웃,강조색,호버만 더함 */
+.card {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.recAccent {
+  border-color: rgba(74, 158, 255, 0.35);
+}
+
+.recAccent:hover {
+  border-color: rgba(74, 158, 255, 0.5);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(74, 158, 255, 0.18);
+}
+
+.gameAccent {
+  border-color: rgba(155, 124, 240, 0.35);
+}
+
+.gameAccent:hover {
+  border-color: rgba(155, 124, 240, 0.5);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(155, 124, 240, 0.18);
+}
+
+/* 카드 안의 링크 하나가 표면을 꽉 채워 카드 전체를 클릭,포커스 영역으로 만듦 */
+.cardLink {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 22px 24px;
+  color: inherit;
+}
+
+.recAccent .cardLink:focus-visible {
+  outline: 2px solid var(--accent-steam);
+  outline-offset: -3px;
+  border-radius: var(--radius-card);
+}
+
+.gameAccent .cardLink:focus-visible {
+  outline: 2px solid var(--accent-violet);
+  outline-offset: -3px;
+  border-radius: var(--radius-card);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.recAccent .icon {
+  color: var(--accent-steam);
+}
+
+.gameAccent .icon {
+  color: var(--accent-violet);
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cardDesc {
+  flex: 1;
+  max-width: 280px;
+  margin: 10px auto 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.recAccent .cta {
+  background: rgba(74, 158, 255, 0.16);
+  color: var(--accent-steam);
+}
+
+.gameAccent .cta {
+  background: rgba(155, 124, 240, 0.16);
+  color: var(--accent-violet);
+}
+
+.ctaIcon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.cardLink:hover .ctaIcon {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .ctaIcon {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .cardLink:hover .ctaIcon {
+    transform: none;
+  }
+}
