@@ -118,6 +118,11 @@
   margin-top: 12px;
 }
 
+.reviewTextSection {
+  display: flex;
+  flex-direction: column;
+}
+
 .reviewTextHeader {
   font-size: 0.75rem;
   font-weight: 700;
