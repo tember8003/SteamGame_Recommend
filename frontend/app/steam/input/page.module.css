@@ -1,0 +1,246 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 40px) 64px;
+}
+
+.intro {
+  text-align: center;
+  padding: 20px 0 30px;
+}
+
+.title {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 왼쪽 입력 패널 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  position: sticky;
+  top: 24px;
+}
+
+@media (max-width: 900px) {
+  .panel {
+    position: static;
+  }
+}
+
+.panelTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f5b046;
+  font-size: 0.82rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent-steam);
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.15);
+}
+
+.textarea.invalid {
+  border-color: #f4877a;
+  box-shadow: 0 0 0 3px rgba(244, 135, 122, 0.18);
+}
+
+.controls {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.controlsTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.controlItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.controlItem:last-child {
+  border-bottom: none;
+}
+
+.controlItem input[type="number"] {
+  width: 84px;
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
+.controlItem input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent-steam);
+  cursor: pointer;
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--radius-btn);
+  background: var(--btn-steam);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 오른쪽 결과 패널 */
+.resultPanel {
+  padding: 24px;
+  min-height: 420px;
+}
+
+.resultHeader {
+  margin-bottom: 20px;
+}
+
+.resultTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.resultSubtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.notice h3 {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.notice p {
+  font-size: 0.88rem;
+  max-width: 340px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submitBtn,
+  .spinner {
+    transition: none;
+    animation: none;
+  }
+}

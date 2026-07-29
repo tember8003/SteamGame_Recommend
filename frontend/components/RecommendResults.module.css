@@ -1,0 +1,199 @@
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* 사용된 태그 칩 */
+.usedTags {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+}
+
+.usedTags h4 {
+  color: var(--accent-steam);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-steam);
+  color: var(--bg-base);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* 게임 목록 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 리뷰 패널 */
+.reviewSection {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+
+.reviewHeader h4 {
+  color: var(--accent-steam);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.reviewStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 10px;
+}
+
+.statItem {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-steam);
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.ratingBar {
+  height: 5px;
+  background: var(--glass-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.ratingFill {
+  height: 100%;
+  background: var(--accent-steam);
+  border-radius: var(--radius-pill);
+}
+
+.noReviewData {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 10px 0;
+}
+
+/* 리뷰 원문(더보기 토글), random 페이지만 씀 */
+.reviewTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.reviewTextHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.positive {
+  color: #6bcf7f;
+}
+
+.negative {
+  color: #f4877a;
+}
+
+.reviewTextContent {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.reviewTextToggle {
+  display: block;
+  background: none;
+  border: none;
+  color: var(--accent-steam);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 0;
+}
+
+.reviewTextToggle:hover {
+  text-decoration: underline;
+}
+
+/* 다시추천 버튼 */
+.recommendAgainRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.recommendAgainBtn {
+  padding: 11px 26px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: var(--btn-steam);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.recommendAgainBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.recommendAgainBtn:focus-visible {
+  outline: 2px solid var(--accent-steam);
+  outline-offset: 2px;
+}
+
+.recommendAgainBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recommendAgainBtn {
+    transition: none;
+  }
+}
