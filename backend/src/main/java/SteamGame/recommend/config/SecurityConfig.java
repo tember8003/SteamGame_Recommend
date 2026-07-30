@@ -21,12 +21,12 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final List<String> allowedOrigins;
+    private final List<String> allowedOriginPatterns;
     private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins,
                           RateLimitFilter rateLimitFilter) {
-        this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
+        this.allowedOriginPatterns = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
@@ -61,7 +61,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(allowedOrigins);
+        // Vercel 프리뷰는 배포마다 URL 이 바뀌므로 패턴으로 허용한다, allowCredentials=false 라 와일드카드가 안전하다
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(false);
