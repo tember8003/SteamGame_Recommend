@@ -72,8 +72,10 @@
   background: var(--glass-fill);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
+  opacity: 1;
   cursor: pointer;
-  transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease,
+    background 0.15s ease;
 }
 
 .feedbackBtn svg {
@@ -90,6 +92,18 @@
 .feedbackBtn:focus-visible {
   outline: 2px solid var(--accent-steam);
   outline-offset: 2px;
+}
+
+/* 클릭 즉시(응답을 기다리지 않고) 눌린 버튼을 표시함, 원본의 opacity 강조를 색상 강조로 재현함 */
+.feedbackBtnActive {
+  color: var(--accent-steam);
+  border-color: var(--accent-steam);
+  background: rgba(74, 158, 255, 0.16);
+}
+
+/* 같은 카드에서 반대 반응이 눌렸을 때 옅게 처리함(원본의 opacity 0.4 대응) */
+.feedbackBtnDimmed {
+  opacity: 0.45;
 }
 
 .storeLink {

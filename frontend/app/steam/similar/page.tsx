@@ -43,6 +43,20 @@ export default function SimilarRecommendPage() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   // 자동완성 목록에서 항목을 고른 직후엔 같은 입력값으로 검색을 다시 태우지 않도록 막는 표시
   const skipNextSearchRef = useRef(false);
+  // 매 조회마다 증가하는 요청 번호, 응답이 왔을 때 이 번호가 최신이 아니면(더 나중 요청,선택,닫기로 무효화됨) 결과를 버림
+  const searchRequestIdRef = useRef(0);
+  // 디바운스 중인(아직 발화 전) setTimeout id, gameName 이 안 바뀌는 close 경로(바깥 클릭 등)에서도 확실히 취소하려고 별도로 들고 있음
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 지금까지 나간 요청을 전부 낡은 것으로 만듦, 늦게 도착하는 응답이 있어도 setSuggestions 를 못 하게 막고
+  // 아직 발화 전인 디바운스 타이머도 여기서 같이 취소함(gameName 이 안 바뀌는 close 경로에서 타이머가 살아남는 걸 막음)
+  function invalidatePendingSearch() {
+    searchRequestIdRef.current += 1;
+    if (debounceTimerRef.current !== null) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+  }
 
   // 입력값이 바뀔 때마다 디바운스 뒤 gamesSearch 로 자동완성 후보를 가져옴
   // 목록을 비우는 동기 처리는 이벤트 핸들러(handleGameNameChange, selectSuggestion)가 맡고
@@ -59,18 +73,36 @@ export default function SimilarRecommendPage() {
     }
 
     const timer = setTimeout(() => {
+      debounceTimerRef.current = null;
+      // 이 조회 하나만의 번호를 찍어두고, 응답이 왔을 때 그사이 더 최신 요청,선택,닫기가 없었는지 확인함
+      const requestId = (searchRequestIdRef.current += 1);
       gamesSearch(query)
-        .then(setSuggestions)
-        .catch(() => setSuggestions([]));
+        .then((items) => {
+          if (searchRequestIdRef.current === requestId) {
+            setSuggestions(items);
+          }
+        })
+        .catch(() => {
+          if (searchRequestIdRef.current === requestId) {
+            setSuggestions([]);
+          }
+        });
     }, AUTOCOMPLETE_DEBOUNCE_MS);
+    debounceTimerRef.current = timer;
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (debounceTimerRef.current === timer) {
+        debounceTimerRef.current = null;
+      }
+    };
   }, [gameName]);
 
-  // 자동완성 바깥을 클릭하면 목록을 닫음
+  // 자동완성 바깥을 클릭하면 목록을 닫음, 닫은 뒤엔 대기 중이던 타이머,늦게 오는 응답 모두 무시함
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        invalidatePendingSearch();
         setSuggestions([]);
       }
     }
@@ -80,6 +112,7 @@ export default function SimilarRecommendPage() {
 
   function selectSuggestion(name: string) {
     skipNextSearchRef.current = true;
+    invalidatePendingSearch();
     setGameName(name);
     setSuggestions([]);
   }
@@ -88,6 +121,7 @@ export default function SimilarRecommendPage() {
   function handleGameNameChange(value: string) {
     setGameName(value);
     if (value.trim().length < AUTOCOMPLETE_MIN_LENGTH) {
+      invalidatePendingSearch();
       setSuggestions([]);
     }
   }

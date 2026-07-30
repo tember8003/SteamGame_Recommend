@@ -99,6 +99,20 @@ class SecurityConfigTest {
                 (UrlBasedCorsConfigurationSource) blankOriginConfig.corsConfigurationSource();
         CorsConfiguration registered = source.getCorsConfigurations().get("/**");
 
-        assertThat(registered.getAllowedOrigins()).isNullOrEmpty();
+        assertThat(registered.getAllowedOriginPatterns()).isNullOrEmpty();
+    }
+
+    // Vercel 프리뷰 오리진은 배포마다 바뀌므로 패턴 매칭으로 허용되는지 확인함
+    @Test
+    void corsConfigurationSource_withVercelPattern_matchesPreviewOrigin() {
+        SecurityConfig patternConfig = new SecurityConfig(
+                "https://*.vercel.app,https://steam-recommend.duckdns.org", mock(RateLimitFilter.class));
+
+        UrlBasedCorsConfigurationSource source =
+                (UrlBasedCorsConfigurationSource) patternConfig.corsConfigurationSource();
+        CorsConfiguration registered = source.getCorsConfigurations().get("/**");
+
+        assertThat(registered.checkOrigin("https://sgr-frontend-git-feature.vercel.app")).isNotNull();
+        assertThat(registered.checkOrigin("https://evil.example")).isNull();
     }
 }

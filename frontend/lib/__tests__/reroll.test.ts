@@ -16,6 +16,11 @@ describe('mergeShownAppids', () => {
     const result = mergeShownAppids([1, 2], [{ appid: 2 }, { appid: 3 }])
     expect(result).toEqual([1, 2, 3])
   })
+
+  it('같은 응답(배치) 안에 같은 appid 가 중복으로 들어와도 한 번만 담는다', () => {
+    const result = mergeShownAppids([], [{ appid: 5 }, { appid: 5 }, { appid: 6 }])
+    expect(result).toEqual([5, 6])
+  })
 })
 
 describe('toExcludeAppids', () => {

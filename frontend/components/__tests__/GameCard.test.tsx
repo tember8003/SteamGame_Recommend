@@ -89,6 +89,23 @@ describe("GameCard", () => {
     expect(sgrFeedback).toHaveBeenCalledWith(BASE_GAME.appid, "DOWN", "SIMILAR", 1, undefined);
   });
 
+  it("클릭 즉시(응답을 기다리지 않고) 눌린 버튼을 aria-pressed 로 표시하고, 반대 버튼을 누르면 전환함", () => {
+    render(<GameCard game={BASE_GAME} feedback={{ context: "INPUT", rank: 0 }} />);
+    const likeBtn = screen.getByRole("button", { name: "Like this game" });
+    const dislikeBtn = screen.getByRole("button", { name: "Dislike this game" });
+
+    expect(likeBtn).toHaveAttribute("aria-pressed", "false");
+    expect(dislikeBtn).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(likeBtn);
+    expect(likeBtn).toHaveAttribute("aria-pressed", "true");
+    expect(dislikeBtn).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(dislikeBtn);
+    expect(likeBtn).toHaveAttribute("aria-pressed", "false");
+    expect(dislikeBtn).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("스토어 링크 클릭 시 CLICK 신호를 보내고 이동은 막지 않음", () => {
     const game: SteamApp = { ...BASE_GAME, steamStore: "https://store.steampowered.com/app/400" };
     render(<GameCard game={game} feedback={{ context: "INPUT", rank: 0 }} />);

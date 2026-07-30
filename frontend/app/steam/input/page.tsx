@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
@@ -27,8 +28,12 @@ function isRateLimitError(error: unknown): boolean {
 }
 
 // 원본 input.html(텍스트로 게임 취향을 설명하면 추천을 받는 화면)을 /steam/input 라우트로 옮김
-export default function InputRecommendPage() {
-  const [text, setText] = useState("");
+// useSearchParams 를 쓰므로 Suspense 경계 안에서만 렌더되어야 함(default export 참고)
+function InputRecommendContent() {
+  const searchParams = useSearchParams();
+  // 랜딩 ConciergeBar 가 넘긴 ?q= 를 입력창 초기값으로만 씀(지연 초기화라 이후 searchParams 변경엔 반응하지 않음,
+  // 자동 제출은 하지 않고 사용자가 버튼을 눌러야 추천이 돎)
+  const [text, setText] = useState(() => searchParams.get("q") ?? "");
   const [review, setReview] = useState(1000);
   const [koreanOnly, setKoreanOnly] = useState(false);
   const [freeOnly, setFreeOnly] = useState(false);
@@ -197,5 +202,28 @@ export default function InputRecommendPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// 로딩 표시(기존 page/main/notice 토큰 재사용, 새 CSS 규칙 없음)
+function InputRecommendFallback() {
+  return (
+    <div className={styles.page}>
+      <Header />
+      <main className={styles.main}>
+        <div className={styles.notice}>
+          <h3>Loading…</h3>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// useSearchParams() 를 쓰는 컴포넌트는 Suspense 로 감싸야 next build 가 통과함
+export default function InputRecommendPage() {
+  return (
+    <Suspense fallback={<InputRecommendFallback />}>
+      <InputRecommendContent />
+    </Suspense>
   );
 }

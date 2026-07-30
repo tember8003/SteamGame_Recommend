@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import GlassPanel from "./ui/GlassPanel";
 import type { FeedbackContext, SteamApp } from "@/lib/types";
 import { sgrFeedback } from "@/lib/feedback";
@@ -26,9 +27,14 @@ export default function GameCard({
 }) {
   const cls = [styles.card, className].filter(Boolean).join(" ");
 
+  // 응답을 기다리지 않고 눌린 버튼을 바로 표시하기 위한 로컬 상태, 서버 반영 여부와 무관하게 클릭 즉시 갱신함
+  const [reaction, setReaction] = useState<"UP" | "DOWN" | null>(null);
+
   // 좋아요,싫어요 클릭 시 신호를 보냄, feedback 이 없으면 아예 버튼을 렌더하지 않으니 호출도 없음
+  // sgrFeedback 은 fire-and-forget 이라 응답을 기다리지 않고, 눌린 버튼 표시는 클릭 즉시 로컬 state 로 갱신함
   function sendReaction(signal: "UP" | "DOWN") {
     if (!feedback) return;
+    setReaction(signal);
     sgrFeedback(game.appid, signal, feedback.context, feedback.rank, feedback.steamId ?? undefined);
   }
 
@@ -66,8 +72,15 @@ export default function GameCard({
           <div className={styles.feedbackRow}>
             <button
               type="button"
-              className={styles.feedbackBtn}
+              className={[
+                styles.feedbackBtn,
+                reaction === "UP" ? styles.feedbackBtnActive : "",
+                reaction === "DOWN" ? styles.feedbackBtnDimmed : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               aria-label="Like this game"
+              aria-pressed={reaction === "UP"}
               onClick={() => sendReaction("UP")}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -77,8 +90,15 @@ export default function GameCard({
             </button>
             <button
               type="button"
-              className={styles.feedbackBtn}
+              className={[
+                styles.feedbackBtn,
+                reaction === "DOWN" ? styles.feedbackBtnActive : "",
+                reaction === "UP" ? styles.feedbackBtnDimmed : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               aria-label="Dislike this game"
+              aria-pressed={reaction === "DOWN"}
               onClick={() => sendReaction("DOWN")}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
