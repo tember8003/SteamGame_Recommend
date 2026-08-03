@@ -28,7 +28,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "/api/recommend/input", "input",
             "/api/recommend/profile", "profile",
             "/api/recommend/recent-play", "recent-play",
-            "/api/recommend/feedback", "feedback"
+            "/api/recommend/feedback", "feedback",
+            "/api/recommend/match", "match"
     );
 
     private final RateLimitProperties props;
