@@ -8,6 +8,8 @@ import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
 import SteamGame.recommend.domain.game.repository.GameRepository;
+import SteamGame.recommend.domain.recommendation.MatchConstants;
+import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.tag.service.TagService;
 import SteamGame.recommend.infra.embedding.VectorLiterals;
 import SteamGame.recommend.infra.embedding.VectorSampler;
@@ -111,6 +113,48 @@ public class GameService {
         return VectorSampler.sample(pool, need, new Random()).stream()
                 .map(GameMapper::convertToSteamDTO)
                 .collect(Collectors.toList());
+    }
+
+    // 예산, 코옵 하드필터를 더한 임베딩 최근접 후보 poolK개를 그대로 반환, 샘플링은 후속 MatchService 가 담당함
+    @Transactional(readOnly = true)
+    public List<Game> matchNearestPool(float[] qvec, RecommendationCriteria c, int poolK) {
+        String qLiteral = VectorLiterals.toPgVector(qvec);
+
+        // 빈 집합이면 sentinel [-1] 바인딩 + excludeCount=0 으로 NOT IN 을 무력화한다
+        List<Long> excludeList = (c.getExcludeAppids() == null || c.getExcludeAppids().isEmpty())
+                ? List.of(-1L)
+                : new ArrayList<>(c.getExcludeAppids());
+        int excludeCount = (c.getExcludeAppids() != null) ? c.getExcludeAppids().size() : 0;
+
+        boolean requireCoop = c.needsCoop();
+        // 코옵이 필요 없으면 sentinel 태그로 IN() 이 비는 상황을 피함
+        List<String> coopTags = requireCoop ? MatchConstants.COOP_TAGS : List.of("__none__");
+
+        boolean excludedCheck = c.getExcludeTags() != null && !c.getExcludeTags().isEmpty();
+        List<String> excludedTag = (c.getExcludeTags() != null) ? c.getExcludeTags() : Collections.emptyList();
+
+        return gameRepository.findMatchNearest(qLiteral, c.getReview(), c.getKorean(), c.getFree(),
+                c.getBudgetCents(), requireCoop, coopTags, excludeList, excludeCount,
+                excludedCheck, excludedTag, poolK);
+    }
+
+    // 예산, 코옵 하드필터를 더한 품질(리뷰 수) 후보 poolK개를 그대로 반환, 임베딩이 없어도 후보에 포함됨
+    @Transactional(readOnly = true)
+    public List<Game> matchQualityPool(RecommendationCriteria c, int poolK) {
+        List<Long> excludeList = (c.getExcludeAppids() == null || c.getExcludeAppids().isEmpty())
+                ? List.of(-1L)
+                : new ArrayList<>(c.getExcludeAppids());
+        int excludeCount = (c.getExcludeAppids() != null) ? c.getExcludeAppids().size() : 0;
+
+        boolean requireCoop = c.needsCoop();
+        List<String> coopTags = requireCoop ? MatchConstants.COOP_TAGS : List.of("__none__");
+
+        boolean excludedCheck = c.getExcludeTags() != null && !c.getExcludeTags().isEmpty();
+        List<String> excludedTag = (c.getExcludeTags() != null) ? c.getExcludeTags() : Collections.emptyList();
+
+        return gameRepository.findMatchByQuality(c.getReview(), c.getKorean(), c.getFree(),
+                c.getBudgetCents(), requireCoop, coopTags, excludeList, excludeCount,
+                excludedCheck, excludedTag, poolK);
     }
 
     public List<ReviewResponseDTO> ResponseList(List<SteamAppDTO> games){

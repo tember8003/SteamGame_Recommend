@@ -4,7 +4,10 @@ import SteamGame.recommend.domain.game.dto.GameNameRequestDTO;
 import SteamGame.recommend.domain.game.dto.GameRequestDTO;
 import SteamGame.recommend.domain.game.dto.SteamIdRequestDTO;
 import SteamGame.recommend.domain.game.dto.TextRequestDTO;
+import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
+import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,9 +24,11 @@ import org.springframework.web.bind.annotation.*;
 public class RecommendController {
 
     private final RecommendService recommendService;
+    private final MatchService matchService;
 
-    public RecommendController(RecommendService recommendService) {
+    public RecommendController(RecommendService recommendService, MatchService matchService) {
         this.recommendService = recommendService;
+        this.matchService = matchService;
     }
 
     @Operation(summary = "Tag-based random recommendation")
@@ -157,5 +162,12 @@ public class RecommendController {
             log.error("Similar game recommendation error: gameName={}", dto.getGameName(), e);
             throw e;
         }
+    }
+
+    @Operation(summary = "Requirement-matched recommendation")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @PostMapping("/match")
+    public ResponseEntity<MatchResultDTO> match(@Valid @RequestBody MatchRequestDTO req) {
+        return ResponseEntity.ok(matchService.recommend(req));
     }
 }

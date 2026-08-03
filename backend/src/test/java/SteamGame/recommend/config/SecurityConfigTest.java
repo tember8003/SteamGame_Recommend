@@ -2,6 +2,7 @@ package SteamGame.recommend.config;
 
 import SteamGame.recommend.controller.RecommendController;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import SteamGame.recommend.infra.web.ClientIpResolver;
 import SteamGame.recommend.infra.web.RateLimitFilter;
@@ -31,6 +32,8 @@ class SecurityConfigTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean RecommendService recommendService;
+    // RecommendController 가 MatchService 를 주입받으므로 슬라이스 컨텍스트에도 목이 필요하다
+    @MockitoBean MatchService matchService;
 
     private RecommendationResultDTO dummy() {
         return new RecommendationResultDTO(List.of(), List.of(), List.of());

@@ -108,4 +108,96 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                                    @Param("excludedTag") List<String> excludedTag,
                                    @Param("k") int k);
 
+    // 예산과 코옵 하드필터를 더한 임베딩 최근접 정렬, 예산 지정 시 price가 null인 게임은 무료가 아니면 자동 제외됨
+    // requireCoop=false면 coopTags에 sentinel(__none__)을 바인딩해 IN()이 비는 상황을 피함
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid
+    WHERE g.embedding IS NOT NULL
+        AND r.total_reviews >= :review
+        AND (:korean IS NULL OR g.korean_support = :korean)
+        AND (:free IS NULL OR g.is_free = :free)
+        AND (:budgetCents IS NULL OR g.is_free = true OR g.price <= :budgetCents)
+        AND (
+            :requireCoop = false
+            OR EXISTS (
+                SELECT 1
+                FROM game_tags gtc
+                JOIN tags tc ON tc.id = gtc.tag_id
+                WHERE gtc.game_id = g.id
+                  AND tc.name IN (:coopTags)
+            )
+        )
+        AND (:excludeCount = 0 OR g.appid NOT IN (:excludeAppids))
+        AND (
+            :excludedCheck = false
+            OR NOT EXISTS (
+                SELECT 1
+                FROM game_tags gt2
+                JOIN tags t2 ON t2.id = gt2.tag_id
+                WHERE gt2.game_id = g.id
+                  AND t2.name IN (:excludedTag)
+            )
+        )
+    ORDER BY g.embedding <=> CAST(:qvec AS vector)
+    LIMIT :k
+""", nativeQuery = true)
+    List<Game> findMatchNearest(@Param("qvec") String qvec,
+                                 @Param("review") int review,
+                                 @Param("korean") Boolean korean,
+                                 @Param("free") Boolean free,
+                                 @Param("budgetCents") Integer budgetCents,
+                                 @Param("requireCoop") boolean requireCoop,
+                                 @Param("coopTags") List<String> coopTags,
+                                 @Param("excludeAppids") List<Long> excludeAppids,
+                                 @Param("excludeCount") int excludeCount,
+                                 @Param("excludedCheck") boolean excludedCheck,
+                                 @Param("excludedTag") List<String> excludedTag,
+                                 @Param("k") int k);
+
+    // 예산과 코옵 하드필터를 더한 품질(리뷰 수) 정렬, 임베딩이 없는 게임도 후보에 포함됨
+    // 예산, 코옵, 제외 가드는 findMatchNearest와 동일함
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid
+    WHERE r.total_reviews >= :review
+        AND (:korean IS NULL OR g.korean_support = :korean)
+        AND (:free IS NULL OR g.is_free = :free)
+        AND (:budgetCents IS NULL OR g.is_free = true OR g.price <= :budgetCents)
+        AND (
+            :requireCoop = false
+            OR EXISTS (
+                SELECT 1
+                FROM game_tags gtc
+                JOIN tags tc ON tc.id = gtc.tag_id
+                WHERE gtc.game_id = g.id
+                  AND tc.name IN (:coopTags)
+            )
+        )
+        AND (:excludeCount = 0 OR g.appid NOT IN (:excludeAppids))
+        AND (
+            :excludedCheck = false
+            OR NOT EXISTS (
+                SELECT 1
+                FROM game_tags gt2
+                JOIN tags t2 ON t2.id = gt2.tag_id
+                WHERE gt2.game_id = g.id
+                  AND t2.name IN (:excludedTag)
+            )
+        )
+    ORDER BY g.review_count DESC NULLS LAST
+    LIMIT :k
+""", nativeQuery = true)
+    List<Game> findMatchByQuality(@Param("review") int review,
+                                   @Param("korean") Boolean korean,
+                                   @Param("free") Boolean free,
+                                   @Param("budgetCents") Integer budgetCents,
+                                   @Param("requireCoop") boolean requireCoop,
+                                   @Param("coopTags") List<String> coopTags,
+                                   @Param("excludeAppids") List<Long> excludeAppids,
+                                   @Param("excludeCount") int excludeCount,
+                                   @Param("excludedCheck") boolean excludedCheck,
+                                   @Param("excludedTag") List<String> excludedTag,
+                                   @Param("k") int k);
+
 }
