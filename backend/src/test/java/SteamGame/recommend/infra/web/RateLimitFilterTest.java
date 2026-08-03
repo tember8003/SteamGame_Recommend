@@ -4,6 +4,7 @@ import SteamGame.recommend.config.RateLimitProperties;
 import SteamGame.recommend.config.SecurityConfig;
 import SteamGame.recommend.controller.RecommendController;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ class RateLimitFilterTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean RecommendService recommendService;
+    // RecommendController 가 MatchService 를 주입받으므로 슬라이스 컨텍스트에도 목이 필요하다
+    @MockitoBean MatchService matchService;
 
     private RecommendationResultDTO dummy() {
         return new RecommendationResultDTO(List.of(), List.of(), List.of());
