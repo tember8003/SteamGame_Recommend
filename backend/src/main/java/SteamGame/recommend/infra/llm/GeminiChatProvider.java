@@ -34,7 +34,7 @@ public class GeminiChatProvider implements ChatCompletionProvider {
                                @Value("${spring.ai.google.api-key:}") String apiKey,
                                @Value("${app.gemini.chat-url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}") String chatUrl) {
         this.objectMapper = objectMapper;
-        this.webClient = webClientBuilder.build();
+        this.webClient = LlmWebClientSupport.build(webClientBuilder);
         this.apiKey = apiKey;
         this.chatUrl = chatUrl;
     }
