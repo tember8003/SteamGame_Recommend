@@ -2,29 +2,25 @@ package SteamGame.recommend.infra.api;
 
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
+import SteamGame.recommend.infra.llm.ChatCompletionRouter;
+import SteamGame.recommend.infra.llm.ChatRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * 자연어 한 줄을 Gemini 로 파싱해 구조화 제약(ParsedConstraints)으로 변환한다
- * 태그 추출용 GeminiApiService 와 동일한 WebClient, 키, Resilience4j 패턴을 따르되 배열이 아니라 오브젝트를 뽑는다
+ * 자연어 한 줄을 채팅 라우터로 파싱해 구조화 제약(ParsedConstraints)으로 변환한다
+ * 실제 제공자 선택, 재시도, 폴백은 ChatCompletionRouter 아래쪽(GroqChatProvider, GeminiChatProvider)에서 처리함
  */
 @Slf4j
 @Service
@@ -46,55 +42,53 @@ public class GeminiConstraintService {
             .map(t -> "\"" + t + "\"")
             .collect(Collectors.joining(", ")) + "]";
 
-    private final ObjectMapper objectMapper;
-    private final WebClient.Builder webClientBuilder;
-    private final String gemini_api_key;
-    private final String constraintUrl;
+    // Groq strict 모드 요구사항을 따름, 모든 프로퍼티는 required 에 포함하고 additionalProperties 는 false 로 고정함
+    // nullable 값은 type 을 union([타입, "null"]) 으로 표현하고 nullable enum 은 enum 배열 안에 null 을 포함시킴(List.of 는 null 불허라 Arrays.asList 사용)
+    private static final Map<String, Object> CONSTRAINT_SCHEMA = Map.of(
+            "type", "object",
+            "properties", Map.of(
+                    "players", Map.of("type", List.of("integer", "null")),
+                    "budgetUsd", Map.of("type", List.of("integer", "null")),
+                    "sessionLength", Map.of("type", List.of("string", "null"),
+                            "enum", Arrays.asList("SHORT", "MEDIUM", "LONG", null)),
+                    "needsCoop", Map.of("type", List.of("boolean", "null")),
+                    "moodText", Map.of("type", List.of("string", "null")),
+                    "excludeTags", Map.of("type", "array", "items", Map.of("type", "string"))
+            ),
+            "required", List.of("players", "budgetUsd", "sessionLength", "needsCoop", "moodText", "excludeTags"),
+            "additionalProperties", false
+    );
 
-    public GeminiConstraintService(ObjectMapper objectMapper, WebClient.Builder webClientBuilder,
-                                    @Value("${spring.ai.google.api-key}") String gemini_api_key,
-                                    @Value("${app.gemini.constraint-url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}") String constraintUrl) {
+    private final ObjectMapper objectMapper;
+    private final ChatCompletionRouter router;
+
+    public GeminiConstraintService(ObjectMapper objectMapper, ChatCompletionRouter router) {
         this.objectMapper = objectMapper;
-        this.webClientBuilder = webClientBuilder;
-        this.gemini_api_key = gemini_api_key;
-        this.constraintUrl = constraintUrl;
+        this.router = router;
     }
 
     // 자연어 한 줄을 구조화 제약으로 바꾸며 빈 입력이거나 파싱 중 하나라도 실패하면 null 을 반환한다
-    @Retry(name = "geminiApi", fallbackMethod = "fallbackParse")
-    @CircuitBreaker(name = "geminiApi", fallbackMethod = "fallbackParse")
     public ParsedConstraints parseConstraints(String rawText) {
         if (rawText == null || rawText.isBlank()) {
             return null;
         }
 
-        String prompt = buildPrompt(rawText);
-
-        Map<String, Object> body = Map.of(
-                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
-                "generationConfig", Map.of("temperature", 0, "maxOutputTokens", 1024)
+        ChatRequest req = new ChatRequest(
+                "You extract structured constraints as JSON.",
+                buildPrompt(rawText),
+                "constraints",
+                CONSTRAINT_SCHEMA,
+                0,
+                1024
         );
 
-        String raw = webClientBuilder.build()
-                .post()
-                .uri(constraintUrl + "?key=" + gemini_api_key)
-                .bodyValue(body)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, resp ->
-                        Mono.error(new ResponseStatusException(resp.statusCode(), "Gemini API 오류"))
-                )
-                .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(5))
-                .block();
+        Optional<String> out = router.complete(req);
+        if (out.isEmpty()) {
+            return null;
+        }
 
         try {
-            JsonNode root = objectMapper.readTree(raw);
-            String text = root.path("candidates").get(0)
-                    .path("content")
-                    .path("parts").get(0)
-                    .path("text").asText();
-
-            Matcher m = Pattern.compile("\\{.*\\}", Pattern.DOTALL).matcher(text);
+            Matcher m = Pattern.compile("\\{.*\\}", Pattern.DOTALL).matcher(out.get());
 
             if (m.find()) {
                 JsonNode constraints = objectMapper.readTree(m.group());
@@ -185,10 +179,5 @@ public class GeminiConstraintService {
             }
         }
         return tags;
-    }
-
-    public ParsedConstraints fallbackParse(String rawText, Throwable ex) {
-        log.info("Gemini Constraint API 실패 (len={}): {}", rawText == null ? 0 : rawText.length(), ex.getMessage());
-        return null;
     }
 }
