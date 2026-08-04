@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -52,7 +54,7 @@ public class GeminiApiService {
         }
 
         try {
-            JsonNode root = objectMapper.readTree(out.get());
+            JsonNode root = parseTagsRoot(out.get());
             JsonNode tagsNode = root.isArray() ? root : root.path("tags");
 
             List<String> tags = new ArrayList<>();
@@ -69,6 +71,25 @@ public class GeminiApiService {
         }
 
         return Collections.emptyList();
+    }
+
+    // 마크다운 펜스나 설명 문구로 감싸진 Gemini 폴백 응답도 견디도록 함, 곧바로 파싱이 되지 않거나 배열도 tags 를 가진 객체도 아니면
+    // 본문에서 첫 JSON 객체나 배열을 정규식으로 추출해 재파싱함
+    private JsonNode parseTagsRoot(String content) throws Exception {
+        try {
+            JsonNode root = objectMapper.readTree(content);
+            if (root.isArray() || root.has("tags")) {
+                return root;
+            }
+        } catch (Exception ignored) {
+            // 아래 정규식 재추출로 넘어감
+        }
+
+        Matcher m = Pattern.compile("\\{.*\\}|\\[.*\\]", Pattern.DOTALL).matcher(content);
+        if (m.find()) {
+            return objectMapper.readTree(m.group());
+        }
+        throw new IllegalArgumentException("Gemini tags 응답에서 JSON 을 찾지 못함");
     }
 
     private String buildPrompt(String input) {

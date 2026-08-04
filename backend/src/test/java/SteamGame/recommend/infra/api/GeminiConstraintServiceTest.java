@@ -3,15 +3,20 @@ package SteamGame.recommend.infra.api;
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
+import SteamGame.recommend.infra.llm.ChatRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +45,24 @@ class GeminiConstraintServiceTest {
         assertThat(pc.needsCoop()).isTrue();
         assertThat(pc.moodText()).isEqualTo("왁자지껄 협동");
         assertThat(pc.excludeTags()).containsExactly("Horror");
+
+        // 라우터로 전송된 스키마가 스왑, 오타 없이 strict 요구사항을 지키는지 구조로 검증함, 상수 자체는 참조하지 않음
+        ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
+        verify(router).complete(captor.capture());
+        ChatRequest sent = captor.getValue();
+
+        assertThat(sent.schemaName()).isEqualTo("constraints");
+        assertThat(sent.jsonSchema().get("additionalProperties")).isEqualTo(false);
+
+        List<String> expectedFields = List.of(
+                "players", "budgetUsd", "sessionLength", "needsCoop", "moodText", "excludeTags");
+        @SuppressWarnings("unchecked")
+        List<Object> required = (List<Object>) sent.jsonSchema().get("required");
+        assertThat(required).containsExactlyElementsOf(expectedFields);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> properties = (Map<String, Object>) sent.jsonSchema().get("properties");
+        assertThat(properties.keySet()).containsExactlyInAnyOrderElementsOf(expectedFields);
     }
 
     @Test

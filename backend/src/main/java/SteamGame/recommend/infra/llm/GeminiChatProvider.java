@@ -77,7 +77,7 @@ public class GeminiChatProvider implements ChatCompletionProvider {
             if (!candidates.isArray() || candidates.isEmpty()) {
                 return Optional.empty();
             }
-            String text = candidates.get(0).path("content").path("parts").get(0).path("text").asText("");
+            String text = candidates.path(0).path("content").path("parts").path(0).path("text").asText("");
             if (text.isBlank()) {
                 return Optional.empty();
             }

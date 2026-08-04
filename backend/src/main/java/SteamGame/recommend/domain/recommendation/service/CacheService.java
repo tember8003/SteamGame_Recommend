@@ -10,6 +10,7 @@ public class CacheService {
     private final InMemoryCacheService cacheService;
     private static final Duration TAGS_TTL = Duration.ofHours(6);
     private static final Duration EMBED_TTL = Duration.ofHours(6);
+    private static final Duration CONSTRAINT_TTL = Duration.ofHours(6);
 
     public CacheService(InMemoryCacheService cacheService) {
         this.cacheService = cacheService;
@@ -33,5 +34,14 @@ public class CacheService {
 
     public void cacheEmbedding(String inputHash, String literal) {
         cacheService.set("gemini:embed:" + inputHash, literal, EMBED_TTL);
+    }
+
+    // 입력 해시 기준 제약 파싱 JSON 캐시(반복 자연어 요청의 Groq,Gemini 재호출 방지)
+    public String getCachedConstraints(String inputHash) {
+        return cacheService.get("gemini:constraint:" + inputHash);
+    }
+
+    public void cacheConstraints(String inputHash, String json) {
+        cacheService.set("gemini:constraint:" + inputHash, json, CONSTRAINT_TTL);
     }
 }

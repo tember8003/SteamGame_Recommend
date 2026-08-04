@@ -3,6 +3,7 @@ package SteamGame.recommend.infra.llm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
@@ -48,6 +49,14 @@ public class GroqChatProvider implements ChatCompletionProvider {
         return apiKey != null && !apiKey.isBlank();
     }
 
+    // GROQ_API_KEY 미설정 배포를 기동 시점에 드러냄, 비활성 상태면 텍스트 작업이 Gemini 로만 폴백함
+    @PostConstruct
+    void warnIfDisabled() {
+        if (!isEnabled()) {
+            log.warn("GROQ_API_KEY 가 비어 Groq 제공자가 비활성임, 텍스트 작업이 Gemini 로만 폴백함");
+        }
+    }
+
     // 네트워크, HTTP 오류(onStatus 의 ResponseStatusException, timeout, 연결오류)는 잡지 않고 그대로 던져 Resilience4j 프록시가 실패로 기록하게 함
     // 파싱 실패만 이 메서드 안에서 흡수함, 서킷브레이커 개폐는 스프링 빈 간 호출(프록시 경유)에서만 걸리므로 단위테스트가 아니라 수기, 통합 검증 대상임
     @Override
@@ -64,7 +73,7 @@ public class GroqChatProvider implements ChatCompletionProvider {
                         Map.of("role", "user", "content", request.user())
                 ),
                 "temperature", request.temperature(),
-                "max_tokens", request.maxTokens(),
+                "max_completion_tokens", request.maxTokens(),
                 "response_format", Map.of(
                         "type", "json_schema",
                         "json_schema", Map.of(
@@ -91,7 +100,7 @@ public class GroqChatProvider implements ChatCompletionProvider {
             if (!choices.isArray() || choices.isEmpty()) {
                 return Optional.empty();
             }
-            String content = choices.get(0).path("message").path("content").asText("");
+            String content = choices.path(0).path("message").path("content").asText("");
             if (content.isBlank()) {
                 return Optional.empty();
             }
