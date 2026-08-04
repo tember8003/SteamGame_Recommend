@@ -5,6 +5,8 @@ import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.api.GeminiConstraintService;
+import SteamGame.recommend.infra.utils.EncryptUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,9 +18,13 @@ import java.util.List;
 public class ConstraintResolver {
 
     private final GeminiConstraintService parser;
+    private final CacheService cache;
+    private final ObjectMapper objectMapper;
 
-    public ConstraintResolver(GeminiConstraintService parser) {
+    public ConstraintResolver(GeminiConstraintService parser, CacheService cache, ObjectMapper objectMapper) {
         this.parser = parser;
+        this.cache = cache;
+        this.objectMapper = objectMapper;
     }
 
     public RecommendationCriteria resolve(MatchRequestDTO req) {
@@ -28,9 +34,28 @@ public class ConstraintResolver {
         String rawText = req.getRawText();
         // rawText 가 비어 있으면 파서를 호출하지 않음
         if (rawText != null && !rawText.isBlank()) {
-            parsed = parser.parseConstraints(rawText);
+            String hash = null;
+            try {
+                hash = EncryptUtils.sha256(rawText);
+                String cached = cache.getCachedConstraints(hash);
+                if (cached != null) {
+                    parsed = objectMapper.readValue(cached, ParsedConstraints.class);
+                }
+            } catch (Exception e) {
+                // 해시,캐시 조회,역직렬화 중 어떤 실패든 미스로 취급해 파서로 자가치유함
+                parsed = null;
+            }
             if (parsed == null) {
-                nlParseFailed = true;
+                parsed = parser.parseConstraints(rawText);
+                if (parsed == null) {
+                    nlParseFailed = true;
+                } else if (hash != null) {
+                    try {
+                        cache.cacheConstraints(hash, objectMapper.writeValueAsString(parsed));
+                    } catch (Exception e) {
+                        // 캐시 저장 실패는 조용히 무시함, 파싱 결과 사용에는 지장 없음
+                    }
+                }
             }
         }
 
