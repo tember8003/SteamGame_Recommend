@@ -37,7 +37,7 @@ public class GroqChatProvider implements ChatCompletionProvider {
                              @Value("${app.groq.model:openai/gpt-oss-20b}") String model,
                              @Value("${app.groq.timeout-ms:5000}") long timeoutMs) {
         this.objectMapper = objectMapper;
-        this.webClient = webClientBuilder.build();
+        this.webClient = LlmWebClientSupport.build(webClientBuilder);
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.model = model;
