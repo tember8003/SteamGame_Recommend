@@ -94,7 +94,7 @@ public class GeminiApiService {
 
     private String buildPrompt(String input) {
         return """
-        Analyze the following sentence and extract up to 5 related tags from the tag list below. Output a single JSON object of the form {"tags": ["Tag1", "Tag2"]}, output nothing else (no markdown fence).
+        Analyze the following sentence and extract up to 5 related tags from the tag list below. Output a single JSON object of the form {"tags": ["Tag1", "Tag2"]}, output nothing else (no markdown fence). When the sentence is in Korean, map Korean genre words to the closest English tag (e.g. 공포=Horror, 호러=Horror, 협동=Co-op, 좀비=Zombies, 로그라이크=Roguelike, 액션=Action, 생존=Survival).
 
         Tag list:
         ["2D", "3D", "RPG", "Action", "Roguelike", "Adventure", "Casual", "Indie", "Strategy", "Simulation", "Multiplayer", "Singleplayer", "Co-op", "Early Access", "Open World", "Story Rich", "Puzzle", "Platformer", "Shooter", "FPS", "Third Person", "VR", "Fantasy", "Sci-fi", "Horror", "Survival", "Anime", "Visual Novel", "Pixel Graphics", "Turn-Based", "Card Game", "Sandbox", "Building", "Crafting", "Mystery", "Comedy", "Dark", "Gore", "Violent", "Cute", "Psychological Horror", "Detective", "Zombies", "Online Co-Op", "Hack and Slash", "Fighting", "Beat 'em up", "Bullet Hell", "Side Scroller", "Roguelike", "Roguelite", "Action RPG", "Action-Adventure", "MMO", "JRPG", "Dungeon Crawler", "Match 3", "Sports", "Racing", "First-Person", "Third-Person Shooter", "Rhythm", "Music", "Management", "Clicker", "Tactical", "Stealth", "Exploration"]

@@ -116,6 +116,8 @@ public class GeminiConstraintService {
         Tag list:
         %s
 
+        For excludeTags, when the sentence is in Korean, map Korean genre words to the closest English tag above (e.g. 공포=Horror, 호러=Horror, 협동=Co-op, 좀비=Zombies, 잔인=Gore, 로그라이크=Roguelike).
+
         Example:
         Input sentence: 친구 3명이랑 20달러 이하 협동, 호러 빼줘
         Output: {"players":3,"budgetUsd":20,"sessionLength":null,"needsCoop":true,"moodText":null,"excludeTags":["Horror"]}

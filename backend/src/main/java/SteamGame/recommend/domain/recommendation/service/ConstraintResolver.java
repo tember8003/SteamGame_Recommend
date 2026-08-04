@@ -49,7 +49,8 @@ public class ConstraintResolver {
                 parsed = parser.parseConstraints(rawText);
                 if (parsed == null) {
                     nlParseFailed = true;
-                } else if (hash != null) {
+                } else if (hash != null && !isEmpty(parsed)) {
+                    // 전 필드 빈 파싱 결과는 캐시하지 않음, 일시적 추출 실패가 TTL 동안 박혀 반복 서빙되는 오염을 막음
                     try {
                         cache.cacheConstraints(hash, objectMapper.writeValueAsString(parsed));
                     } catch (Exception e) {
@@ -118,5 +119,15 @@ public class ConstraintResolver {
 
     private List<String> parsedExcludeTags(ParsedConstraints parsed) {
         return parsed == null ? null : parsed.excludeTags();
+    }
+
+    // 모든 필드가 비면 추출이 사실상 실패한 것으로 보고 캐시에서 제외한다, 일시적 실패가 캐시에 박히는 것을 막는 목적임
+    private boolean isEmpty(ParsedConstraints p) {
+        return p.players() == null
+                && p.budgetUsd() == null
+                && p.sessionLength() == null
+                && p.needsCoop() == null
+                && (p.moodText() == null || p.moodText().isBlank())
+                && (p.excludeTags() == null || p.excludeTags().isEmpty());
     }
 }

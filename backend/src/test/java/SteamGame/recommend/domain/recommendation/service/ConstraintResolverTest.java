@@ -149,4 +149,19 @@ class ConstraintResolverTest {
         assertThat(c.isNlParseFailed()).isTrue();
         verify(cache, never()).cacheConstraints(any(), any());
     }
+
+    @Test
+    void emptyParseNotCached() {
+        // 전 필드 빈 파싱 결과는 캐시하지 않는다, 일시적 추출 실패가 TTL 동안 박히는 오염을 막음
+        when(cache.getCachedConstraints(any())).thenReturn(null);
+        when(parser.parseConstraints(any())).thenReturn(
+                new ParsedConstraints(null, null, null, null, null, List.of()));
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setRawText("그냥 재밌는 거 추천");
+
+        RecommendationCriteria c = resolver.resolve(req);
+
+        assertThat(c.isNlParseFailed()).isFalse();
+        verify(cache, never()).cacheConstraints(any(), any());
+    }
 }
