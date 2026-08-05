@@ -8,6 +8,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +27,11 @@ import java.util.Map;
 @Slf4j
 @Service
 public class GeminiEmbeddingService {
+    // 요청 본문 직렬화 전용 ObjectMapper, 기본(@Primary) ObjectMapper 에는 StringCleanerSerializer 가 붙어
+    // 비 Latin-1 문자(한글 등)를 물음표로 뭉개므로 임베딩 대상 텍스트를 원문 그대로 보내려면 깨끗한 인코더가 필요하다
+    // 상태가 없어 스레드 안전함
+    private static final ObjectMapper CLEAN_MAPPER = new ObjectMapper();
+
     private final ObjectMapper objectMapper;
     private final WebClient webClient;
     private final EmbeddingProperties props;
@@ -38,9 +44,13 @@ public class GeminiEmbeddingService {
         this.props = props;
         this.gemini_api_key = gemini_api_key;
         // 배치 임베딩 응답(최대 batchSize × dimension floats)이 WebClient 기본 256KB 버퍼를 초과 → 16MB 로 상향.
+        // 아울러 요청 인코더를 깨끗한 ObjectMapper 로 덮어써 한글 텍스트가 파괴되지 않게 함(위 CLEAN_MAPPER 주석 참고)
         // 공유 빌더를 clone 해 다른 서비스(Steam/Gemini 태그)에는 영향을 주지 않음
         this.webClient = webClientBuilder.clone()
-                .codecs(c -> c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+                .codecs(c -> {
+                    c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                    c.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(CLEAN_MAPPER));
+                })
                 .build();
     }
 
