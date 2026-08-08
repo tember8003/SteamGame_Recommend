@@ -3,12 +3,12 @@ package SteamGame.recommend.config;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-@Component
+// JacksonConfig 에 더는 등록하지 않는다(정상 UTF-8 을 ® 로 파괴하던 유물)
+// 회귀 테스트가 오염 인코더 픽스처로 쓰려고 클래스만 남긴다, 스프링 빈으로 등록하지 않음
 public class StringCleanerSerializer extends JsonSerializer<String> {
 
     @Override
