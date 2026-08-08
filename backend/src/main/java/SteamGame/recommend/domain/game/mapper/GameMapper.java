@@ -31,20 +31,10 @@ public class GameMapper {
         return dto;
     }
 
+    // 이름은 정상 UTF-8 로 저장돼 인코딩 정리가 필요 없다, 앞뒤 공백만 다듬는다
+    // 과거 치환(?→®, Â®→®, Â→"" 등)은 정상 문자를 파괴하던 H2 시절 유물이라 제거함, 다시 넣지 않는다
     private static String cleanGameName(String name) {
         if (name == null) return null;
-
-        return name
-                .replace("??","™")
-                .replace("?","®")
-                .replace("짰","®")
-                .replace("Â®", "®")
-                .replace("â„¢", "™")
-                .replace("Â©", "©")
-                .replace("Â", "")
-                .replace("â€™", "'")
-                .replace("â€œ", "\"")
-                .replace("â€", "\"")
-                .trim();
+        return name.trim();
     }
 }
