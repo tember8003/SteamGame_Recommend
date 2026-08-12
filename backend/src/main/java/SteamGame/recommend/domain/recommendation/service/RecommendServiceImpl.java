@@ -184,13 +184,16 @@ public class RecommendServiceImpl implements RecommendService {
         // 벡터 우선: 보유작 평균 taste 벡터로 최근접 추천(보유작 제외)
         float[] taste = embeddingRepository.findMeanEmbeddingByAppids(new ArrayList<>(ownedAppIds));
         if (taste != null) {
+            // 보유작에 더해 클라이언트 제외, 억제(DOWN)까지 함께 뺀다
+            Set<Long> exclude = new HashSet<>(ownedAppIds);
+            if (excludeAppids != null) exclude.addAll(excludeAppids);
             List<SteamAppDTO> ranked = gameService.findNearestSampled(taste, review, koreanCheck, freeCheck,
-                    false, null, ownedAppIds,
+                    false, null, exclude,
                     embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
             if (!ranked.isEmpty()) {
                 ranked = topUp(ranked, picked -> {
                     Set<Long> ex = new HashSet<>(picked);
-                    ex.addAll(ownedAppIds);
+                    ex.addAll(exclude);
                     return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
                 });
                 return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
@@ -295,13 +298,16 @@ public class RecommendServiceImpl implements RecommendService {
         // 벡터 우선: 최근플레이 평균 taste 벡터로 최근접 추천(보유작 제외)
         float[] taste = embeddingRepository.findMeanEmbeddingByAppids(recentAppIds);
         if (taste != null) {
+            // 보유작에 더해 클라이언트 제외, 억제(DOWN)까지 함께 뺀다
+            Set<Long> exclude = new HashSet<>(ownedAppIds);
+            if (excludeAppids != null) exclude.addAll(excludeAppids);
             List<SteamAppDTO> ranked = gameService.findNearestSampled(taste, review, koreanCheck, freeCheck,
-                    false, null, ownedAppIds,
+                    false, null, exclude,
                     embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
             if (!ranked.isEmpty()) {
                 ranked = topUp(ranked, picked -> {
                     Set<Long> ex = new HashSet<>(picked);
-                    ex.addAll(ownedAppIds);
+                    ex.addAll(exclude);
                     return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
                 });
                 return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
