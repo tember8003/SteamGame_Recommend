@@ -17,6 +17,7 @@ import {
 } from '../api'
 
 const API_BASE = 'http://localhost:8888'
+const GENERATED_UUID = 'test-client-uuid'
 
 function stubFetchOnce(responseBody: unknown, ok = true, status = 200) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -30,6 +31,14 @@ function stubFetchOnce(responseBody: unknown, ok = true, status = 200) {
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_API_BASE = API_BASE
+  const store = new Map<string, string>()
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      store.set(k, v)
+    },
+  })
+  vi.stubGlobal('crypto', { randomUUID: () => GENERATED_UUID })
 })
 
 afterEach(() => {
@@ -107,6 +116,7 @@ describe('recommend', () => {
         korean_check: true,
         free_check: false,
         excludeAppids: undefined,
+        clientId: GENERATED_UUID,
       }),
     })
     expect(result).toEqual(recResult)
@@ -126,6 +136,7 @@ describe('recommend', () => {
         korean_check: null,
         free_check: null,
         excludeAppids: undefined,
+        clientId: GENERATED_UUID,
       }),
     })
   })
@@ -144,6 +155,7 @@ describe('recommend', () => {
         korean_check: null,
         free_check: null,
         excludeAppids: undefined,
+        clientId: GENERATED_UUID,
       }),
     })
   })
@@ -162,6 +174,7 @@ describe('recommend', () => {
         korean_check: null,
         free_check: null,
         excludeAppids: [1, 2],
+        clientId: GENERATED_UUID,
       }),
     })
   })
@@ -185,6 +198,7 @@ describe('recommend', () => {
         korean_check: true,
         free_check: true,
         excludeAppids: undefined,
+        clientId: GENERATED_UUID,
         excludedTag: ['Horror'],
       }),
     })
@@ -204,6 +218,7 @@ describe('recommend', () => {
         korean_check: null,
         free_check: null,
         excludeAppids: undefined,
+        clientId: GENERATED_UUID,
         excludedTag: null,
       }),
     })
