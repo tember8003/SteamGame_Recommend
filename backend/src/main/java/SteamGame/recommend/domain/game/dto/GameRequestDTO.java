@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.game.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,7 @@ public class GameRequestDTO {
     private Boolean free_check;
     private String[] excludedTag;
     private Set<Long> excludeAppids;
+
+    @Size(max = 64)
+    private String clientId;
 }

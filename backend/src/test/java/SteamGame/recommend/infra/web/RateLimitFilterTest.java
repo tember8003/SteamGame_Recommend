@@ -3,9 +3,11 @@ package SteamGame.recommend.infra.web;
 import SteamGame.recommend.config.RateLimitProperties;
 import SteamGame.recommend.config.SecurityConfig;
 import SteamGame.recommend.controller.RecommendController;
+import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -30,6 +33,13 @@ class RateLimitFilterTest {
     @MockitoBean RecommendService recommendService;
     // RecommendController 가 MatchService 를 주입받으므로 슬라이스 컨텍스트에도 목이 필요하다
     @MockitoBean MatchService matchService;
+    @MockitoBean FeedbackSuppressionService suppressionService;
+
+    @BeforeEach
+    void stubSuppression() {
+        // 요청에 client_id 가 없어 억제는 no-op 이지만, 컨트롤러가 유효 제외 집합을 계산하므로 non-null 을 돌려줌
+        given(suppressionService.resolveExcludes(any(), any())).willReturn(Set.of());
+    }
 
     private RecommendationResultDTO dummy() {
         return new RecommendationResultDTO(List.of(), List.of(), List.of());
