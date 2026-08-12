@@ -15,6 +15,7 @@ import type {
   ReviewGuessResult,
   ReviewGuessStartResponse,
 } from './types'
+import { getClientId } from './clientId'
 
 // NEXT_PUBLIC_API_BASE 와 경로를 합쳐 완전한 요청 URL 을 만든다, feedback.ts 도 이 헬퍼를 재사용함
 export function apiUrl(path: string): string {
@@ -45,6 +46,7 @@ function recommendCommonBody(options: RecommendOptions) {
     korean_check: options.koreanCheck ?? null,
     free_check: options.freeCheck ?? null,
     excludeAppids: options.excludeAppids,
+    clientId: getClientId(),
   }
 }
 

@@ -7,6 +7,7 @@ import SteamGame.recommend.domain.game.dto.TextRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,10 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Set;
+import java.util.function.Function;
 
 @Slf4j
 @Tag(name = "recommend", description = "Game Recommendation API")
@@ -25,10 +30,30 @@ public class RecommendController {
 
     private final RecommendService recommendService;
     private final MatchService matchService;
+    private final FeedbackSuppressionService suppressionService;
 
-    public RecommendController(RecommendService recommendService, MatchService matchService) {
+    public RecommendController(RecommendService recommendService, MatchService matchService,
+                              FeedbackSuppressionService suppressionService) {
         this.recommendService = recommendService;
         this.matchService = matchService;
+        this.suppressionService = suppressionService;
+    }
+
+    // client_id 로 DOWN 을 병합한 제외 집합으로 호출하고, 억제가 실제로 더해졌는데 404 면 억제를 떼고 한 번 재시도함
+    // 클라이언트 자신의 제외나 태그 조건 때문에 원래 비는 경우는 재시도해도 같은 404 라 그대로 표면화됨
+    private RecommendationResultDTO withSuppressionFallback(String clientId, Set<Long> clientExcludes,
+                                                            Function<Set<Long>, RecommendationResultDTO> call) {
+        Set<Long> effective = suppressionService.resolveExcludes(clientId, clientExcludes);
+        int originalSize = (clientExcludes == null) ? 0 : clientExcludes.size();
+        boolean suppressed = effective.size() > originalSize;
+        try {
+            return call.apply(effective);
+        } catch (ResponseStatusException e) {
+            if (suppressed && e.getStatusCode().value() == 404) {
+                return call.apply(clientExcludes);
+            }
+            throw e;
+        }
     }
 
     @Operation(summary = "Tag-based random recommendation")
@@ -41,15 +66,16 @@ public class RecommendController {
 
             Boolean excludedCheck = request.getExcludedTag() != null;
 
-            RecommendationResultDTO recommendServiceGame = recommendService.findGame(
-                    request.getTags(),
-                    request.getReview(),
-                    request.getKorean_check(),
-                    request.getFree_check(),
-                    excludedCheck,
-                    request.getExcludedTag(),
-                    request.getExcludeAppids()
-            );
+            RecommendationResultDTO recommendServiceGame = withSuppressionFallback(
+                    request.getClientId(), request.getExcludeAppids(),
+                    ex -> recommendService.findGame(
+                            request.getTags(),
+                            request.getReview(),
+                            request.getKorean_check(),
+                            request.getFree_check(),
+                            excludedCheck,
+                            request.getExcludedTag(),
+                            ex));
 
             log.info("Tag-based random recommendation successful: found {} games", recommendServiceGame.getRecommendedGame().size());
             return ResponseEntity.ok(recommendServiceGame);
@@ -68,13 +94,14 @@ public class RecommendController {
             log.info("Text input-based recommendation request: text={}, review={}, korean={}, free={}",
                     dto.getText(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
 
-            RecommendationResultDTO result = recommendService.selectInfo(
-                    dto.getText(),
-                    dto.getReview(),
-                    dto.getKorean_check(),
-                    dto.getFree_check(),
-                    dto.getExcludeAppids()
-            );
+            RecommendationResultDTO result = withSuppressionFallback(
+                    dto.getClientId(), dto.getExcludeAppids(),
+                    ex -> recommendService.selectInfo(
+                            dto.getText(),
+                            dto.getReview(),
+                            dto.getKorean_check(),
+                            dto.getFree_check(),
+                            ex));
 
             log.info("Text input-based recommendation successful: extracted tags={}, found {} games",
                     result.getUsedTags(), result.getRecommendedGame().size());
@@ -94,13 +121,14 @@ public class RecommendController {
             log.info("Profile-based recommendation request: steamId={}, review={}, korean={}, free={}",
                     dto.getSteamId(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
 
-            RecommendationResultDTO result = recommendService.recommendByProfile(
-                    dto.getSteamId(),
-                    dto.getReview(),
-                    dto.getKorean_check(),
-                    dto.getFree_check(),
-                    dto.getExcludeAppids()
-            );
+            RecommendationResultDTO result = withSuppressionFallback(
+                    dto.getClientId(), dto.getExcludeAppids(),
+                    ex -> recommendService.recommendByProfile(
+                            dto.getSteamId(),
+                            dto.getReview(),
+                            dto.getKorean_check(),
+                            dto.getFree_check(),
+                            ex));
 
             log.info("Profile-based recommendation successful: steamId={}, extracted tags={}, found {} games",
                     dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
@@ -120,13 +148,14 @@ public class RecommendController {
             log.info("Recent play-based recommendation request: steamId={}, review={}, korean={}, free={}",
                     dto.getSteamId(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
 
-            RecommendationResultDTO result = recommendService.recommendByRecentPlay(
-                    dto.getSteamId(),
-                    dto.getReview(),
-                    dto.getKorean_check(),
-                    dto.getFree_check(),
-                    dto.getExcludeAppids()
-            );
+            RecommendationResultDTO result = withSuppressionFallback(
+                    dto.getClientId(), dto.getExcludeAppids(),
+                    ex -> recommendService.recommendByRecentPlay(
+                            dto.getSteamId(),
+                            dto.getReview(),
+                            dto.getKorean_check(),
+                            dto.getFree_check(),
+                            ex));
 
             log.info("Recent play-based recommendation successful: steamId={}, extracted tags={}, found {} games",
                     dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
@@ -146,13 +175,14 @@ public class RecommendController {
             log.info("Similar game recommendation request: gameName={}, review={}, korean={}, free={}",
                     dto.getGameName(), dto.getReview(), dto.getKorean_check(), dto.getFree_check());
 
-            RecommendationResultDTO result = recommendService.recommendBySimilarGame(
-                    dto.getGameName(),
-                    dto.getReview(),
-                    dto.getKorean_check(),
-                    dto.getFree_check(),
-                    dto.getExcludeAppids()
-            );
+            RecommendationResultDTO result = withSuppressionFallback(
+                    dto.getClientId(), dto.getExcludeAppids(),
+                    ex -> recommendService.recommendBySimilarGame(
+                            dto.getGameName(),
+                            dto.getReview(),
+                            dto.getKorean_check(),
+                            dto.getFree_check(),
+                            ex));
 
             log.info("Similar game recommendation successful: gameName={}, extracted tags={}, found {} games\"",
                     dto.getGameName(), result.getUsedTags(), result.getRecommendedGame().size());

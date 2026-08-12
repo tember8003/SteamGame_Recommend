@@ -11,6 +11,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -59,5 +61,28 @@ class RecommendationFeedbackRepositoryTest extends PostgresTestBase {
                 "INSERT INTO recommendation_feedback (client_id, appid, context, signal) VALUES (?,?,?,?)",
                 "c", 570L, "NOPE", "UP"))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void findAppidsByClientIdAndSignal_returnsDistinctDownAppids_forThatClientOnly() {
+        saveFeedback("client-1", 570L, FeedbackSignal.DOWN);
+        saveFeedback("client-1", 570L, FeedbackSignal.DOWN);   // 중복은 하나로 접힘
+        saveFeedback("client-1", 730L, FeedbackSignal.DOWN);
+        saveFeedback("client-1", 220L, FeedbackSignal.UP);     // 다른 신호는 빠짐
+        saveFeedback("client-1", 240L, FeedbackSignal.CLICK);  // 다른 신호는 빠짐
+        saveFeedback("client-2", 999L, FeedbackSignal.DOWN);   // 다른 클라는 빠짐
+
+        List<Long> down = repository.findAppidsByClientIdAndSignal("client-1", FeedbackSignal.DOWN);
+
+        assertThat(down).containsExactlyInAnyOrder(570L, 730L);
+    }
+
+    private void saveFeedback(String clientId, long appid, FeedbackSignal signal) {
+        RecommendationFeedback f = new RecommendationFeedback();
+        f.setClientId(clientId);
+        f.setAppid(appid);
+        f.setContext(FeedbackContext.INPUT);
+        f.setSignal(signal);
+        repository.save(f);
     }
 }

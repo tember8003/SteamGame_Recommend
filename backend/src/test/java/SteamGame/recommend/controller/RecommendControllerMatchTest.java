@@ -6,6 +6,7 @@ import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
+import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import SteamGame.recommend.infra.web.ClientIpResolver;
@@ -35,6 +36,7 @@ class RecommendControllerMatchTest {
     @Autowired MockMvc mvc;
     @MockitoBean MatchService matchService;
     @MockitoBean RecommendService recommendService;
+    @MockitoBean FeedbackSuppressionService suppressionService;
 
     @Test
     void validRequestReturns200WithShape() throws Exception {
