@@ -11,14 +11,19 @@ import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
+import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
+import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiEmbeddingService;
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
+import SteamGame.recommend.infra.embedding.EmbeddingRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,8 +45,11 @@ class MatchServiceTest {
     TagRepository tagRepository = mock(TagRepository.class);
     ExplanationBuilder explanationBuilder = new ExplanationBuilder();
     EmbeddingProperties props = new EmbeddingProperties();
+    RecommendationFeedbackRepository feedbackRepository = mock(RecommendationFeedbackRepository.class);
+    EmbeddingRepository embeddingRepository = mock(EmbeddingRepository.class);
 
-    MatchService service = new MatchService(resolver, gameService, embed, explanationBuilder, props, reviewRepository, tagRepository);
+    MatchService service = new MatchService(resolver, gameService, embed, explanationBuilder, props,
+            reviewRepository, tagRepository, feedbackRepository, embeddingRepository);
 
     @Test
     void usesQualityPathAndFlagsMoodUnavailableWhenEmbeddingNull() {
@@ -161,6 +169,154 @@ class MatchServiceTest {
         List<Long> resultAppids = r.games().stream().map(SteamAppDTO::getAppid).toList();
         assertThat(resultAppids).hasSize(4);
         assertThat(resultAppids).contains(900L, 901L);
+    }
+
+    @Test
+    void noClientId_skipsTaste_neverQueriesFeedback() {
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+
+        MatchResultDTO r = service.recommend(new MatchRequestDTO()); // clientId 없음
+
+        assertThat(r.games()).hasSize(4);
+        verify(feedbackRepository, never()).findAppidsByClientIdAndSignal(any(), any());
+        verify(embeddingRepository, never()).findEmbeddingsByAppids(any());
+    }
+
+    @Test
+    void emptyUpFeedback_fallsBackToUniform() {
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of());
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(r.games()).hasSize(4);
+        verify(embeddingRepository, never()).findMeanEmbeddingByAppids(any());
+        verify(embeddingRepository, never()).findEmbeddingsByAppids(any());
+    }
+
+    @Test
+    void nullMeanEmbedding_fallsBackToUniform() {
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(embeddingRepository.findMeanEmbeddingByAppids(List.of(900L))).thenReturn(null);
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(r.games()).hasSize(4);
+        verify(embeddingRepository, never()).findEmbeddingsByAppids(any());
+    }
+
+    @Test
+    void tasteBoost_tinyTau_picksNearestCandidate() {
+        when(resolver.resolve(any())).thenReturn(emptyCriteria()); // sessionLength 없음 → 전체 풀에서 뽑음
+        List<Game> pool = new ArrayList<>();
+        pool.add(game(501L));
+        pool.add(game(502L));
+        pool.add(game(503L));
+        pool.add(game(504L));
+        pool.add(game(505L));
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool);
+
+        props.setResultSize(1);   // need=1 로 좁혀 결정성 확보
+        props.setTasteTau(1e-6);  // 그리디
+
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(embeddingRepository.findMeanEmbeddingByAppids(List.of(900L)))
+                .thenReturn(new float[]{1f, 0f});
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(501L, new float[]{1f, 0f});   // cos 1.0
+        vecs.put(502L, new float[]{0f, 1f});   // cos 0.0
+        vecs.put(503L, new float[]{-1f, 0f});  // cos -1.0
+        // 504, 505 임베딩 없음 → cos 0
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
+        assertThat(ids).containsExactly(501L);
+    }
+
+    @Test
+    void tasteBoost_resultStaysWithinPool() {
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        List<Game> pool = pool(5, 600L); // 600..604
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool);
+        props.setTasteTau(0.25);
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(embeddingRepository.findMeanEmbeddingByAppids(List.of(900L)))
+                .thenReturn(new float[]{1f, 0f});
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(new HashMap<>());
+        service.useRandom(new Random(11));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
+        assertThat(ids).hasSize(4);
+        assertThat(List.of(600L, 601L, 602L, 603L, 604L)).containsAll(ids);
+    }
+
+    @Test
+    void tasteBoost_withSessionLength_picksNearestFromMatchedBucket() {
+        // 세션길이 넛지와 취향 가중 합성, matched 버킷 우선 + 그 안에서 취향 최근접이 뽑혀야 함
+        RecommendationCriteria criteria = RecommendationCriteria.builder().sessionLength(SessionLength.SHORT).build();
+        when(resolver.resolve(any())).thenReturn(criteria);
+
+        List<Game> matched = new ArrayList<>();
+        matched.add(game(700L));
+        matched.add(game(701L));
+        matched.add(game(702L));
+        List<Game> mismatched = new ArrayList<>();
+        mismatched.add(game(710L));
+        mismatched.add(game(711L));
+        List<Game> wholePool = new ArrayList<>();
+        wholePool.addAll(matched);
+        wholePool.addAll(mismatched);
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(wholePool);
+
+        List<Review> reviews = new ArrayList<>();
+        for (Game g : matched) {
+            reviews.add(review(g.getAppid(), new BigDecimal("5")));    // SHORT 버킷
+        }
+        for (Game g : mismatched) {
+            reviews.add(review(g.getAppid(), new BigDecimal("60")));   // SHORT 아님
+        }
+        when(reviewRepository.findByAppidIn(any())).thenReturn(reviews);
+
+        props.setResultSize(1);   // need=1 로 좁혀 matched 버킷만으로 채워짐
+        props.setTasteTau(1e-6);  // 그리디
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(embeddingRepository.findMeanEmbeddingByAppids(List.of(900L)))
+                .thenReturn(new float[]{1f, 0f});
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(700L, new float[]{0f, 1f});    // cos 0
+        vecs.put(701L, new float[]{1f, 0f});    // cos 1, matched 중 최근접
+        vecs.put(702L, new float[]{-1f, 0f});   // cos -1
+        vecs.put(710L, new float[]{1f, 0f});    // mismatched 최근접이지만 버킷 우선이라 안 뽑힘
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        service.useRandom(new Random(3));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
+        assertThat(ids).containsExactly(701L);
     }
 
     private List<String> codes(List<ExplanationItem> items) {
