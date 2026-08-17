@@ -2,6 +2,7 @@ package SteamGame.recommend.domain.recommendation.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,4 +22,5 @@ public class MatchRequestDTO {
     private Boolean korean;
     private Boolean free;
     private Set<Long> excludeAppids;
+    @Size(max = 64) private String clientId;      // 익명 기기 로컬 키, 없으면 취향 부스트를 적용하지 않는다
 }

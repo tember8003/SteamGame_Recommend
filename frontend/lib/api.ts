@@ -7,6 +7,8 @@ import type {
   ChoiceStartResponse,
   GameSearchResult,
   GraphNode,
+  MatchOptions,
+  MatchResult,
   NeighborsResponse,
   RecommendationResult,
   RecommendOptions,
@@ -81,6 +83,20 @@ export const recommendRandom = (tags: string[], options: RecommendRandomOptions)
     tags,
     ...recommendCommonBody(options),
     excludedTag: options.excludedTag ?? null,
+  })
+
+// /match 는 필드명이 MatchRequestDTO 와 달라 recommendCommonBody 를 쓰지 않고 자체 바디를 만든다
+export const recommendMatch = (options: MatchOptions) =>
+  postJson<MatchResult>('/api/recommend/match', {
+    rawText: options.rawText,
+    sessionLength: options.sessionLength ?? null,
+    budgetUsd: options.budgetUsd ?? null,
+    players: options.players ?? null,
+    review: options.review,
+    korean: options.korean ?? null,
+    free: options.free ?? null,
+    excludeAppids: options.excludeAppids,
+    clientId: getClientId(),
   })
 
 // ── choice ──

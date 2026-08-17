@@ -1,9 +1,12 @@
 package SteamGame.recommend.infra.embedding;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,5 +58,20 @@ public class EmbeddingRepository {
         return jdbc.query(sql,
                 rs -> rs.next() ? VectorLiterals.parse(rs.getString(1)) : null,
                 appids.toArray());
+    }
+
+    // 여러 appid 의 임베딩을 한 번에 읽음, 임베딩 없는 appid 는 맵에서 빠짐
+    // 람다는 RowCallbackHandler 로 캐스팅해야 함, 안 하면 값 반환 람다가 ResultSetExtractor 로 해석돼 행 커서 이전에 1회만 호출됨
+    public Map<Long, float[]> findEmbeddingsByAppids(List<Long> appids) {
+        if (appids == null || appids.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = appids.stream().map(x -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT appid, embedding::text FROM games WHERE appid IN (" + placeholders
+                + ") AND embedding IS NOT NULL";
+        Map<Long, float[]> out = new HashMap<>();
+        jdbc.query(sql, (RowCallbackHandler) rs ->
+                out.put(rs.getLong(1), VectorLiterals.parse(rs.getString(2))), appids.toArray());
+        return out;
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,6 +75,28 @@ class EmbeddingRepositoryTest extends PostgresTestBase {
         game(320L, "X");
         assertThat(repo.findMeanEmbeddingByAppids(List.of(320L))).isNull();
         assertThat(repo.findMeanEmbeddingByAppids(List.of())).isNull();
+    }
+
+    @Test
+    void findEmbeddings_returnsVectors_skipsUnembedded() {
+        game(340L, "A");
+        game(341L, "B");
+        game(342L, "NoEmb");
+        repo.updateEmbedding(340L, vec(1.0, 2.0));
+        repo.updateEmbedding(341L, vec(3.0, 4.0));
+        // 342 는 임베딩 없음 → 맵에서 빠짐
+
+        Map<Long, float[]> map = repo.findEmbeddingsByAppids(List.of(340L, 341L, 342L));
+
+        assertThat(map).containsOnlyKeys(340L, 341L);
+        assertThat(map.get(340L)[0]).isEqualTo(1.0f);
+        assertThat(map.get(340L)[1]).isEqualTo(2.0f);
+        assertThat(map.get(341L)[0]).isEqualTo(3.0f);
+    }
+
+    @Test
+    void findEmbeddings_emptyInput_returnsEmptyMap() {
+        assertThat(repo.findEmbeddingsByAppids(List.of())).isEmpty();
     }
 
     @Test

@@ -66,6 +66,43 @@ export interface RecommendRandomOptions extends RecommendOptions {
   excludedTag?: string[] | null
 }
 
+// ── match ──
+
+export interface ExplanationItem {
+  code: string
+  params: Record<string, unknown>
+}
+
+export interface MatchExplanation {
+  reasons: ExplanationItem[]
+  caveats: ExplanationItem[]
+}
+
+// 응답 criteria 중 화면이 실제로 읽는 필드만 명시함
+export interface MatchCriteria {
+  nlParseFailed: boolean
+}
+
+export interface MatchResult {
+  criteria: MatchCriteria
+  games: SteamApp[]
+  reviews: ReviewResponse[]
+  explanations: MatchExplanation[]
+  shortfall: boolean
+}
+
+// /match 요청 옵션, 필드명은 MatchRequestDTO 와 동일하게 맞춤
+export interface MatchOptions {
+  rawText: string
+  sessionLength?: 'SHORT' | 'MEDIUM' | 'LONG' | null
+  budgetUsd?: number | null
+  players?: number | null
+  review: number
+  korean?: boolean | null
+  free?: boolean | null
+  excludeAppids?: number[]
+}
+
 // ── choice ──
 
 export interface ChoiceRound {
@@ -160,7 +197,7 @@ export interface ReviewGuessStatus {
 // ── feedback ──
 
 // 피드백이 발생한 추천 플로우를 나타냄
-export type FeedbackContext = 'INPUT' | 'PROFILE' | 'RECENT' | 'SIMILAR' | 'RANDOM'
+export type FeedbackContext = 'INPUT' | 'PROFILE' | 'RECENT' | 'SIMILAR' | 'RANDOM' | 'MATCH'
 
 // 추천 반응 신호, CLICK 은 스토어 이동(약한 양성 후보)으로 UP 과 구분함
 export type FeedbackSignal = 'UP' | 'DOWN' | 'CLICK'

@@ -1,0 +1,115 @@
+/* 리뷰 패널 */
+.reviewSection {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+
+.reviewHeader h4 {
+  color: var(--accent-steam);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.reviewStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 10px;
+}
+
+.statItem {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-steam);
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.ratingBar {
+  height: 5px;
+  background: var(--glass-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.ratingFill {
+  height: 100%;
+  background: var(--accent-steam);
+  border-radius: var(--radius-pill);
+}
+
+.noReviewData {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 10px 0;
+}
+
+/* 리뷰 원문(더보기 토글), random 페이지만 씀 */
+.reviewTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.reviewTextSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewTextHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.positive {
+  color: #6bcf7f;
+}
+
+.negative {
+  color: #f4877a;
+}
+
+.reviewTextContent {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.reviewTextToggle {
+  display: block;
+  background: none;
+  border: none;
+  color: var(--accent-steam);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 0;
+}
+
+.reviewTextToggle:hover {
+  text-decoration: underline;
+}

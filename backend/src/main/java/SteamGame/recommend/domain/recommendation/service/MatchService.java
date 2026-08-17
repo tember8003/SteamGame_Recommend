@@ -13,9 +13,13 @@ import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.util.VolumeBuckets;
+import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
+import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiEmbeddingService;
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
+import SteamGame.recommend.infra.embedding.EmbeddingRepository;
+import SteamGame.recommend.infra.embedding.TasteWeightedSampler;
 import SteamGame.recommend.infra.embedding.VectorSampler;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +48,8 @@ public class MatchService {
     private final EmbeddingProperties props;
     private final ReviewRepository reviewRepository;
     private final TagRepository tagRepository;
+    private final RecommendationFeedbackRepository feedbackRepository;
+    private final EmbeddingRepository embeddingRepository;
 
     // 운영 기본값은 매 호출 새 Random, 테스트는 useRandom 으로 시드를 주입해 샘플링을 결정적으로 만듦
     private Random random = new Random();
@@ -54,7 +60,9 @@ public class MatchService {
                          ExplanationBuilder explanationBuilder,
                          EmbeddingProperties props,
                          ReviewRepository reviewRepository,
-                         TagRepository tagRepository) {
+                         TagRepository tagRepository,
+                         RecommendationFeedbackRepository feedbackRepository,
+                         EmbeddingRepository embeddingRepository) {
         this.resolver = resolver;
         this.gameService = gameService;
         this.embeddingService = embeddingService;
@@ -62,6 +70,8 @@ public class MatchService {
         this.props = props;
         this.reviewRepository = reviewRepository;
         this.tagRepository = tagRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.embeddingRepository = embeddingRepository;
     }
 
     // 같은 패키지 테스트 전용 통로, 운영 경로에서는 호출하지 않음
@@ -79,7 +89,9 @@ public class MatchService {
         Map<Long, Review> reviewMap = new HashMap<>();
         loadReviews(reviewMap, appidsOfGames(initialPool.games()));
 
-        List<Selected> selected = sampleWithVolumeNudge(initialPool.games(), criteria, need, reviewMap, initialPool.moodPath());
+        float[] taste = resolveTasteVector(req.getClientId());
+        List<Selected> selected = sampleWithVolumeNudge(initialPool.games(), criteria, need, reviewMap,
+                initialPool.moodPath(), taste);
 
         // 폴백 사다리 전체에서 이미 뽑힌 appid 를 누적해 다음 조회의 excludeAppids 에 반영함
         Set<Long> pickedAppids = selected.stream()
@@ -126,8 +138,14 @@ public class MatchService {
     }
 
     // 세션 길이가 지정되면 리뷰 볼륨 버킷이 맞는 후보를 먼저 샘플하고 모자라면 불일치에서 채움
+    // taste 가 있으면 각 버킷을 취향 가중으로 뽑고 없으면 균일로 뽑음
     private List<Selected> sampleWithVolumeNudge(List<Game> pool, RecommendationCriteria criteria, int need,
-                                                  Map<Long, Review> reviewMap, boolean moodPath) {
+                                                  Map<Long, Review> reviewMap, boolean moodPath, float[] taste) {
+        // 취향이 있을 때만 풀 후보 임베딩을 배치로 읽음, 없으면 빈 맵
+        Map<Long, float[]> vecs = (taste == null)
+                ? Map.of()
+                : embeddingRepository.findEmbeddingsByAppids(appidsOfGames(pool));
+
         List<Game> chosen;
         if (criteria.getSessionLength() != null) {
             List<Game> matched = new ArrayList<>();
@@ -141,12 +159,12 @@ public class MatchService {
                     unmatched.add(game);
                 }
             }
-            chosen = new ArrayList<>(VectorSampler.sample(matched, need, random));
+            chosen = new ArrayList<>(pickFromPool(matched, need, taste, vecs, random));
             if (chosen.size() < need) {
-                chosen.addAll(VectorSampler.sample(unmatched, need - chosen.size(), random));
+                chosen.addAll(pickFromPool(unmatched, need - chosen.size(), taste, vecs, random));
             }
         } else {
-            chosen = VectorSampler.sample(pool, need, random);
+            chosen = pickFromPool(pool, need, taste, vecs, random);
         }
 
         List<Selected> result = new ArrayList<>();
@@ -154,6 +172,28 @@ public class MatchService {
             result.add(new Selected(game, moodPath, false));
         }
         return result;
+    }
+
+    // taste 가 null 이면 균일 VectorSampler, 아니면 취향 가중 TasteWeightedSampler 로 need 개를 뽑음
+    private List<Game> pickFromPool(List<Game> bucket, int need, float[] taste,
+                                    Map<Long, float[]> vecs, Random rnd) {
+        if (taste == null) {
+            return VectorSampler.sample(bucket, need, rnd);
+        }
+        return TasteWeightedSampler.sample(bucket, g -> vecs.get(g.getAppid()), taste, need,
+                props.getTasteTau(), rnd);
+    }
+
+    // client_id 가 없거나 UP 이 없거나 매칭 임베딩이 없으면 null 을 돌려줌, 호출부는 null 이면 균일 샘플로 감
+    private float[] resolveTasteVector(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            return null;
+        }
+        List<Long> up = feedbackRepository.findAppidsByClientIdAndSignal(clientId, FeedbackSignal.UP);
+        if (up.isEmpty()) {
+            return null;
+        }
+        return embeddingRepository.findMeanEmbeddingByAppids(up);
     }
 
     // 후보에서 아직 안 뽑힌 appid 만 need 에 닿을 때까지 채워 넣음, moodPath 는 topup 경로라 항상 거짓임

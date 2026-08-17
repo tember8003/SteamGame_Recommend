@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import GlassPanel from "./ui/GlassPanel";
-import type { FeedbackContext, SteamApp } from "@/lib/types";
+import type { FeedbackContext, MatchExplanation, SteamApp } from "@/lib/types";
 import { sgrFeedback } from "@/lib/feedback";
+import { describeReason, describeCaveat } from "@/lib/explanations";
 import { siSteam } from "simple-icons";
 import styles from "./GameCard.module.css";
 
@@ -16,16 +17,28 @@ export type GameCardFeedback = {
 
 // 게임 한 편을 보여주는 기본 카드, 이름, 설명은 항상 텍스트 렌더만 써서 XSS 를 막음
 // feedback prop 을 주면 좋아요,싫어요 버튼과 스토어 링크 클릭 훅이 추가로 붙음(뒤호환, 없으면 기존과 동일)
+// explanation prop 을 주면 사유 칩과 주의점 문구가 붙음(뒤호환, 없으면 기존과 동일)
 export default function GameCard({
   game,
   className,
   feedback,
+  explanation,
 }: {
   game: SteamApp;
   className?: string;
   feedback?: GameCardFeedback;
+  explanation?: MatchExplanation;
 }) {
   const cls = [styles.card, className].filter(Boolean).join(" ");
+
+  // 코드를 문구로 옮기고 미지 코드(null)는 걸러냄, 문구는 항상 텍스트 렌더만 씀
+  const reasonTexts = (explanation?.reasons ?? [])
+    .map(describeReason)
+    .filter((t): t is string => t !== null);
+  const caveatTexts = (explanation?.caveats ?? [])
+    .map(describeCaveat)
+    .filter((t): t is string => t !== null);
+  const hasExplanation = reasonTexts.length > 0 || caveatTexts.length > 0;
 
   // 응답을 기다리지 않고 눌린 버튼을 바로 표시하기 위한 로컬 상태, 서버 반영 여부와 무관하게 클릭 즉시 갱신함
   const [reaction, setReaction] = useState<"UP" | "DOWN" | null>(null);
@@ -66,6 +79,29 @@ export default function GameCard({
 
         {game.shortDescription ? (
           <p className={styles.desc}>{game.shortDescription}</p>
+        ) : null}
+
+        {hasExplanation ? (
+          <div className={styles.explanation}>
+            {reasonTexts.length > 0 ? (
+              <ul className={styles.reasonChips}>
+                {reasonTexts.map((t, i) => (
+                  <li key={i} className={styles.reasonChip}>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {caveatTexts.length > 0 ? (
+              <ul className={styles.caveats}>
+                {caveatTexts.map((t, i) => (
+                  <li key={i} className={styles.caveat}>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         ) : null}
 
         {feedback ? (

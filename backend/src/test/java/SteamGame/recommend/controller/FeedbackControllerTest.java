@@ -58,6 +58,18 @@ class FeedbackControllerTest {
     }
 
     @Test
+    void matchContext_returns204() throws Exception {
+        mockMvc.perform(post("/api/recommend/feedback")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"c1\",\"appid\":570,\"context\":\"MATCH\",\"signal\":\"UP\",\"rankPosition\":0}"))
+                .andExpect(status().isNoContent());
+
+        ArgumentCaptor<FeedbackRequestDTO> captor = ArgumentCaptor.forClass(FeedbackRequestDTO.class);
+        verify(feedbackService).record(captor.capture());
+        assertThat(captor.getValue().getContext()).isEqualTo(FeedbackContext.MATCH);
+    }
+
+    @Test
     void invalidSignal_returns400() throws Exception {
         mockMvc.perform(post("/api/recommend/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
