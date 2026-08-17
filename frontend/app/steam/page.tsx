@@ -64,6 +64,18 @@ const RECOMMENDATION_CARDS: FeatureCard[] = [
     ),
   },
   {
+    title: "Requirement Match",
+    description: "Describe what you want and set constraints to get matched picks with reasons",
+    href: "/steam/match",
+    cta: "Start",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+        <path d="M4 7h10M4 12h16M4 17h7" strokeLinecap="round" />
+        <circle cx="18" cy="7" r="1.4" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
     title: "Profile-Based",
     description: "Analyze your gaming profile to match your playing style",
     href: "/steam/profile",

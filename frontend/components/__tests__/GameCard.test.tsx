@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import GameCard from "../GameCard";
-import type { SteamApp } from "@/lib/types";
+import type { MatchExplanation, SteamApp } from "@/lib/types";
 
 // sgrFeedback 은 실제 fetch 를 태우므로 모듈째 목킹해 호출 인자만 검증함
 vi.mock("@/lib/feedback", () => ({
@@ -116,5 +116,39 @@ describe("GameCard", () => {
 
     expect(sgrFeedback).toHaveBeenCalledWith(game.appid, "CLICK", "INPUT", 0, undefined);
     expect(notPrevented).toBe(true);
+  });
+});
+
+const EXPLANATION: MatchExplanation = {
+  reasons: [
+    { code: "IS_FREE", params: {} },
+    { code: "WELL_REVIEWED", params: { positivePct: 92, reviewCount: 12000 } },
+  ],
+  caveats: [{ code: "MOOD_UNAVAILABLE", params: {} }],
+};
+
+describe("GameCard 설명", () => {
+  it("explanation 이 없으면 설명 영역을 렌더하지 않음", () => {
+    render(<GameCard game={BASE_GAME} />);
+    expect(screen.queryByText("Free to play")).not.toBeInTheDocument();
+  });
+
+  it("explanation 이 있으면 사유 칩과 주의점 문구를 렌더함", () => {
+    render(<GameCard game={BASE_GAME} explanation={EXPLANATION} />);
+    expect(screen.getByText("Free to play")).toBeInTheDocument();
+    expect(screen.getByText("92% positive from 12000 reviews")).toBeInTheDocument();
+    expect(
+      screen.getByText("Could not match your mood, showing top-quality picks instead")
+    ).toBeInTheDocument();
+  });
+
+  it("미지 코드는 건너뛰고 화면을 깨지 않음", () => {
+    render(
+      <GameCard
+        game={BASE_GAME}
+        explanation={{ reasons: [{ code: "NOPE", params: {} }], caveats: [] }}
+      />
+    );
+    expect(screen.getByText("Portal")).toBeInTheDocument();
   });
 });

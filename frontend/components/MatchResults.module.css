@@ -1,0 +1,63 @@
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* need 를 다 못 채웠을 때의 흐린 안내 한 줄 */
+.shortfall {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendAgainRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.recommendAgainBtn {
+  padding: 11px 26px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: var(--btn-steam);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.recommendAgainBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.recommendAgainBtn:focus-visible {
+  outline: 2px solid var(--accent-steam);
+  outline-offset: 2px;
+}
+
+.recommendAgainBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recommendAgainBtn {
+    transition: none;
+  }
+}

@@ -56,6 +56,45 @@
   overflow: hidden;
 }
 
+/* match 결과의 사유 칩과 주의점 문구, feedback prop 과 마찬가지로 있을 때만 렌더됨 */
+.explanation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.reasonChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.reasonChip {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(74, 158, 255, 0.14);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  color: var(--accent-steam);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.caveats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: none;
+}
+
+.caveat {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .feedbackRow {
   display: flex;
   gap: 8px;
