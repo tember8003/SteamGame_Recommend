@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
+import { useT } from "@/lib/i18n/useT";
 import { recommendInput } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
@@ -30,6 +31,7 @@ function isRateLimitError(error: unknown): boolean {
 // 원본 input.html(텍스트로 게임 취향을 설명하면 추천을 받는 화면)을 /steam/input 라우트로 옮김
 // useSearchParams 를 쓰므로 Suspense 경계 안에서만 렌더되어야 함(default export 참고)
 function InputRecommendContent() {
+  const t = useT();
   const searchParams = useSearchParams();
   // 랜딩 ConciergeBar 가 넘긴 ?q= 를 입력창 초기값으로만 씀(지연 초기화라 이후 searchParams 변경엔 반응하지 않음,
   // 자동 제출은 하지 않고 사용자가 버튼을 눌러야 추천이 돎)
@@ -96,25 +98,25 @@ function InputRecommendContent() {
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Find Game Tags with Gemini</h1>
-          <p className={styles.subtitle}>Describe your desired game features and find the perfect game!</p>
+          <h1 className={styles.title}>{t("input.title")}</h1>
+          <p className={styles.subtitle}>{t("input.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>
-            <h2 className={styles.panelTitle}>Custom Input</h2>
+            <h2 className={styles.panelTitle}>{t("input.panelTitle")}</h2>
 
-            <div className={styles.warning}>Must enter at least 3 characters to work!</div>
+            <div className={styles.warning}>{t("input.warning")}</div>
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="input-text">
-                Game Features
+                {t("input.featuresLabel")}
               </label>
               <textarea
                 id="input-text"
                 ref={textRef}
                 className={`${styles.textarea} ${invalid ? styles.invalid : ""}`}
-                placeholder="Enter your desired game features (e.g., 'fantasy RPG with magic system')"
+                placeholder={t("input.placeholder")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -122,9 +124,9 @@ function InputRecommendContent() {
             </div>
 
             <div className={styles.controls}>
-              <h3 className={styles.controlsTitle}>Options</h3>
+              <h3 className={styles.controlsTitle}>{t("common.options")}</h3>
               <div className={styles.controlItem}>
-                <label htmlFor="input-review">Review Count</label>
+                <label htmlFor="input-review">{t("common.reviewCount")}</label>
                 <input
                   type="number"
                   id="input-review"
@@ -135,7 +137,7 @@ function InputRecommendContent() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="input-korean">Korean Support Only</label>
+                <label htmlFor="input-korean">{t("common.koreanSupportOnly")}</label>
                 <input
                   type="checkbox"
                   id="input-korean"
@@ -144,7 +146,7 @@ function InputRecommendContent() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="input-free">Free Games Only</label>
+                <label htmlFor="input-free">{t("common.freeGamesOnly")}</label>
                 <input
                   type="checkbox"
                   id="input-free"
@@ -156,30 +158,30 @@ function InputRecommendContent() {
 
             <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
               {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-              Get Recommendations
+              {t("common.getRecommendations")}
             </button>
           </GlassPanel>
 
           <GlassPanel as="section" className={styles.resultPanel}>
             <div className={styles.resultHeader}>
-              <h2 className={styles.resultTitle}>Recommended Games</h2>
-              <p className={styles.resultSubtitle}>AI-powered game recommendations based on your preferences</p>
+              <h2 className={styles.resultTitle}>{t("input.resultTitle")}</h2>
+              <p className={styles.resultSubtitle}>{t("input.resultSubtitle")}</p>
             </div>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please try again later.</p>
+                <h3>{t("common.errorTitle")}</h3>
+                <p>{t("common.tryAgainLater")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("common.rateTitle")}</h3>
+                <p>{t("common.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No games found</h3>
-                <p>Try different keywords!</p>
+                <h3>{t("common.noGames")}</h3>
+                <p>{t("input.noGamesHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <RecommendResults
@@ -193,9 +195,9 @@ function InputRecommendContent() {
               />
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to Find Games</h3>
-                <p>Enter your game preferences and click &quot;Get Recommendations&quot; to start!</p>
-                <p>Please configure your Gemini API key to use this feature.</p>
+                <h3>{t("input.ready")}</h3>
+                <p>{t("input.readyHint1")}</p>
+                <p>{t("input.readyHint2")}</p>
               </div>
             )}
           </GlassPanel>
@@ -207,12 +209,13 @@ function InputRecommendContent() {
 
 // 로딩 표시(기존 page/main/notice 토큰 재사용, 새 CSS 규칙 없음)
 function InputRecommendFallback() {
+  const t = useT();
   return (
     <div className={styles.page}>
       <Header />
       <main className={styles.main}>
         <div className={styles.notice}>
-          <h3>Loading…</h3>
+          <h3>{t("common.loading")}</h3>
         </div>
       </main>
     </div>

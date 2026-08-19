@@ -5,6 +5,7 @@ import GlassPanel from "./ui/GlassPanel";
 import type { FeedbackContext, MatchExplanation, SteamApp } from "@/lib/types";
 import { sgrFeedback } from "@/lib/feedback";
 import { describeReason, describeCaveat } from "@/lib/explanations";
+import { useT } from "@/lib/i18n/useT";
 import { siSteam } from "simple-icons";
 import styles from "./GameCard.module.css";
 
@@ -31,13 +32,15 @@ export default function GameCard({
 }) {
   const cls = [styles.card, className].filter(Boolean).join(" ");
 
+  const t = useT();
+
   // 코드를 문구로 옮기고 미지 코드(null)는 걸러냄, 문구는 항상 텍스트 렌더만 씀
   const reasonTexts = (explanation?.reasons ?? [])
-    .map(describeReason)
-    .filter((t): t is string => t !== null);
+    .map((item) => describeReason(item, t))
+    .filter((v): v is string => v !== null);
   const caveatTexts = (explanation?.caveats ?? [])
-    .map(describeCaveat)
-    .filter((t): t is string => t !== null);
+    .map((item) => describeCaveat(item, t))
+    .filter((v): v is string => v !== null);
   const hasExplanation = reasonTexts.length > 0 || caveatTexts.length > 0;
 
   // 응답을 기다리지 않고 눌린 버튼을 바로 표시하기 위한 로컬 상태, 서버 반영 여부와 무관하게 클릭 즉시 갱신함
@@ -85,18 +88,18 @@ export default function GameCard({
           <div className={styles.explanation}>
             {reasonTexts.length > 0 ? (
               <ul className={styles.reasonChips}>
-                {reasonTexts.map((t, i) => (
+                {reasonTexts.map((text, i) => (
                   <li key={i} className={styles.reasonChip}>
-                    {t}
+                    {text}
                   </li>
                 ))}
               </ul>
             ) : null}
             {caveatTexts.length > 0 ? (
               <ul className={styles.caveats}>
-                {caveatTexts.map((t, i) => (
+                {caveatTexts.map((text, i) => (
                   <li key={i} className={styles.caveat}>
-                    {t}
+                    {text}
                   </li>
                 ))}
               </ul>
@@ -115,7 +118,7 @@ export default function GameCard({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              aria-label="Like this game"
+              aria-label={t("gameCard.like")}
               aria-pressed={reaction === "UP"}
               onClick={() => sendReaction("UP")}
             >
@@ -133,7 +136,7 @@ export default function GameCard({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              aria-label="Dislike this game"
+              aria-label={t("gameCard.dislike")}
               aria-pressed={reaction === "DOWN"}
               onClick={() => sendReaction("DOWN")}
             >
@@ -161,7 +164,7 @@ export default function GameCard({
             >
               <path d={siSteam.path} />
             </svg>
-            View on Steam
+            {t("gameCard.viewOnSteam")}
           </a>
         ) : null}
       </div>

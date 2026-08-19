@@ -3,14 +3,16 @@
 
 export interface RoundProgress {
   percent: number
-  label: string
+  roundNumber: number
+  totalRounds: number
 }
 
-// totalRounds 가 0 이하면(세션이 아직 없거나 빈 응답) 퍼센트는 0, 라벨은 라운드 번호만 남김
+// totalRounds 가 0 이하면(세션이 아직 없거나 빈 응답) 퍼센트는 0, 라운드 번호만 유효함
+// 문구는 언어별로 달라 이 함수는 숫자만 내고 라벨 조립은 화면이 맡는다
 export function roundProgress(roundIndex: number, totalRounds: number): RoundProgress {
   if (totalRounds <= 0) {
-    return { percent: 0, label: `Round ${roundIndex + 1}` }
+    return { percent: 0, roundNumber: roundIndex + 1, totalRounds: 0 }
   }
   const percent = ((roundIndex + 1) / totalRounds) * 100
-  return { percent, label: `Round ${roundIndex + 1} of ${totalRounds}` }
+  return { percent, roundNumber: roundIndex + 1, totalRounds }
 }

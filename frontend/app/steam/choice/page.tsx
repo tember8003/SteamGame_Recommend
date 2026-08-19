@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import GameCard from "@/components/GameCard";
+import { useT } from "@/lib/i18n/useT";
 import { choiceResult, choiceSelect, choiceStart } from "@/lib/api";
 import { roundProgress } from "@/lib/miniGame";
 import type { ChoiceResult, ChoiceStartResponse, RecommendationResult } from "@/lib/types";
@@ -55,6 +56,7 @@ function GameOption({
   disabled: boolean;
   onSelect: (gameId: number) => void;
 }) {
+  const t = useT();
   const game = data.recommendedGame[0];
   if (!game) return null;
 
@@ -71,7 +73,7 @@ function GameOption({
         <img src={game.headerImage} alt={game.name} className={styles.gameImage} />
       ) : null}
       <div className={styles.gameTitle}>{game.name}</div>
-      <p className={styles.gameDescription}>{game.shortDescription || "No description available"}</p>
+      <p className={styles.gameDescription}>{game.shortDescription || t("choice.noDescription")}</p>
       {data.usedTags.length > 0 ? (
         <div className={styles.gameTags}>
           {data.usedTags.slice(0, 3).map((tag) => (
@@ -85,10 +87,10 @@ function GameOption({
         {review ? (
           <>
             <span className={scoreCls}>{score ? `${Math.round(score)}%` : "N/A"}</span>
-            <span className={styles.reviewSummary}>{review.reviewSummary || "No rating available"}</span>
+            <span className={styles.reviewSummary}>{review.reviewSummary || t("choice.noRating")}</span>
           </>
         ) : (
-          <span className={styles.reviewScore}>No review data</span>
+          <span className={styles.reviewScore}>{t("choice.noReviewData")}</span>
         )}
       </div>
     </button>
@@ -96,17 +98,18 @@ function GameOption({
 }
 
 function Notice({ status }: { status: Status }) {
+  const t = useT();
   if (status === "error") {
     return (
       <div className={styles.notice}>
-        <p>An error occurred. Please try again.</p>
+        <p>{t("game.errorNotice")}</p>
       </div>
     );
   }
   if (status === "rateLimited") {
     return (
       <div className={styles.notice}>
-        <p>Too many requests. Please wait a moment before trying again.</p>
+        <p>{t("game.rateNotice")}</p>
       </div>
     );
   }
@@ -115,6 +118,7 @@ function Notice({ status }: { status: Status }) {
 
 // 원본 choice.html(두 게임 중 마음에 드는 쪽을 골라 취향 태그, 최종 추천을 받는 미니게임)을 /steam/choice 라우트로 옮김
 export default function ChoicePage() {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("welcome");
   const [status, setStatus] = useState<Status>("idle");
   const [session, setSession] = useState<ChoiceStartResponse | null>(null);
@@ -130,6 +134,10 @@ export default function ChoicePage() {
   const totalRounds = session?.rounds.length ?? 0;
   const currentRound = session?.rounds[currentRoundIndex];
   const progress = roundProgress(currentRoundIndex, totalRounds);
+  const progressLabel =
+    progress.totalRounds > 0
+      ? t("game.roundOf", { n: progress.roundNumber, total: progress.totalRounds })
+      : t("game.round", { n: progress.roundNumber });
 
   // 언마운트 여부, 연출 지연 도중 페이지를 벗어나도 그 뒤 응답으로 state 를 건드리지 않도록 막는 가드로 씀
   const mountedRef = useRef(true);
@@ -205,25 +213,20 @@ export default function ChoicePage() {
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Steam Game Choice</h1>
-          <p className={styles.subtitle}>Choose your favorite games and get personalized recommendations!</p>
+          <h1 className={styles.title}>{t("choice.title")}</h1>
+          <p className={styles.subtitle}>{t("choice.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <aside className={styles.leftPanel}>
             {phase === "welcome" ? (
               <GlassPanel as="div" className={styles.panel}>
-                <h2 className={styles.panelTitle}>Game Choice</h2>
-                <p className={styles.description}>
-                  We&apos;ll show you popular games (10,000+ reviews) in 7 rounds. Pick your favorites to discover
-                  your gaming preferences!
-                </p>
-                <div className={styles.note}>
-                  After completing all rounds, you&apos;ll see your preferred tags and can customize filters.
-                </div>
+                <h2 className={styles.panelTitle}>{t("choice.panelTitle")}</h2>
+                <p className={styles.description}>{t("choice.description")}</p>
+                <div className={styles.note}>{t("choice.note")}</div>
                 <button type="button" className={styles.primaryBtn} onClick={handleStart} disabled={busy}>
                   {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
-                  {busy ? "Starting..." : "Start Game Choice"}
+                  {busy ? t("choice.starting") : t("choice.start")}
                 </button>
                 <Notice status={status} />
               </GlassPanel>
@@ -231,17 +234,17 @@ export default function ChoicePage() {
 
             {phase === "playing" ? (
               <GlassPanel as="div" className={styles.panel}>
-                <h2 className={styles.panelTitle}>Progress</h2>
+                <h2 className={styles.panelTitle}>{t("choice.progress")}</h2>
                 <div className={styles.progressBar}>
                   <div className={styles.progressFill} style={{ width: `${progress.percent}%` }} />
                 </div>
-                <div className={styles.progressText}>{progress.label}</div>
+                <div className={styles.progressText}>{progressLabel}</div>
               </GlassPanel>
             ) : null}
 
             {phase === "afterRounds" ? (
               <GlassPanel as="div" className={styles.panel}>
-                <h2 className={styles.panelTitle}>Your Preferences</h2>
+                <h2 className={styles.panelTitle}>{t("choice.preferences")}</h2>
                 <div className={styles.tagsDisplay}>
                   {discoveredTags.length > 0 ? (
                     discoveredTags.map((tag) => (
@@ -250,14 +253,14 @@ export default function ChoicePage() {
                       </span>
                     ))
                   ) : (
-                    <p className={styles.emptyTags}>No specific tags discovered</p>
+                    <p className={styles.emptyTags}>{t("choice.emptyTags")}</p>
                   )}
                 </div>
 
-                <h3 className={styles.panelTitle}>Customize Filters</h3>
+                <h3 className={styles.panelTitle}>{t("choice.customizeFilters")}</h3>
                 <div className={styles.controlsGroup}>
                   <div className={styles.controlItem}>
-                    <label htmlFor="choice-review">Min Reviews</label>
+                    <label htmlFor="choice-review">{t("common.minReviews")}</label>
                     <input
                       type="number"
                       id="choice-review"
@@ -268,7 +271,7 @@ export default function ChoicePage() {
                     />
                   </div>
                   <div className={styles.controlItem}>
-                    <label htmlFor="choice-korean">Korean Only</label>
+                    <label htmlFor="choice-korean">{t("common.koreanOnly")}</label>
                     <input
                       type="checkbox"
                       id="choice-korean"
@@ -277,7 +280,7 @@ export default function ChoicePage() {
                     />
                   </div>
                   <div className={styles.controlItem}>
-                    <label htmlFor="choice-free">Free Only</label>
+                    <label htmlFor="choice-free">{t("common.freeOnly")}</label>
                     <input
                       type="checkbox"
                       id="choice-free"
@@ -289,7 +292,7 @@ export default function ChoicePage() {
 
                 <button type="button" className={styles.primaryBtn} onClick={handleGetRecommendations} disabled={busy}>
                   {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
-                  Get Recommendations
+                  {t("common.getRecommendations")}
                 </button>
                 <Notice status={status} />
               </GlassPanel>
@@ -300,20 +303,16 @@ export default function ChoicePage() {
             {phase === "welcome" ? (
               <div className={styles.welcome}>
                 <GamepadIcon />
-                <h2>Ready to Discover Your Gaming Style?</h2>
-                <p>
-                  Click &quot;Start Game Choice&quot; to begin a fun journey of discovering games you&apos;ll love.
-                  We&apos;ll show you pairs of popular games, and your choices will help us understand your
-                  preferences!
-                </p>
+                <h2>{t("choice.welcomeTitle")}</h2>
+                <p>{t("choice.welcomeText")}</p>
               </div>
             ) : null}
 
             {phase === "playing" && currentRound ? (
               <div className={styles.roundArea}>
                 <div className={styles.roundInfo}>
-                  <div className={styles.roundTitle}>Round {currentRoundIndex + 1}</div>
-                  <div className={styles.roundSubtitle}>Choose your preferred game</div>
+                  <div className={styles.roundTitle}>{t("game.round", { n: currentRoundIndex + 1 })}</div>
+                  <div className={styles.roundSubtitle}>{t("choice.chooseGame")}</div>
                 </div>
 
                 <Notice status={status} />
@@ -340,16 +339,13 @@ export default function ChoicePage() {
               busy ? (
                 <div className={styles.loadingArea}>
                   <span className={styles.bigSpinner} aria-hidden="true" />
-                  <p>Analyzing your preferences and finding perfect games...</p>
+                  <p>{t("choice.analyzing")}</p>
                 </div>
               ) : result ? (
                 <div className={styles.resultsArea}>
                   <div className={styles.resultsHeader}>
-                    <h2>Your Personalized Recommendations!</h2>
-                    <p>
-                      Found {result.recommendedGames.length} games based on your preferences. Adjust settings on the
-                      left for new results.
-                    </p>
+                    <h2>{t("choice.resultsTitle")}</h2>
+                    <p>{t("choice.resultsSubtitle", { n: result.recommendedGames.length })}</p>
                   </div>
                   {result.recommendedGames.length > 0 ? (
                     <div className={styles.grid}>
@@ -359,18 +355,15 @@ export default function ChoicePage() {
                     </div>
                   ) : (
                     <div className={styles.notice}>
-                      <p>No games matched your filters. Try loosening them and get recommendations again.</p>
+                      <p>{t("choice.noMatches")}</p>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className={styles.welcome}>
                   <SparkleIcon />
-                  <h2>Preferences Discovered!</h2>
-                  <p>
-                    Based on your choices, we&apos;ve identified your gaming preferences. Adjust the settings on the
-                    left and click &quot;Get Recommendations&quot; to discover your perfect games!
-                  </p>
+                  <h2>{t("choice.discoveredTitle")}</h2>
+                  <p>{t("choice.discoveredText")}</p>
                 </div>
               )
             ) : null}

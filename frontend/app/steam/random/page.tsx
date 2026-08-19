@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
+import { useT } from "@/lib/i18n/useT";
 import { recommendRandom } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
@@ -39,6 +40,7 @@ function isRateLimitError(error: unknown): boolean {
 
 // 원본 random.html(태그를 고르면 그 태그들로 게임을 추천받는 화면)을 /steam/random 라우트로 옮김
 export default function RandomRecommendPage() {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<TagTab>("include");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -102,21 +104,21 @@ export default function RandomRecommendPage() {
       {loading ? (
         <div className={styles.overlay}>
           <div className={styles.overlaySpinner} aria-hidden="true" />
-          <h3>Finding games...</h3>
-          <p>Please wait a moment</p>
+          <h3>{t("random.overlayTitle")}</h3>
+          <p>{t("common.pleaseWait")}</p>
         </div>
       ) : null}
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Game Recommend</h1>
-          <p className={styles.subtitle}>Select preferred tags and discover games randomly</p>
+          <h1 className={styles.title}>{t("random.title")}</h1>
+          <p className={styles.subtitle}>{t("random.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <div className={styles.leftPanel}>
             <GlassPanel as="div" className={styles.panel}>
-              <h2 className={styles.panelTitle}>Tag Selection</h2>
+              <h2 className={styles.panelTitle}>{t("random.panelTitle")}</h2>
 
               <div className={styles.tabSwitcher}>
                 <button
@@ -124,14 +126,14 @@ export default function RandomRecommendPage() {
                   className={`${styles.tabBtn} ${activeTab === "include" ? styles.tabBtnActive : ""}`}
                   onClick={() => setActiveTab("include")}
                 >
-                  Include
+                  {t("random.include")}
                 </button>
                 <button
                   type="button"
                   className={`${styles.tabBtn} ${activeTab === "exclude" ? styles.tabBtnActive : ""}`}
                   onClick={() => setActiveTab("exclude")}
                 >
-                  Exclude
+                  {t("random.exclude")}
                 </button>
               </div>
 
@@ -139,16 +141,16 @@ export default function RandomRecommendPage() {
                 <input
                   type="text"
                   className={styles.searchInput}
-                  placeholder="Search tags..."
+                  placeholder={t("random.searchTags")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  aria-label="Search tags"
+                  aria-label={t("random.searchTagsLabel")}
                 />
                 {searchTerm ? (
                   <button
                     type="button"
                     className={styles.clearSearchBtn}
-                    aria-label="Clear search"
+                    aria-label={t("random.clearSearch")}
                     onClick={() => setSearchTerm("")}
                   >
                     ×
@@ -157,7 +159,7 @@ export default function RandomRecommendPage() {
               </div>
 
               {filteredTags.length === 0 ? (
-                <p className={styles.noTagsFound}>No tags found</p>
+                <p className={styles.noTagsFound}>{t("random.noTagsFound")}</p>
               ) : (
                 <div className={styles.tagGrid}>
                   {filteredTags.map((tag) => {
@@ -183,7 +185,7 @@ export default function RandomRecommendPage() {
 
             <GlassPanel as="div" className={styles.controlsPanel}>
               <div className={styles.controlItem}>
-                <label htmlFor="random-review">Min Reviews</label>
+                <label htmlFor="random-review">{t("common.minReviews")}</label>
                 <input
                   type="number"
                   id="random-review"
@@ -194,7 +196,7 @@ export default function RandomRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="random-korean">Korean Only</label>
+                <label htmlFor="random-korean">{t("common.koreanOnly")}</label>
                 <input
                   type="checkbox"
                   id="random-korean"
@@ -203,7 +205,7 @@ export default function RandomRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="random-free">Free Only</label>
+                <label htmlFor="random-free">{t("common.freeOnly")}</label>
                 <input
                   type="checkbox"
                   id="random-free"
@@ -214,28 +216,28 @@ export default function RandomRecommendPage() {
 
               <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
                 {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-                Get Recommendations
+                {t("common.getRecommendations")}
               </button>
             </GlassPanel>
           </div>
 
           <GlassPanel as="section" className={styles.resultPanel}>
-            <h2 className={styles.resultTitle}>Game Recommendations</h2>
+            <h2 className={styles.resultTitle}>{t("random.resultTitle")}</h2>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please try again later.</p>
+                <h3>{t("common.errorTitle")}</h3>
+                <p>{t("common.tryAgainLater")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("common.rateTitle")}</h3>
+                <p>{t("common.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No games found</h3>
-                <p>Try different tag combinations!</p>
+                <h3>{t("common.noGames")}</h3>
+                <p>{t("random.noGamesHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <RecommendResults
@@ -249,8 +251,8 @@ export default function RandomRecommendPage() {
               />
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to find games</h3>
-                <p>Select tags and click &quot;Get Recommendations&quot; to start!</p>
+                <h3>{t("random.ready")}</h3>
+                <p>{t("random.readyHint")}</p>
               </div>
             )}
           </GlassPanel>

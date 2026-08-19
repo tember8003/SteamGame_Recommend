@@ -2,6 +2,7 @@
 
 import GameCard from "./GameCard";
 import ReviewPanel, { type ReviewDisplayOptions } from "./ReviewPanel";
+import { useT } from "@/lib/i18n/useT";
 import type { MatchExplanation, ReviewResponse, SteamApp } from "@/lib/types";
 import styles from "./MatchResults.module.css";
 
@@ -23,10 +24,11 @@ export default function MatchResults({
   onRecommendAgain: () => void;
   recommendAgainDisabled?: boolean;
 }) {
+  const t = useT();
   return (
     <div className={styles.results}>
       {shortfall ? (
-        <p className={styles.shortfall}>We could not fill every pick for these constraints.</p>
+        <p className={styles.shortfall}>{t("results.shortfall")}</p>
       ) : null}
 
       <div className={styles.grid}>
@@ -49,7 +51,7 @@ export default function MatchResults({
           onClick={onRecommendAgain}
           disabled={recommendAgainDisabled}
         >
-          Recommend Again
+          {t("common.recommendAgain")}
         </button>
       </div>
     </div>

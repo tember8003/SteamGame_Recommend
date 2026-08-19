@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
+import { useT } from "@/lib/i18n/useT";
 import { gamesSearch, recommendSimilar } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { GameSearchResult, RecommendationResult } from "@/lib/types";
@@ -28,6 +29,7 @@ function isRateLimitError(error: unknown): boolean {
 
 // 원본 similar.html(게임 이름 하나를 검색해 비슷한 태그의 게임을 추천받는 화면)을 /steam/similar 라우트로 옮김
 export default function SimilarRecommendPage() {
+  const t = useT();
   const [gameName, setGameName] = useState("");
   const [suggestions, setSuggestions] = useState<GameSearchResult[]>([]);
   const [review, setReview] = useState(1000);
@@ -176,30 +178,30 @@ export default function SimilarRecommendPage() {
       {loading ? (
         <div className={styles.overlay}>
           <div className={styles.overlaySpinner} aria-hidden="true" />
-          <h3>Finding similar games...</h3>
-          <p>Please wait a moment</p>
+          <h3>{t("similar.overlayTitle")}</h3>
+          <p>{t("common.pleaseWait")}</p>
         </div>
       ) : null}
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Similar Game Finder</h1>
-          <p className={styles.subtitle}>Discover games with similar tags to your favorites</p>
+          <h1 className={styles.title}>{t("similar.title")}</h1>
+          <p className={styles.subtitle}>{t("similar.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <div className={styles.leftPanel}>
             <GlassPanel as="div" className={styles.panel}>
-              <h2 className={styles.panelTitle}>Game Search</h2>
+              <h2 className={styles.panelTitle}>{t("similar.panelTitle")}</h2>
 
-              <div className={styles.warning}>Enter a game name and select from the autocomplete list</div>
+              <div className={styles.warning}>{t("similar.warning")}</div>
 
               <div ref={wrapperRef} className={styles.searchWrapper}>
                 <input
                   ref={inputRef}
                   type="text"
                   className={`${styles.textInput} ${invalid ? styles.invalid : ""}`}
-                  placeholder="Enter game name for recommendations"
+                  placeholder={t("similar.placeholder")}
                   autoComplete="off"
                   value={gameName}
                   onChange={(e) => handleGameNameChange(e.target.value)}
@@ -228,7 +230,7 @@ export default function SimilarRecommendPage() {
 
             <GlassPanel as="div" className={styles.controlsPanel}>
               <div className={styles.controlItem}>
-                <label htmlFor="similar-review">Min Reviews</label>
+                <label htmlFor="similar-review">{t("common.minReviews")}</label>
                 <input
                   type="number"
                   id="similar-review"
@@ -239,7 +241,7 @@ export default function SimilarRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="similar-korean">Korean Only</label>
+                <label htmlFor="similar-korean">{t("common.koreanOnly")}</label>
                 <input
                   type="checkbox"
                   id="similar-korean"
@@ -248,7 +250,7 @@ export default function SimilarRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="similar-free">Free Only</label>
+                <label htmlFor="similar-free">{t("common.freeOnly")}</label>
                 <input
                   type="checkbox"
                   id="similar-free"
@@ -259,33 +261,33 @@ export default function SimilarRecommendPage() {
 
               <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
                 {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-                Get Recommendations
+                {t("common.getRecommendations")}
               </button>
             </GlassPanel>
           </div>
 
           <GlassPanel as="section" className={styles.resultPanel}>
-            <h2 className={styles.resultTitle}>Similar Games</h2>
+            <h2 className={styles.resultTitle}>{t("similar.resultTitle")}</h2>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please check the game name or try again later.</p>
+                <h3>{t("common.errorTitle")}</h3>
+                <p>{t("similar.errorHint")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("common.rateTitle")}</h3>
+                <p>{t("common.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No games found</h3>
-                <p>Please check the game name or try a different game!</p>
+                <h3>{t("common.noGames")}</h3>
+                <p>{t("similar.noGamesHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <RecommendResults
                 usedTags={result.usedTags}
-                usedTagsLabel="Analyzed Tags"
+                usedTagsLabel={t("similar.usedTagsLabel")}
                 games={games}
                 reviews={result.review}
                 context="SIMILAR"
@@ -295,8 +297,8 @@ export default function SimilarRecommendPage() {
               />
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to find similar games</h3>
-                <p>Search for a game to get recommendations based on similar tags and features!</p>
+                <h3>{t("similar.ready")}</h3>
+                <p>{t("similar.readyHint")}</p>
               </div>
             )}
           </GlassPanel>

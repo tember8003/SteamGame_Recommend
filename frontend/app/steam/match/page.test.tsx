@@ -122,4 +122,22 @@ describe("MatchPage", () => {
     // 다시추천은 방금 본 appid 1 을 제외 집합으로 실어 보냄
     expect(vi.mocked(recommendMatch).mock.calls[1][0].excludeAppids).toEqual([1]);
   });
+
+  it("세션 길이 세그먼트에서 Short 를 고르면 페이로드에 SHORT 를 싣는다", async () => {
+    mockGet.mockReturnValue(null);
+    vi.mocked(recommendMatch).mockResolvedValue({
+      criteria: { nlParseFailed: false },
+      games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
+      reviews: [{ positiveRating: 90 }],
+      explanations: [{ reasons: [], caveats: [] }],
+      shortfall: false,
+    });
+
+    render(<MatchPage />);
+    fireEvent.click(screen.getByRole("radio", { name: "Short" }));
+    fireEvent.click(screen.getByRole("button", { name: /match/i }));
+
+    await waitFor(() => expect(recommendMatch).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(recommendMatch).mock.calls[0][0].sessionLength).toBe("SHORT");
+  });
 });
