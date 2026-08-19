@@ -1,24 +1,24 @@
+"use client";
+
 import Header from "@/components/Header";
 import Button from "@/components/ui/Button";
 import Concierge from "@/components/mascot/Concierge";
 import ConciergeBar from "@/components/landing/ConciergeBar";
+import { useT, useMessages } from "@/lib/i18n/useT";
 import { siSteam } from "simple-icons";
 import styles from "./page.module.css";
 
-const MC_TAGS = ["Adventure", "Tech", "Magic", "Exploration", "Hardcore"];
-
 export default function Home() {
+  const t = useT();
+  const m = useMessages();
   return (
     <div className={styles.page}>
       <Header />
 
       <main className={styles.main}>
         <section className={styles.hero}>
-          <h1 className={styles.title}>Find your next way to play.</h1>
-          <p className={styles.subtitle}>
-            Discover great Steam games or build the perfect Minecraft modpack,
-            guided by your AI concierge.
-          </p>
+          <h1 className={styles.title}>{t("landing.heroTitle")}</h1>
+          <p className={styles.subtitle}>{t("landing.heroSubtitle")}</p>
         </section>
 
         <section className={styles.modes}>
@@ -30,19 +30,17 @@ export default function Home() {
                 </svg>
               </span>
               <h2 className={styles.cardTitle}>
-                STEAM <span className={styles.steamAccent}>Picks</span>
+                STEAM <span className={styles.steamAccent}>{t("landing.steamPicks")}</span>
               </h2>
-              <p className={styles.cardDesc}>
-                Personalized game recommendations just for you.
-              </p>
+              <p className={styles.cardDesc}>{t("landing.steamDesc")}</p>
             </div>
             <Button variant="steam" href="/steam" className={styles.cardCta}>
-              Explore Steam Picks →
+              {t("landing.steamCta")}
             </Button>
           </article>
 
           <article className={`${styles.card} ${styles.mcCard}`} aria-disabled="true">
-            <span className={styles.comingSoon}>Coming soon</span>
+            <span className={styles.comingSoon}>{t("landing.comingSoon")}</span>
             <div className={styles.cardBody}>
               <span className={`${styles.mark} ${styles.mcMark}`} aria-hidden="true">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -57,21 +55,19 @@ export default function Home() {
                 </svg>
               </span>
               <h2 className={styles.cardTitle}>
-                MINECRAFT <span className={styles.mcAccent}>Modpacks</span>
+                MINECRAFT <span className={styles.mcAccent}>{t("landing.mcModpacks")}</span>
               </h2>
-              <p className={styles.cardDesc}>
-                Find or build the perfect modpack for your adventure.
-              </p>
+              <p className={styles.cardDesc}>{t("landing.mcDesc")}</p>
               <div className={styles.tags}>
-                {MC_TAGS.map((t) => (
-                  <span key={t} className={styles.tag}>
-                    {t}
+                {m.landing.mcTags.map((tag) => (
+                  <span key={tag} className={styles.tag}>
+                    {tag}
                   </span>
                 ))}
               </div>
             </div>
             <Button variant="minecraft" disabled className={styles.cardCta}>
-              Explore Minecraft Mods →
+              {t("landing.mcCta")}
             </Button>
           </article>
         </section>
@@ -80,12 +76,12 @@ export default function Home() {
           <ConciergeBar />
           <aside className={styles.mascotPanel}>
             <div className={styles.mascotHead}>
-              <span className={styles.spark}>✦</span> mascot
+              <span className={styles.spark}>✦</span> {t("landing.mascotLabel")}
             </div>
             <div className={styles.mascotInner}>
               <div className={styles.bubble}>
-                <p>Hi, I&apos;m your AI concierge.</p>
-                <p>How can I help you today?</p>
+                <p>{t("landing.bubbleGreeting")}</p>
+                <p>{t("landing.bubbleHelp")}</p>
               </div>
               <div className={styles.mascotArt}>
                 <Concierge state="idle" />
@@ -94,9 +90,7 @@ export default function Home() {
           </aside>
         </section>
 
-        <footer className={styles.footer}>
-          Not affiliated with Valve or Mojang. PLAYLOOM is an independent project.
-        </footer>
+        <footer className={styles.footer}>{t("landing.footer")}</footer>
       </main>
     </div>
   );

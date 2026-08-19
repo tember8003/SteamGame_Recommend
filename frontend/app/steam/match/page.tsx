@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import MatchResults from "@/components/MatchResults";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { type ReviewDisplayOptions } from "@/components/ReviewPanel";
+import { useT } from "@/lib/i18n/useT";
 import { recommendMatch } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { MatchResult } from "@/lib/types";
@@ -30,6 +32,7 @@ function isRateLimitError(error: unknown): boolean {
 // /match 엔드포인트를 노출하는 화면, 자연어 서술 + 구조화 제약으로 요청을 만들고 게임마다 사유/주의점을 보여줌
 // useSearchParams 를 쓰므로 Suspense 경계 안에서만 렌더되어야 함(default export 참고)
 function MatchContent() {
+  const t = useT();
   const searchParams = useSearchParams();
   // 랜딩에서 넘긴 ?q= 를 서술 박스 초기값으로만 씀(지연 초기화라 이후 변경엔 반응하지 않음, 자동 제출은 하지 않음)
   const [rawText, setRawText] = useState(() => searchParams.get("q") ?? "");
@@ -101,67 +104,68 @@ function MatchContent() {
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Match Your Requirements</h1>
-          <p className={styles.subtitle}>Describe what you want and set a few constraints to get picks with reasons</p>
+          <h1 className={styles.title}>{t("match.title")}</h1>
+          <p className={styles.subtitle}>{t("match.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>
-            <h2 className={styles.panelTitle}>Your Requirements</h2>
+            <h2 className={styles.panelTitle}>{t("match.panelTitle")}</h2>
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="match-text">
-                Describe your ideal game
+                {t("match.describeLabel")}
               </label>
               <textarea
                 id="match-text"
                 ref={textRef}
                 className={`${styles.textarea} ${invalid ? styles.invalid : ""}`}
-                placeholder="e.g., 'a relaxing co-op game for a short evening with a friend'"
+                placeholder={t("match.describePlaceholder")}
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
               />
             </div>
 
             <div className={styles.controls}>
-              <h3 className={styles.controlsTitle}>Constraints</h3>
+              <h3 className={styles.controlsTitle}>{t("match.constraints")}</h3>
               <div className={styles.controlItem}>
-                <label htmlFor="match-session">Session Length</label>
-                <select
-                  id="match-session"
+                <label>{t("match.session.label")}</label>
+                <SegmentedControl
+                  ariaLabel={t("match.session.label")}
                   value={sessionLength}
-                  onChange={(e) => setSessionLength(e.target.value as SessionValue)}
-                >
-                  <option value="">Any</option>
-                  <option value="SHORT">Short</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="LONG">Long</option>
-                </select>
+                  onChange={(v) => setSessionLength(v as SessionValue)}
+                  options={[
+                    { value: "", label: t("match.session.any") },
+                    { value: "SHORT", label: t("match.session.short") },
+                    { value: "MEDIUM", label: t("match.session.medium") },
+                    { value: "LONG", label: t("match.session.long") },
+                  ]}
+                />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="match-budget">Budget (USD)</label>
+                <label htmlFor="match-budget">{t("match.budget")}</label>
                 <input
                   type="number"
                   id="match-budget"
                   min={0}
-                  placeholder="Any"
+                  placeholder={t("common.any")}
                   value={budgetUsd}
                   onChange={(e) => setBudgetUsd(e.target.value)}
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="match-players">Players</label>
+                <label htmlFor="match-players">{t("match.players")}</label>
                 <input
                   type="number"
                   id="match-players"
                   min={1}
-                  placeholder="Any"
+                  placeholder={t("common.any")}
                   value={players}
                   onChange={(e) => setPlayers(e.target.value)}
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="match-review">Min Review Count</label>
+                <label htmlFor="match-review">{t("match.minReviews")}</label>
                 <input
                   type="number"
                   id="match-review"
@@ -172,7 +176,7 @@ function MatchContent() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="match-korean">Korean Support Only</label>
+                <label htmlFor="match-korean">{t("match.koreanOnly")}</label>
                 <input
                   type="checkbox"
                   id="match-korean"
@@ -181,7 +185,7 @@ function MatchContent() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="match-free">Free Games Only</label>
+                <label htmlFor="match-free">{t("match.freeOnly")}</label>
                 <input
                   type="checkbox"
                   id="match-free"
@@ -193,36 +197,36 @@ function MatchContent() {
 
             <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
               {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-              Get Matches
+              {t("match.submit")}
             </button>
           </GlassPanel>
 
           <GlassPanel as="section" className={styles.resultPanel}>
             <div className={styles.resultHeader}>
-              <h2 className={styles.resultTitle}>Matched Games</h2>
-              <p className={styles.resultSubtitle}>Picks that fit your requirements, with the reasons why</p>
+              <h2 className={styles.resultTitle}>{t("match.resultTitle")}</h2>
+              <p className={styles.resultSubtitle}>{t("match.resultSubtitle")}</p>
             </div>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please try again later.</p>
+                <h3>{t("match.errorTitle")}</h3>
+                <p>{t("match.errorHint")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("match.rateTitle")}</h3>
+                <p>{t("match.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No matches</h3>
-                <p>Try loosening your constraints or describing it differently.</p>
+                <h3>{t("match.noMatch")}</h3>
+                <p>{t("match.noMatchHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <>
                 {result.criteria.nlParseFailed ? (
                   <p className={styles.parseNotice}>
-                    We could not fully read your description, so we used your filters.
+                    {t("match.parseFailed")}
                   </p>
                 ) : null}
                 <MatchResults
@@ -237,8 +241,8 @@ function MatchContent() {
               </>
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to Match</h3>
-                <p>Describe your ideal game or set a constraint, then click &quot;Get Matches&quot; to start!</p>
+                <h3>{t("match.ready")}</h3>
+                <p>{t("match.readyHint")}</p>
               </div>
             )}
           </GlassPanel>
@@ -250,12 +254,13 @@ function MatchContent() {
 
 // 로딩 표시(기존 page/main/notice 토큰 재사용, 새 CSS 규칙 없음)
 function MatchFallback() {
+  const t = useT();
   return (
     <div className={styles.page}>
       <Header />
       <main className={styles.main}>
         <div className={styles.notice}>
-          <h3>Loading…</h3>
+          <h3>{t("match.loading")}</h3>
         </div>
       </main>
     </div>

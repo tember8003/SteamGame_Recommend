@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
+import { useT } from "@/lib/i18n/useT";
 import { reviewGuessAnswer, reviewGuessResult, reviewGuessStart } from "@/lib/api";
 import { roundProgress } from "@/lib/miniGame";
 import type {
@@ -71,17 +72,14 @@ function XIcon() {
 
 // onRetry 를 주면 에러,요청 과다 문구 아래에 재시도 버튼을 같이 보여줌(결과 조회처럼 막다른 상태를 벗어날 수단이 따로 없는 경우에 씀)
 function Notice({ status, onRetry }: { status: Status; onRetry?: () => void }) {
+  const t = useT();
   if (status === "error" || status === "rateLimited") {
     return (
       <div className={styles.notice}>
-        <p>
-          {status === "rateLimited"
-            ? "Too many requests. Please wait a moment before trying again."
-            : "An error occurred. Please try again."}
-        </p>
+        <p>{status === "rateLimited" ? t("game.rateNotice") : t("game.errorNotice")}</p>
         {onRetry ? (
           <button type="button" className={styles.retryBtn} onClick={onRetry}>
-            Try Again
+            {t("reviewGuess.tryAgain")}
           </button>
         ) : null}
       </div>
@@ -92,6 +90,7 @@ function Notice({ status, onRetry }: { status: Status; onRetry?: () => void }) {
 
 // 원본 review-guess.html(리뷰 두 개를 읽고 어느 게임인지 맞히는 미니게임)을 /steam/review-guess 라우트로 옮김
 export default function ReviewGuessPage() {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("start");
   const [status, setStatus] = useState<Status>("idle");
   const [session, setSession] = useState<ReviewGuessStartResponse | null>(null);
@@ -218,36 +217,34 @@ export default function ReviewGuessPage() {
       {showOverlay ? (
         <div className={styles.overlay}>
           <div className={styles.overlaySpinner} aria-hidden="true" />
-          <h3>{phase === "start" ? "Preparing game..." : "Checking your answer..."}</h3>
-          <p>Please wait a moment</p>
+          <h3>{phase === "start" ? t("reviewGuess.overlayStart") : t("reviewGuess.overlayChecking")}</h3>
+          <p>{t("common.pleaseWait")}</p>
         </div>
       ) : null}
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Steam Game Review Guess</h1>
-          <p className={styles.subtitle}>Read the reviews and guess which game they belong to!</p>
+          <h1 className={styles.title}>{t("reviewGuess.title")}</h1>
+          <p className={styles.subtitle}>{t("reviewGuess.subtitle")}</p>
         </section>
 
         {phase === "start" ? (
           <GlassPanel as="section" className={styles.card}>
-            <h2 className={styles.cardTitle}>Game Rules</h2>
-            <p className={styles.description}>
-              Test your Steam game knowledge! Read game reviews and try to guess which game they belong to.
-            </p>
+            <h2 className={styles.cardTitle}>{t("reviewGuess.rules")}</h2>
+            <p className={styles.description}>{t("reviewGuess.rulesDesc")}</p>
             <div className={styles.rules}>
-              <h4>How to Play:</h4>
+              <h4>{t("reviewGuess.howToPlay")}</h4>
               <ul>
-                <li>You&apos;ll see positive and negative reviews from a Steam game</li>
-                <li>Choose the correct game from 3 options</li>
-                <li>Complete 7 rounds to get your final score</li>
-                <li>All games have 5000+ reviews for quality content</li>
-                <li>Try to get the highest accuracy possible!</li>
+                <li>{t("reviewGuess.rule1")}</li>
+                <li>{t("reviewGuess.rule2")}</li>
+                <li>{t("reviewGuess.rule3")}</li>
+                <li>{t("reviewGuess.rule4")}</li>
+                <li>{t("reviewGuess.rule5")}</li>
               </ul>
             </div>
             <button type="button" className={styles.primaryBtn} onClick={handleStart} disabled={busy}>
               {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
-              Start Game
+              {t("reviewGuess.start")}
             </button>
             <Notice status={status} />
           </GlassPanel>
@@ -261,26 +258,26 @@ export default function ReviewGuessPage() {
                   <div className={styles.progressFill} style={{ width: `${progress.percent}%` }} />
                 </div>
                 <div className={styles.roundInfo}>
-                  <div className={styles.roundTitle}>Round {currentRoundIndex + 1}</div>
+                  <div className={styles.roundTitle}>{t("game.round", { n: currentRoundIndex + 1 })}</div>
                   <div className={styles.scoreDisplay}>
-                    Score: {score} / {totalRounds}
+                    {t("reviewGuess.score", { score, total: totalRounds })}
                   </div>
-                  <div className={styles.roundSubtitle}>Read the reviews and guess the game!</div>
+                  <div className={styles.roundSubtitle}>{t("reviewGuess.readGuess")}</div>
                 </div>
 
                 <div className={styles.reviewSection}>
                   <div className={styles.reviewSectionHeader}>
-                    <h3>Game Reviews</h3>
-                    <p>These are real Steam user reviews. Can you identify the game?</p>
+                    <h3>{t("reviewGuess.reviews")}</h3>
+                    <p>{t("reviewGuess.reviewsHint")}</p>
                   </div>
 
                   <div className={styles.reviewContent}>
                     <div className={`${styles.reviewCard} ${styles.positive}`}>
-                      <h4>Positive Review</h4>
+                      <h4>{t("reviewGuess.positiveReview")}</h4>
                       <div className={styles.reviewText}>{currentRound.positiveReview}</div>
                     </div>
                     <div className={`${styles.reviewCard} ${styles.negative}`}>
-                      <h4>Negative Review</h4>
+                      <h4>{t("reviewGuess.negativeReview")}</h4>
                       <div className={styles.reviewText}>{currentRound.negativeReview}</div>
                     </div>
                   </div>
@@ -293,8 +290,8 @@ export default function ReviewGuessPage() {
                     {answer.correct ? <CheckIcon /> : <XIcon />}
                     <span>
                       {answer.correct
-                        ? `Correct! The answer was "${answer.correctGameName}"`
-                        : `Wrong! The correct answer was "${answer.correctGameName}"`}
+                        ? t("reviewGuess.correct", { name: answer.correctGameName })
+                        : t("reviewGuess.wrong", { name: answer.correctGameName })}
                     </span>
                   </div>
                 ) : null}
@@ -334,7 +331,7 @@ export default function ReviewGuessPage() {
                         ) : null}
                         <div className={styles.optionInfo}>
                           <div className={styles.optionTitle}>{game.name}</div>
-                          <div className={styles.optionDescription}>{game.description || "No description available"}</div>
+                          <div className={styles.optionDescription}>{game.description || t("reviewGuess.noDescription")}</div>
                         </div>
                       </button>
                     );
@@ -343,7 +340,7 @@ export default function ReviewGuessPage() {
 
                 {answer && !answer.gameCompleted ? (
                   <button type="button" className={styles.nextBtn} onClick={handleNextRound}>
-                    Next Round
+                    {t("reviewGuess.nextRound")}
                   </button>
                 ) : null}
               </div>
@@ -353,13 +350,13 @@ export default function ReviewGuessPage() {
 
         {phase === "results" && result ? (
           <GlassPanel as="section" className={styles.card}>
-            <h2 className={styles.cardTitle}>Final Results</h2>
+            <h2 className={styles.cardTitle}>{t("reviewGuess.finalResults")}</h2>
             <div className={styles.resultHeader}>
               <div className={styles.finalScore}>
                 {result.correctAnswers}/{result.totalRounds}
               </div>
               <div className={[styles.grade, gradeCls ? styles[gradeCls] : ""].filter(Boolean).join(" ")}>{result.grade}</div>
-              <div className={styles.accuracy}>{result.accuracy.toFixed(1)}% Accuracy</div>
+              <div className={styles.accuracy}>{t("reviewGuess.accuracy", { pct: result.accuracy.toFixed(1) })}</div>
             </div>
 
             <div className={styles.roundResults}>
@@ -368,10 +365,10 @@ export default function ReviewGuessPage() {
                   key={round.roundIndex}
                   className={[styles.roundResultRow, round.correct ? styles.feedbackCorrect : styles.feedbackIncorrect].join(" ")}
                 >
-                  <div className={styles.roundNumber}>Round {round.roundIndex + 1}</div>
+                  <div className={styles.roundNumber}>{t("game.round", { n: round.roundIndex + 1 })}</div>
                   <div className={styles.roundResultDetails}>
-                    <div>Your answer: {round.selectedGameName}</div>
-                    <div>Correct answer: {round.correctGameName}</div>
+                    <div>{t("reviewGuess.yourAnswer", { name: round.selectedGameName })}</div>
+                    <div>{t("reviewGuess.correctAnswer", { name: round.correctGameName })}</div>
                   </div>
                   <div className={styles.resultIcon}>{round.correct ? <CheckIcon /> : <XIcon />}</div>
                 </div>
@@ -379,7 +376,7 @@ export default function ReviewGuessPage() {
             </div>
 
             <button type="button" className={styles.primaryBtn} onClick={handlePlayAgain}>
-              Play Again
+              {t("reviewGuess.playAgain")}
             </button>
           </GlassPanel>
         ) : null}

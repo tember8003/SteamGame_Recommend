@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
+import { useT } from "@/lib/i18n/useT";
 import { recommendRecent } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
@@ -26,6 +27,7 @@ function isRateLimitError(error: unknown): boolean {
 
 // 원본 recent.html(최근 2주 플레이 기록을 분석해 추천을 받는 화면)을 /steam/recent 라우트로 옮김
 export default function RecentRecommendPage() {
+  const t = useT();
   const [steamId, setSteamId] = useState("");
   const [review, setReview] = useState(1000);
   const [koreanOnly, setKoreanOnly] = useState(false);
@@ -92,30 +94,30 @@ export default function RecentRecommendPage() {
       {loading ? (
         <div className={styles.overlay}>
           <div className={styles.overlaySpinner} aria-hidden="true" />
-          <h3>Analyzing recent play history...</h3>
-          <p>Please wait a moment</p>
+          <h3>{t("recent.overlayTitle")}</h3>
+          <p>{t("common.pleaseWait")}</p>
         </div>
       ) : null}
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Recent Play Analysis</h1>
-          <p className={styles.subtitle}>Get recommendations based on your last 2 weeks of Steam activity</p>
+          <h1 className={styles.title}>{t("recent.title")}</h1>
+          <p className={styles.subtitle}>{t("recent.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <div className={styles.leftPanel}>
             <GlassPanel as="div" className={styles.panel}>
-              <h2 className={styles.panelTitle}>Steam ID Input</h2>
+              <h2 className={styles.panelTitle}>{t("recent.panelTitle")}</h2>
 
-              <div className={styles.warning}>We&apos;ll analyze your gaming activity from the last 2 weeks</div>
+              <div className={styles.warning}>{t("recent.warning")}</div>
 
               <input
                 type="text"
                 ref={steamIdRef}
                 className={`${styles.textInput} ${invalid ? styles.invalid : ""}`}
-                placeholder="Enter your Steam ID"
-                aria-label="Steam ID"
+                placeholder={t("recent.placeholder")}
+                aria-label={t("common.steamId")}
                 value={steamId}
                 onChange={(e) => setSteamId(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -124,7 +126,7 @@ export default function RecentRecommendPage() {
 
             <GlassPanel as="div" className={styles.controlsPanel}>
               <div className={styles.controlItem}>
-                <label htmlFor="recent-review">Min Reviews</label>
+                <label htmlFor="recent-review">{t("common.minReviews")}</label>
                 <input
                   type="number"
                   id="recent-review"
@@ -135,7 +137,7 @@ export default function RecentRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="recent-korean">Korean Only</label>
+                <label htmlFor="recent-korean">{t("common.koreanOnly")}</label>
                 <input
                   type="checkbox"
                   id="recent-korean"
@@ -144,7 +146,7 @@ export default function RecentRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="recent-free">Free Only</label>
+                <label htmlFor="recent-free">{t("common.freeOnly")}</label>
                 <input
                   type="checkbox"
                   id="recent-free"
@@ -155,33 +157,33 @@ export default function RecentRecommendPage() {
 
               <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
                 {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-                Get Recommendations
+                {t("common.getRecommendations")}
               </button>
             </GlassPanel>
           </div>
 
           <GlassPanel as="section" className={styles.resultPanel}>
-            <h2 className={styles.resultTitle}>Personalized Recommendations</h2>
+            <h2 className={styles.resultTitle}>{t("recent.resultTitle")}</h2>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please check your Steam ID or try again later.</p>
+                <h3>{t("common.errorTitle")}</h3>
+                <p>{t("recent.errorHint")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("common.rateTitle")}</h3>
+                <p>{t("common.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No games found</h3>
-                <p>Please check your Steam ID or recent play history!</p>
+                <h3>{t("common.noGames")}</h3>
+                <p>{t("recent.noGamesHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <RecommendResults
                 usedTags={result.usedTags}
-                usedTagsLabel="Tags from Recent Play"
+                usedTagsLabel={t("recent.usedTagsLabel")}
                 games={games}
                 reviews={result.review}
                 context="RECENT"
@@ -192,8 +194,8 @@ export default function RecentRecommendPage() {
               />
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to analyze</h3>
-                <p>Enter your Steam ID to get personalized game recommendations based on your recent play history!</p>
+                <h3>{t("recent.ready")}</h3>
+                <p>{t("recent.readyHint")}</p>
               </div>
             )}
           </GlassPanel>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import CosmicBackground from "@/components/CosmicBackground";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -18,7 +19,7 @@ export default function RootLayout({
     <html lang="en" className={geist.variable}>
       <body>
         <CosmicBackground />
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import GlassPanel from "@/components/ui/GlassPanel";
+import { useT } from "@/lib/i18n/useT";
 import { graphNeighbors, graphSearch } from "@/lib/api";
 import type { GraphNode } from "@/lib/types";
 import { edgeId, hasEdge, seedPosition } from "./seedPosition";
@@ -63,6 +64,7 @@ function addNodeData(data: cytoscape.NodeDataDefinition, image: string | undefin
 // 원본 static/graph.html(임베딩 유사도 그래프 탐색)을 옮긴 컴포넌트, cytoscape 본체를 여기서 다룸
 // 페이지 쪽(app/steam/graph/page.tsx)이 ssr:false 로 이 컴포넌트만 클라이언트 전용으로 불러온다
 export default function SimilarityGraph() {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GraphNode[]>([]);
   const [hintVisible, setHintVisible] = useState(true);
@@ -235,12 +237,12 @@ export default function SimilarityGraph() {
   return (
     <div className={styles.body}>
       <GlassPanel as="div" className={styles.toolbar}>
-        <h1 className={styles.title}>Similarity Graph</h1>
+        <h1 className={styles.title}>{t("graph.title")}</h1>
         <div ref={wrapperRef} className={styles.searchWrapper}>
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="게임 검색 후 선택"
+            placeholder={t("graph.searchPlaceholder")}
             autoComplete="off"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
@@ -269,7 +271,7 @@ export default function SimilarityGraph() {
       <div className={styles.graphArea}>
         <div ref={containerRef} className={styles.cyContainer} />
         {hintVisible ? (
-          <div className={styles.hint}>게임을 검색해 시작하세요. 노드를 클릭하면 이웃이 펼쳐집니다.</div>
+          <div className={styles.hint}>{t("graph.hint")}</div>
         ) : null}
       </div>
     </div>

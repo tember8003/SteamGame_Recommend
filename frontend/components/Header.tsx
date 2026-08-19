@@ -1,8 +1,8 @@
 import Link from "next/link";
 import styles from "./Header.module.css";
-import Button from "./ui/Button";
+import HeaderActions from "./HeaderActions";
 
-// 상단 브랜드 바, v0 은 Login/Signup·언어 토글이 비활성 자리표시자(연결은 v0.5)
+// 상단 브랜드 바, 언어 토글은 연결됨, Login/Signup 은 아직 비활성 자리표시자
 export default function Header() {
   return (
     <header className={styles.header}>
@@ -30,14 +30,7 @@ export default function Header() {
       </Link>
 
       <div className={styles.actions}>
-        <button className={styles.iconBtn} aria-label="Language" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" />
-          </svg>
-        </button>
-        <Button variant="glass" disabled>Log in</Button>
-        <Button variant="violet" disabled>Sign up</Button>
+        <HeaderActions />
       </div>
     </header>
   );

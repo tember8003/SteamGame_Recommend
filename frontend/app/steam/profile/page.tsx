@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
+import { useT } from "@/lib/i18n/useT";
 import { recommendProfile } from "@/lib/api";
 import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
@@ -26,6 +27,7 @@ function isRateLimitError(error: unknown): boolean {
 
 // 원본 profile.html(Steam 프로필을 분석해 추천을 받는 화면)을 /steam/profile 라우트로 옮김
 export default function ProfileRecommendPage() {
+  const t = useT();
   const [steamId, setSteamId] = useState("");
   const [review, setReview] = useState(1000);
   const [koreanOnly, setKoreanOnly] = useState(false);
@@ -91,28 +93,26 @@ export default function ProfileRecommendPage() {
 
       <main className={styles.main}>
         <section className={styles.intro}>
-          <h1 className={styles.title}>Steam Profile-Based Recommendation</h1>
-          <p className={styles.subtitle}>Analyze your Steam profile to find games matching your playing style</p>
+          <h1 className={styles.title}>{t("profile.title")}</h1>
+          <p className={styles.subtitle}>{t("profile.subtitle")}</p>
         </section>
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>
-            <h2 className={styles.panelTitle}>Profile Analysis</h2>
+            <h2 className={styles.panelTitle}>{t("profile.panelTitle")}</h2>
 
-            <div className={styles.warning}>
-              Please enter your Steam ID accurately. Only public profiles can be analyzed.
-            </div>
+            <div className={styles.warning}>{t("profile.warning")}</div>
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="profile-id">
-                Steam ID
+                {t("common.steamId")}
               </label>
               <input
                 type="text"
                 id="profile-id"
                 ref={steamIdRef}
                 className={`${styles.textInput} ${invalid ? styles.invalid : ""}`}
-                placeholder="Enter your Steam ID (e.g., your_username)"
+                placeholder={t("profile.placeholder")}
                 value={steamId}
                 onChange={(e) => setSteamId(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -120,9 +120,9 @@ export default function ProfileRecommendPage() {
             </div>
 
             <div className={styles.controls}>
-              <h3 className={styles.controlsTitle}>Options</h3>
+              <h3 className={styles.controlsTitle}>{t("common.options")}</h3>
               <div className={styles.controlItem}>
-                <label htmlFor="profile-review">Review Count</label>
+                <label htmlFor="profile-review">{t("common.reviewCount")}</label>
                 <input
                   type="number"
                   id="profile-review"
@@ -133,7 +133,7 @@ export default function ProfileRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="profile-korean">Korean Support Only</label>
+                <label htmlFor="profile-korean">{t("common.koreanSupportOnly")}</label>
                 <input
                   type="checkbox"
                   id="profile-korean"
@@ -142,7 +142,7 @@ export default function ProfileRecommendPage() {
                 />
               </div>
               <div className={styles.controlItem}>
-                <label htmlFor="profile-free">Free Games Only</label>
+                <label htmlFor="profile-free">{t("common.freeGamesOnly")}</label>
                 <input
                   type="checkbox"
                   id="profile-free"
@@ -154,35 +154,35 @@ export default function ProfileRecommendPage() {
 
             <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
               {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-              Get Recommendations
+              {t("common.getRecommendations")}
             </button>
           </GlassPanel>
 
           <GlassPanel as="section" className={styles.resultPanel}>
             <div className={styles.resultHeader}>
-              <h2 className={styles.resultTitle}>Profile-Based Recommendations</h2>
-              <p className={styles.resultSubtitle}>game recommendations based on your Steam profile analysis</p>
+              <h2 className={styles.resultTitle}>{t("profile.resultTitle")}</h2>
+              <p className={styles.resultSubtitle}>{t("profile.resultSubtitle")}</p>
             </div>
 
             {status === "error" ? (
               <div className={styles.notice}>
-                <h3>An error occurred</h3>
-                <p>Please check your Steam ID or try again later.</p>
+                <h3>{t("common.errorTitle")}</h3>
+                <p>{t("profile.errorHint")}</p>
               </div>
             ) : status === "rateLimited" ? (
               <div className={styles.notice}>
-                <h3>Too many requests</h3>
-                <p>Please wait a moment before trying again.</p>
+                <h3>{t("common.rateTitle")}</h3>
+                <p>{t("common.rateHint")}</p>
               </div>
             ) : result && games.length === 0 ? (
               <div className={styles.notice}>
-                <h3>No games found</h3>
-                <p>Please check your Steam ID or try different options!</p>
+                <h3>{t("common.noGames")}</h3>
+                <p>{t("profile.noGamesHint")}</p>
               </div>
             ) : result && games.length > 0 ? (
               <RecommendResults
                 usedTags={result.usedTags}
-                usedTagsLabel="Tags Analyzed from Profile"
+                usedTagsLabel={t("profile.usedTagsLabel")}
                 games={games}
                 reviews={result.review}
                 context="PROFILE"
@@ -193,11 +193,8 @@ export default function ProfileRecommendPage() {
               />
             ) : (
               <div className={styles.notice}>
-                <h3>Ready to Analyze Your Profile</h3>
-                <p>
-                  Enter your Steam ID and click &quot;Get Recommendations&quot; to discover games perfectly matched
-                  to your gaming style!
-                </p>
+                <h3>{t("profile.ready")}</h3>
+                <p>{t("profile.readyHint")}</p>
               </div>
             )}
           </GlassPanel>
