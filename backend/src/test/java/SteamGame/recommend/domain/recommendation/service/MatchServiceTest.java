@@ -13,6 +13,7 @@ import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
 import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
+import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiEmbeddingService;
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
@@ -25,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+
+import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -47,9 +51,10 @@ class MatchServiceTest {
     EmbeddingProperties props = new EmbeddingProperties();
     RecommendationFeedbackRepository feedbackRepository = mock(RecommendationFeedbackRepository.class);
     EmbeddingRepository embeddingRepository = mock(EmbeddingRepository.class);
+    FeedbackSuppressionService suppressionService = new FeedbackSuppressionService(feedbackRepository);
 
     MatchService service = new MatchService(resolver, gameService, embed, explanationBuilder, props,
-            reviewRepository, tagRepository, feedbackRepository, embeddingRepository);
+            reviewRepository, tagRepository, feedbackRepository, embeddingRepository, suppressionService);
 
     @Test
     void usesQualityPathAndFlagsMoodUnavailableWhenEmbeddingNull() {
@@ -317,6 +322,81 @@ class MatchServiceTest {
 
         List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
         assertThat(ids).containsExactly(701L);
+    }
+
+    @Test
+    void downFeedbackAppidsAreExcludedFromMatchPool() {
+        // 클라이언트가 보낸 제외 999 와 싫어요 777,888 이 풀 조회 제외 집합에 함께 실려야 함
+        RecommendationCriteria criteria = RecommendationCriteria.builder()
+                .players(2).review(50).excludeAppids(Set.of(999L)).build();
+        when(resolver.resolve(any())).thenReturn(criteria);
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.DOWN))
+                .thenReturn(List.of(777L, 888L));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        ArgumentCaptor<RecommendationCriteria> captor = ArgumentCaptor.forClass(RecommendationCriteria.class);
+        verify(gameService).matchQualityPool(captor.capture(), anyInt());
+        assertThat(captor.getValue().getExcludeAppids()).contains(999L, 777L, 888L);
+        // 응답의 criteria 는 사용자가 보낸 제외만 되비치고 DOWN 이력은 노출하지 않음
+        assertThat(r.criteria().getExcludeAppids()).containsExactly(999L);
+    }
+
+    @Test
+    void downSuppressionAppliesToNearestPool() {
+        // 분위기 임베딩 경로(nearest 풀)에도 DOWN 억제가 걸려야 함
+        when(resolver.resolve(any())).thenReturn(criteriaWithMood("cozy"));
+        when(embed.embed(any())).thenReturn(new float[]{1f});
+        when(gameService.matchNearestPool(any(), any(), anyInt())).thenReturn(pool4());
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.DOWN))
+                .thenReturn(List.of(777L));
+
+        MatchRequestDTO req = reqWithMood("cozy");
+        req.setClientId("cid");
+        service.recommend(req);
+
+        ArgumentCaptor<RecommendationCriteria> captor = ArgumentCaptor.forClass(RecommendationCriteria.class);
+        verify(gameService).matchNearestPool(any(), captor.capture(), anyInt());
+        assertThat(captor.getValue().getExcludeAppids()).contains(777L);
+    }
+
+    @Test
+    void downSuppressionPropagatesThroughFallbackTiers() {
+        // 1차 1개 -> 2차, 3차 topup 이 돌아 풀 조회가 세 번, 세 조회 모두 DOWN 을 제외해야 함
+        RecommendationCriteria criteria = RecommendationCriteria.builder().players(2).review(50).build();
+        when(resolver.resolve(any())).thenReturn(criteria);
+        when(gameService.matchQualityPool(any(), anyInt()))
+                .thenReturn(pool(1, 1L), pool(2, 300L), pool(2, 400L));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.DOWN))
+                .thenReturn(List.of(777L));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        service.recommend(req);
+
+        ArgumentCaptor<RecommendationCriteria> captor = ArgumentCaptor.forClass(RecommendationCriteria.class);
+        verify(gameService, times(3)).matchQualityPool(captor.capture(), anyInt());
+        assertThat(captor.getAllValues())
+                .allSatisfy(c -> assertThat(c.getExcludeAppids()).contains(777L));
+    }
+
+    @Test
+    void noDownFeedback_leavesPoolExcludesEmpty() {
+        // DOWN 이 없으면 제외 집합에 억제로 끼어드는 appid 가 없어야 함
+        RecommendationCriteria criteria = RecommendationCriteria.builder().players(2).review(50).build();
+        when(resolver.resolve(any())).thenReturn(criteria);
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        service.recommend(req);
+
+        ArgumentCaptor<RecommendationCriteria> captor = ArgumentCaptor.forClass(RecommendationCriteria.class);
+        verify(gameService).matchQualityPool(captor.capture(), anyInt());
+        assertThat(captor.getValue().getExcludeAppids()).isEmpty();
     }
 
     private List<String> codes(List<ExplanationItem> items) {

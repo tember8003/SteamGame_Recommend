@@ -15,6 +15,7 @@ import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.util.VolumeBuckets;
 import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
 import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
+import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiEmbeddingService;
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
@@ -50,6 +51,7 @@ public class MatchService {
     private final TagRepository tagRepository;
     private final RecommendationFeedbackRepository feedbackRepository;
     private final EmbeddingRepository embeddingRepository;
+    private final FeedbackSuppressionService suppressionService;
 
     // 운영 기본값은 매 호출 새 Random, 테스트는 useRandom 으로 시드를 주입해 샘플링을 결정적으로 만듦
     private Random random = new Random();
@@ -62,7 +64,8 @@ public class MatchService {
                          ReviewRepository reviewRepository,
                          TagRepository tagRepository,
                          RecommendationFeedbackRepository feedbackRepository,
-                         EmbeddingRepository embeddingRepository) {
+                         EmbeddingRepository embeddingRepository,
+                         FeedbackSuppressionService suppressionService) {
         this.resolver = resolver;
         this.gameService = gameService;
         this.embeddingService = embeddingService;
@@ -72,6 +75,7 @@ public class MatchService {
         this.tagRepository = tagRepository;
         this.feedbackRepository = feedbackRepository;
         this.embeddingRepository = embeddingRepository;
+        this.suppressionService = suppressionService;
     }
 
     // 같은 패키지 테스트 전용 통로, 운영 경로에서는 호출하지 않음
@@ -80,7 +84,10 @@ public class MatchService {
     }
 
     public MatchResultDTO recommend(MatchRequestDTO req) {
-        RecommendationCriteria criteria = resolver.resolve(req);
+        RecommendationCriteria resolved = resolver.resolve(req);
+        // 싫어요한 appid 는 풀 조회,폴백 세 티어에만 반영하고 응답 criteria 에는 사용자가 보낸 값만 남긴다, 억제로 못 채우면 shortfall 이 그대로 표면화됨
+        Set<Long> suppressedExcludes = suppressionService.resolveExcludes(req.getClientId(), resolved.getExcludeAppids());
+        RecommendationCriteria criteria = withExcludeAndReview(resolved, resolved.getReview(), suppressedExcludes);
         int need = props.getResultSize();
         int poolK = props.getCandidatePoolK();
 
@@ -117,7 +124,8 @@ public class MatchService {
         loadReviews(reviewMap, missingAppids(selected, reviewMap));
         Map<Long, List<String>> tagMap = loadTags(appidsOfSelected(selected));
 
-        return buildResult(criteria, selected, reviewMap, tagMap, shortfall);
+        // 설명은 excludeAppids 를 읽지 않아 resolved 로 만들어도 결과가 같음, 응답 criteria 는 억제 전 값으로 되비침
+        return buildResult(resolved, selected, reviewMap, tagMap, shortfall);
     }
 
     // 빈 요청은 popular, 그 외엔 분위기 임베딩 최근접이 되면 nearest, 안 되면 quality 로 감
