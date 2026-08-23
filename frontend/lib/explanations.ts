@@ -11,6 +11,12 @@ function roundHours(v: unknown): number {
 export function describeReason(item: ExplanationItem, t: TFunction): string | null {
   const p = item.params ?? {}
   switch (item.code) {
+    case 'BECAUSE_YOU_LIKED': {
+      // 좋아요 게임 이름이 실려 올 때만 지명 사유를 냄, 비었으면 렌더에서 건너뛴다
+      const game = typeof p.gameName === 'string' ? p.gameName.trim() : ''
+      if (!game) return null
+      return t('explain.reason.becauseYouLiked', { game })
+    }
     case 'IS_FREE':
       return t('explain.reason.isFree')
     case 'WITHIN_BUDGET': {

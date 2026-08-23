@@ -11,6 +11,16 @@ describe('describeReason', () => {
     expect(describeReason({ code: 'IS_FREE', params: {} }, t)).toBe('Free to play')
   })
 
+  it('BECAUSE_YOU_LIKED 는 gameName 을 넣어 문구로 옮긴다', () => {
+    expect(describeReason({ code: 'BECAUSE_YOU_LIKED', params: { gameName: 'Hollow Knight' } }, t))
+      .toBe('Because you liked Hollow Knight')
+  })
+
+  it('BECAUSE_YOU_LIKED 는 gameName 이 없거나 공백이면 null 을 반환한다', () => {
+    expect(describeReason({ code: 'BECAUSE_YOU_LIKED', params: {} }, t)).toBeNull()
+    expect(describeReason({ code: 'BECAUSE_YOU_LIKED', params: { gameName: '  ' } }, t)).toBeNull()
+  })
+
   it('WITHIN_BUDGET 는 budgetCents 를 달러로 녹인다', () => {
     expect(describeReason({ code: 'WITHIN_BUDGET', params: { priceCents: 1500, budgetCents: 2000 } }, t))
       .toBe('Within your $20 budget')
@@ -54,5 +64,10 @@ describe('한국어 스모크', () => {
   const tk = makeT(ko)
   it('IS_FREE 를 한국어로 옮긴다', () => {
     expect(describeReason({ code: 'IS_FREE', params: {} }, tk)).toBe(ko.explain.reason.isFree)
+  })
+
+  it('BECAUSE_YOU_LIKED 를 한국어로 옮긴다', () => {
+    expect(describeReason({ code: 'BECAUSE_YOU_LIKED', params: { gameName: 'Hades' } }, tk))
+      .toBe('‘Hades’ 같은 게임을 좋아해서')
   })
 })

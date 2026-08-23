@@ -33,6 +33,7 @@ export const en = {
   },
   explain: {
     reason: {
+      becauseYouLiked: "Because you liked {game}",
       isFree: "Free to play",
       withinBudget: "Within your ${budget} budget",
       withinBudgetGeneric: "Within your budget",
