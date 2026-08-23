@@ -18,6 +18,8 @@ public class EmbeddingProperties {
     private int resultSize = 4;
     // 취향 가중 샘플의 softmax 온도, 작을수록 취향에 가깝고 클수록 균일에 가까움
     private double tasteTau = 0.25;
+    // 취향 설명에서 좋아요 게임을 지명할 최소 코사인, 이 값 미만이면 억지 지명을 막으려고 사유를 뺀다
+    private double explainMinCos = 0.5;
     // 배치 임베딩이 429(rate limit)로 실패하면 백오프 후 재시도하는 최대 횟수·대기시간
     private int maxBatchRetries = 3;
     private long retryBackoffMs = 60000;
@@ -44,6 +46,8 @@ public class EmbeddingProperties {
     public void setResultSize(int resultSize) { this.resultSize = resultSize; }
     public double getTasteTau() { return tasteTau; }
     public void setTasteTau(double tasteTau) { this.tasteTau = tasteTau; }
+    public double getExplainMinCos() { return explainMinCos; }
+    public void setExplainMinCos(double explainMinCos) { this.explainMinCos = explainMinCos; }
     public int getMaxBatchRetries() { return maxBatchRetries; }
     public void setMaxBatchRetries(int maxBatchRetries) { this.maxBatchRetries = maxBatchRetries; }
     public long getRetryBackoffMs() { return retryBackoffMs; }

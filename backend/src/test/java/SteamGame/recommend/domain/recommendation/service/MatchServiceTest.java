@@ -2,6 +2,7 @@ package SteamGame.recommend.domain.recommendation.service;
 
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.entity.Review;
+import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.repository.ReviewRepository;
 import SteamGame.recommend.domain.game.service.GameService;
 import SteamGame.recommend.domain.recommendation.dto.ExplanationItem;
@@ -52,9 +53,11 @@ class MatchServiceTest {
     RecommendationFeedbackRepository feedbackRepository = mock(RecommendationFeedbackRepository.class);
     EmbeddingRepository embeddingRepository = mock(EmbeddingRepository.class);
     FeedbackSuppressionService suppressionService = new FeedbackSuppressionService(feedbackRepository);
+    GameRepository gameRepository = mock(GameRepository.class);
 
     MatchService service = new MatchService(resolver, gameService, embed, explanationBuilder, props,
-            reviewRepository, tagRepository, feedbackRepository, embeddingRepository, suppressionService);
+            reviewRepository, tagRepository, feedbackRepository, embeddingRepository, suppressionService,
+            gameRepository);
 
     @Test
     void usesQualityPathAndFlagsMoodUnavailableWhenEmbeddingNull() {
@@ -205,7 +208,7 @@ class MatchServiceTest {
     }
 
     @Test
-    void nullMeanEmbedding_fallsBackToUniform() {
+    void nullMeanEmbeddingOmitsTasteReason() {
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
         when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
         when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
@@ -217,7 +220,9 @@ class MatchServiceTest {
         MatchResultDTO r = service.recommend(req);
 
         assertThat(r.games()).hasSize(4);
-        verify(embeddingRepository, never()).findEmbeddingsByAppids(any());
+        // 평균 임베딩이 null 이면 샘플링은 균일로 떨어지고 좋아요 게임 임베딩도 없어 취향 지명 사유가 안 붙음
+        assertThat(r.explanations()).allSatisfy(e ->
+                assertThat(codes(e.reasons())).doesNotContain("BECAUSE_YOU_LIKED"));
     }
 
     @Test
@@ -399,8 +404,143 @@ class MatchServiceTest {
         assertThat(captor.getValue().getExcludeAppids()).isEmpty();
     }
 
+    @Test
+    void tasteNamesNearestLikedGameAndOmitsDistantOnes() {
+        // 좋아요 900 과 가까운 후보 200 에는 지명 사유가 붙고 먼 후보 201 에는 안 붙어야 함
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L), game(201L)));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Hollow Knight")));
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(900L, new float[]{1f, 0f});
+        vecs.put(200L, new float[]{1f, 0f});    // cos 1 >= 0.5 이라 지명
+        vecs.put(201L, new float[]{0f, 1f});    // cos 0 < 0.5 이라 생략
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        service.useRandom(new Random(1));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(reasonCodesFor(r, 200L)).contains("BECAUSE_YOU_LIKED");
+        assertThat(itemFor(r, 200L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "Hollow Knight"));
+        assertThat(reasonCodesFor(r, 201L)).doesNotContain("BECAUSE_YOU_LIKED");
+    }
+
+    @Test
+    void tastePicksNearestAmongMultipleLikedGames() {
+        // 좋아요가 여럿이면 후보와 가장 가까운 좋아요 이름이 뽑혀야 함, up 순서와 무관
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L)));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L, 901L));
+        when(gameRepository.findByAppidIn(List.of(900L, 901L)))
+                .thenReturn(List.of(named(900L, "Far"), named(901L, "Near")));
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(200L, new float[]{1f, 0f});
+        vecs.put(900L, new float[]{0.6f, 0.8f});   // cos 0.6
+        vecs.put(901L, new float[]{1f, 0f});       // cos 1.0, 더 가까움
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        service.useRandom(new Random(1));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(itemFor(r, 200L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "Near"));
+    }
+
+    @Test
+    void tasteNamesAtExactThresholdButNotBelow() {
+        // 임계와 정확히 같은 코사인은 지명하고 그 미만은 생략함
+        props.setExplainMinCos(1.0);   // 정확히 1.0 이라 float 오차 없는 경계
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L), game(201L)));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Edge")));
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(900L, new float[]{1f, 0f});
+        vecs.put(200L, new float[]{1f, 0f});       // cos 1.0 == 임계 이라 지명
+        vecs.put(201L, new float[]{0.8f, 0.6f});   // cos 0.8 < 1.0 이라 생략
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        service.useRandom(new Random(1));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(itemFor(r, 200L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "Edge"));
+        assertThat(reasonCodesFor(r, 201L)).doesNotContain("BECAUSE_YOU_LIKED");
+    }
+
+    @Test
+    void coldStartWithoutUpFeedbackOmitsTasteReason() {
+        // 좋아요가 없으면 어떤 후보에도 지명 사유가 붙지 않음
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(r.explanations()).allSatisfy(e ->
+                assertThat(codes(e.reasons())).doesNotContain("BECAUSE_YOU_LIKED"));
+    }
+
+    @Test
+    void selfMatchDoesNotNameTheGameByItself() {
+        // 좋아요한 900 이 그대로 추천돼도 자기 자신을 지명하지 않고, 유일한 좋아요라 다른 후보도 못 지명함
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(900L), game(201L)));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Self")));
+        Map<Long, float[]> vecs = new HashMap<>();
+        vecs.put(900L, new float[]{1f, 0f});
+        vecs.put(201L, new float[]{0f, 1f});    // 900 과 cos 0
+        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        service.useRandom(new Random(1));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        MatchResultDTO r = service.recommend(req);
+
+        assertThat(reasonCodesFor(r, 900L)).doesNotContain("BECAUSE_YOU_LIKED");
+        assertThat(reasonCodesFor(r, 201L)).doesNotContain("BECAUSE_YOU_LIKED");
+    }
+
     private List<String> codes(List<ExplanationItem> items) {
         return items.stream().map(ExplanationItem::code).toList();
+    }
+
+    // 결과에서 특정 appid 의 사유 코드 목록을 뽑음, games 와 explanations 는 같은 순서라 인덱스로 짝지음
+    private List<String> reasonCodesFor(MatchResultDTO r, long appid) {
+        return codes(r.explanations().get(indexOfAppid(r, appid)).reasons());
+    }
+
+    private ExplanationItem itemFor(MatchResultDTO r, long appid, String code) {
+        return r.explanations().get(indexOfAppid(r, appid)).reasons().stream()
+                .filter(i -> i.code().equals(code)).findFirst()
+                .orElseThrow(() -> new AssertionError("코드가 없음: " + code));
+    }
+
+    private int indexOfAppid(MatchResultDTO r, long appid) {
+        List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
+        int idx = ids.indexOf(appid);
+        if (idx < 0) {
+            throw new AssertionError("appid 가 결과에 없음: " + appid);
+        }
+        return idx;
+    }
+
+    private Game named(long appid, String name) {
+        Game g = new Game();
+        g.setAppid(appid);
+        g.setName(name);
+        g.setReviewCount(100);
+        return g;
     }
 
     private Game game(long appid) {

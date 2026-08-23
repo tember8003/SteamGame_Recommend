@@ -24,7 +24,7 @@ class ExplanationBuilderTest {
         Review r = review(96, new BigDecimal("8"));
         RecommendationCriteria c = criteria(4, SessionLength.SHORT, 2000, "협동");
 
-        MatchExplanation e = builder.build(g, r, List.of("Online Co-Op"), c, true, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of("Online Co-Op"), c, true, 1, false, null);
 
         assertThat(codes(e.reasons())).contains("IS_FREE", "COOP_SUPPORTED", "WELL_REVIEWED", "VOLUME_FITS", "MOOD_MATCH");
         assertThat(codes(e.caveats())).contains("PLAYER_COUNT_APPROX");
@@ -39,7 +39,7 @@ class ExplanationBuilderTest {
         Review r = review(90, null);
         RecommendationCriteria c = criteria(1, null, null, "cozy");
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.caveats())).contains("MOOD_UNAVAILABLE");
         assertThat(codes(e.caveats())).doesNotContain("VOLUME_UNKNOWN");
@@ -52,7 +52,7 @@ class ExplanationBuilderTest {
         Review r = review(80, null);
         RecommendationCriteria c = criteria(1, SessionLength.MEDIUM, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.caveats())).contains("VOLUME_UNKNOWN");
         assertThat(codes(e.caveats())).doesNotContain("MOOD_UNAVAILABLE");
@@ -64,7 +64,7 @@ class ExplanationBuilderTest {
         Review r = review(90, new BigDecimal("60"));
         RecommendationCriteria c = criteria(1, SessionLength.SHORT, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.caveats())).contains("LONGER_THAN_REQUESTED");
         assertThat(codes(e.caveats())).doesNotContain("SHORTER_THAN_REQUESTED");
@@ -78,7 +78,7 @@ class ExplanationBuilderTest {
         Review r = review(90, new BigDecimal("5"));
         RecommendationCriteria c = criteria(1, SessionLength.LONG, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.caveats())).contains("SHORTER_THAN_REQUESTED");
     }
@@ -89,7 +89,7 @@ class ExplanationBuilderTest {
         Review r = review(85, new BigDecimal("20"));
         RecommendationCriteria c = criteria(1, null, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of("Singleplayer"), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of("Singleplayer"), c, false, 1, false, null);
 
         assertThat(codes(e.reasons())).contains("SOLO_FRIENDLY");
         assertThat(codes(e.caveats())).doesNotContain("PLAYER_COUNT_APPROX");
@@ -101,7 +101,7 @@ class ExplanationBuilderTest {
         Review r = review(70, null);
         RecommendationCriteria c = criteria(1, null, 2000, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.reasons())).contains("WITHIN_BUDGET");
         assertThat(codes(e.caveats())).contains("PRICE_NO_DISCOUNT");
@@ -114,7 +114,7 @@ class ExplanationBuilderTest {
         Review r = review(70, null);
         RecommendationCriteria c = criteria(1, null, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, true);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, true, null);
 
         assertThat(codes(e.caveats())).contains("REVIEW_RELAXED");
     }
@@ -125,7 +125,7 @@ class ExplanationBuilderTest {
         Review r = review(80, null);
         RecommendationCriteria c = criteria(2, null, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of("Multiplayer", "Co-op"), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of("Multiplayer", "Co-op"), c, false, 1, false, null);
 
         assertThat(itemOf(e.reasons(), "COOP_SUPPORTED").params()).isEqualTo(Map.of("tag", "Multiplayer"));
     }
@@ -136,10 +136,34 @@ class ExplanationBuilderTest {
         Review r = review(null, null);
         RecommendationCriteria c = criteria(1, null, null, null);
 
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false);
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.reasons())).contains("WELL_REVIEWED");
         assertThat(itemOf(e.reasons(), "WELL_REVIEWED").params()).isEmpty();
+    }
+
+    @Test
+    void likedGameNameAddsBecauseYouLikedReasonFirst() {
+        Game g = game(false, 500, 300);
+        Review r = review(85, new BigDecimal("20"));
+        RecommendationCriteria c = criteria(1, null, null, null);
+
+        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, "Hollow Knight");
+
+        assertThat(e.reasons().get(0).code()).isEqualTo("BECAUSE_YOU_LIKED");
+        assertThat(e.reasons().get(0).params()).isEqualTo(Map.of("gameName", "Hollow Knight"));
+    }
+
+    @Test
+    void blankOrNullLikedGameNameOmitsBecauseYouLikedReason() {
+        Game g = game(false, 500, 300);
+        Review r = review(85, new BigDecimal("20"));
+        RecommendationCriteria c = criteria(1, null, null, null);
+
+        assertThat(codes(builder.build(g, r, List.of(), c, false, 1, false, null).reasons()))
+                .doesNotContain("BECAUSE_YOU_LIKED");
+        assertThat(codes(builder.build(g, r, List.of(), c, false, 1, false, "  ").reasons()))
+                .doesNotContain("BECAUSE_YOU_LIKED");
     }
 
     private Game game(boolean free, Integer price, Integer reviewCount) {
