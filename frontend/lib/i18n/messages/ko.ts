@@ -35,6 +35,7 @@ export const ko: Messages = {
   },
   explain: {
     reason: {
+      becauseYouLiked: "‘{game}’ 같은 게임을 좋아해서",
       isFree: "무료 플레이",
       withinBudget: "예산 ${budget} 안",
       withinBudgetGeneric: "예산 안",
