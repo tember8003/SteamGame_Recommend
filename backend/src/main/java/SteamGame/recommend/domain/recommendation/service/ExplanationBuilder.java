@@ -22,7 +22,7 @@ import java.util.Map;
 public class ExplanationBuilder {
 
     public MatchExplanation build(Game game, Review review, List<String> gameTags, RecommendationCriteria c,
-                                   boolean moodPath, int rank, boolean reviewRelaxed) {
+                                   boolean moodPath, int rank, boolean reviewRelaxed, String likedGameName) {
         List<String> tags = gameTags == null ? List.of() : gameTags;
         boolean isFree = game != null && game.isFree();
         Integer priceCents = game == null ? null : game.getPrice();
@@ -35,6 +35,7 @@ public class ExplanationBuilder {
         SessionLength actualSession = VolumeBuckets.classify(positiveHour);
 
         List<ExplanationItem> reasons = new ArrayList<>();
+        addBecauseYouLikedReason(reasons, likedGameName);
         addPriceReason(reasons, isFree, priceCents, budgetCents);
         addCoopReason(reasons, c.needsCoop(), tags);
         addSoloReason(reasons, players, tags);
@@ -51,6 +52,13 @@ public class ExplanationBuilder {
         addIf(caveats, reviewRelaxed, "REVIEW_RELAXED");
 
         return new MatchExplanation(reasons, caveats);
+    }
+
+    // 취향에 가장 가까운 좋아요 게임이 정해졌을 때만 맨 앞에 지명 사유를 냄, 임계 판정과 이름 조회는 오케스트레이션 책임임
+    private void addBecauseYouLikedReason(List<ExplanationItem> reasons, String likedGameName) {
+        if (likedGameName != null && !likedGameName.isBlank()) {
+            reasons.add(new ExplanationItem("BECAUSE_YOU_LIKED", Map.of("gameName", likedGameName)));
+        }
     }
 
     // 무료면 IS_FREE 만, 아니면 예산 이내일 때만 WITHIN_BUDGET 을 냄

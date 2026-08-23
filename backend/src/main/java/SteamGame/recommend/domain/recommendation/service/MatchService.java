@@ -3,6 +3,7 @@ package SteamGame.recommend.domain.recommendation.service;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.entity.Review;
 import SteamGame.recommend.domain.game.mapper.GameMapper;
+import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.repository.ReviewRepository;
 import SteamGame.recommend.domain.game.service.GameService;
 import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
@@ -52,6 +53,7 @@ public class MatchService {
     private final RecommendationFeedbackRepository feedbackRepository;
     private final EmbeddingRepository embeddingRepository;
     private final FeedbackSuppressionService suppressionService;
+    private final GameRepository gameRepository;
 
     // 운영 기본값은 매 호출 새 Random, 테스트는 useRandom 으로 시드를 주입해 샘플링을 결정적으로 만듦
     private Random random = new Random();
@@ -65,7 +67,8 @@ public class MatchService {
                          TagRepository tagRepository,
                          RecommendationFeedbackRepository feedbackRepository,
                          EmbeddingRepository embeddingRepository,
-                         FeedbackSuppressionService suppressionService) {
+                         FeedbackSuppressionService suppressionService,
+                         GameRepository gameRepository) {
         this.resolver = resolver;
         this.gameService = gameService;
         this.embeddingService = embeddingService;
@@ -76,6 +79,7 @@ public class MatchService {
         this.feedbackRepository = feedbackRepository;
         this.embeddingRepository = embeddingRepository;
         this.suppressionService = suppressionService;
+        this.gameRepository = gameRepository;
     }
 
     // 같은 패키지 테스트 전용 통로, 운영 경로에서는 호출하지 않음
@@ -124,8 +128,12 @@ public class MatchService {
         loadReviews(reviewMap, missingAppids(selected, reviewMap));
         Map<Long, List<String>> tagMap = loadTags(appidsOfSelected(selected));
 
+        // 후보마다 가장 비슷한 좋아요 게임 이름을 구해 취향 설명에 실음, 없으면 빈 맵이라 설명이 안 붙음
+        List<Game> selectedGames = selected.stream().map(Selected::game).collect(Collectors.toList());
+        Map<Long, String> tasteMatches = resolveTasteMatches(req.getClientId(), selectedGames);
+
         // 설명은 excludeAppids 를 읽지 않아 resolved 로 만들어도 결과가 같음, 응답 criteria 는 억제 전 값으로 되비침
-        return buildResult(resolved, selected, reviewMap, tagMap, shortfall);
+        return buildResult(resolved, selected, reviewMap, tagMap, shortfall, tasteMatches);
     }
 
     // 빈 요청은 popular, 그 외엔 분위기 임베딩 최근접이 되면 nearest, 안 되면 quality 로 감
@@ -202,6 +210,58 @@ public class MatchService {
             return null;
         }
         return embeddingRepository.findMeanEmbeddingByAppids(up);
+    }
+
+    // client_id 의 좋아요 게임 중 후보와 코사인이 임계 이상인 최근접을 찾아 후보 appid 를 그 게임 이름에 매핑함
+    // 자기 자신은 비교에서 빼고, client_id 나 좋아요나 임베딩이 없으면 빈 맵이라 설명이 안 붙음
+    private Map<Long, String> resolveTasteMatches(String clientId, List<Game> selected) {
+        if (clientId == null || clientId.isBlank() || selected.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> up = feedbackRepository.findAppidsByClientIdAndSignal(clientId, FeedbackSignal.UP);
+        if (up.isEmpty()) {
+            return Map.of();
+        }
+        // 좋아요와 후보 임베딩을 한 번에 읽음
+        Set<Long> union = new LinkedHashSet<>(up);
+        selected.forEach(g -> union.add(g.getAppid()));
+        Map<Long, float[]> vecs = embeddingRepository.findEmbeddingsByAppids(new ArrayList<>(union));
+
+        Map<Long, String> likedNames = new HashMap<>();
+        for (Game liked : gameRepository.findByAppidIn(up)) {
+            likedNames.put(liked.getAppid(), liked.getName());
+        }
+
+        double minCos = props.getExplainMinCos();
+        Map<Long, String> matches = new HashMap<>();
+        for (Game cand : selected) {
+            float[] cv = vecs.get(cand.getAppid());
+            if (cv == null) {
+                continue;
+            }
+            String bestName = null;
+            double bestCos = Double.NEGATIVE_INFINITY;
+            for (Long likedAppid : up) {
+                if (likedAppid.equals(cand.getAppid())) {
+                    continue;          // 좋아요한 게임이 그대로 다시 추천돼도 자기 자신과 비슷하다고 하지 않음
+                }
+                float[] lv = vecs.get(likedAppid);
+                String name = likedNames.get(likedAppid);
+                if (lv == null || name == null || name.isBlank()) {
+                    continue;
+                }
+                double cos = TasteWeightedSampler.cosine(cv, lv);
+                if (cos > bestCos) {   // 동점이면 먼저 나온 좋아요를 유지해 결정적으로 고름
+                    bestCos = cos;
+                    bestName = name;
+                }
+            }
+            // 가장 가까운 좋아요가 임계 이상일 때만 지명함
+            if (bestName != null && bestCos >= minCos) {
+                matches.put(cand.getAppid(), bestName);
+            }
+        }
+        return matches;
     }
 
     // 후보에서 아직 안 뽑힌 appid 만 need 에 닿을 때까지 채워 넣음, moodPath 는 topup 경로라 항상 거짓임
@@ -288,7 +348,7 @@ public class MatchService {
 
     private MatchResultDTO buildResult(RecommendationCriteria criteria, List<Selected> selected,
                                         Map<Long, Review> reviewMap, Map<Long, List<String>> tagMap,
-                                        boolean shortfall) {
+                                        boolean shortfall, Map<Long, String> tasteMatches) {
         List<SteamAppDTO> games = new ArrayList<>();
         List<ReviewResponseDTO> reviews = new ArrayList<>();
         List<MatchExplanation> explanations = new ArrayList<>();
@@ -301,7 +361,8 @@ public class MatchService {
 
             games.add(GameMapper.convertToSteamDTO(game));
             reviews.add(review != null ? GameMapper.convertToReviewDTO(review) : new ReviewResponseDTO());
-            explanations.add(explanationBuilder.build(game, review, tags, criteria, s.moodPath(), rank, s.reviewRelaxed()));
+            String likedGameName = tasteMatches.get(game.getAppid());
+            explanations.add(explanationBuilder.build(game, review, tags, criteria, s.moodPath(), rank, s.reviewRelaxed(), likedGameName));
             rank++;
         }
 
