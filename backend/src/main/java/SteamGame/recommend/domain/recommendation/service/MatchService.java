@@ -212,8 +212,10 @@ public class MatchService {
         return embeddingRepository.findMeanEmbeddingByAppids(up);
     }
 
-    // client_id 의 좋아요 게임 중 후보와 코사인이 임계 이상인 최근접을 찾아 후보 appid 를 그 게임 이름에 매핑함
-    // 자기 자신은 비교에서 빼고, client_id 나 좋아요나 임베딩이 없으면 빈 맵이라 설명이 안 붙음
+    // client_id 의 좋아요 게임마다 임베딩 최근접 이웃 top-N 을 구해, 후보가 그 안에 들면 후보 appid 를 그 게임 이름에 매핑함
+    // 여러 좋아요에 걸리면 후보가 더 가까운(랭크 작은) 쪽을 지명함
+    // 임베딩이 좁은 대역에 몰려 절대 코사인은 변별력이 없으므로 랭크로 거른다, 이웃 쿼리가 seed 를 빼 자기 자신은 지명 안 됨
+    // client_id 나 좋아요가 없거나 좋아요 게임에 이웃이 없으면 빈 맵이라 설명이 안 붙음
     private Map<Long, String> resolveTasteMatches(String clientId, List<Game> selected) {
         if (clientId == null || clientId.isBlank() || selected.isEmpty()) {
             return Map.of();
@@ -222,43 +224,34 @@ public class MatchService {
         if (up.isEmpty()) {
             return Map.of();
         }
-        // 좋아요와 후보 임베딩을 한 번에 읽음
-        Set<Long> union = new LinkedHashSet<>(up);
-        selected.forEach(g -> union.add(g.getAppid()));
-        Map<Long, float[]> vecs = embeddingRepository.findEmbeddingsByAppids(new ArrayList<>(union));
-
+        Set<Long> selectedAppids = selected.stream().map(Game::getAppid).collect(Collectors.toSet());
         Map<Long, String> likedNames = new HashMap<>();
         for (Game liked : gameRepository.findByAppidIn(up)) {
             likedNames.put(liked.getAppid(), liked.getName());
         }
+        // 좋아요 시드 벡터를 배치로 한 번에 읽음, 좋아요마다 점 조회를 반복하지 않으려는 것임
+        Map<Long, String> likedVecs = embeddingRepository.findEmbeddingTextsByAppids(up);
 
-        double minCos = props.getExplainMinCos();
+        int k = props.getExplainNeighborK();
         Map<Long, String> matches = new HashMap<>();
-        for (Game cand : selected) {
-            float[] cv = vecs.get(cand.getAppid());
-            if (cv == null) {
+        Map<Long, Integer> bestRank = new HashMap<>();
+        for (Long liked : up) {
+            String name = likedNames.get(liked);
+            String vec = likedVecs.get(liked);
+            if (name == null || name.isBlank() || vec == null) {
                 continue;
             }
-            String bestName = null;
-            double bestCos = Double.NEGATIVE_INFINITY;
-            for (Long likedAppid : up) {
-                if (likedAppid.equals(cand.getAppid())) {
-                    continue;          // 좋아요한 게임이 그대로 다시 추천돼도 자기 자신과 비슷하다고 하지 않음
-                }
-                float[] lv = vecs.get(likedAppid);
-                String name = likedNames.get(likedAppid);
-                if (lv == null || name == null || name.isBlank()) {
+            List<Long> neighbors = embeddingRepository.findNeighborAppids(vec, liked, k);
+            for (int rank = 0; rank < neighbors.size(); rank++) {
+                Long cand = neighbors.get(rank);
+                if (!selectedAppids.contains(cand)) {
                     continue;
                 }
-                double cos = TasteWeightedSampler.cosine(cv, lv);
-                if (cos > bestCos) {   // 동점이면 먼저 나온 좋아요를 유지해 결정적으로 고름
-                    bestCos = cos;
-                    bestName = name;
+                Integer prev = bestRank.get(cand);
+                if (prev == null || rank < prev) {   // 더 가까운 좋아요를 지명, 동점이면 먼저 나온 것을 유지함
+                    bestRank.put(cand, rank);
+                    matches.put(cand, name);
                 }
-            }
-            // 가장 가까운 좋아요가 임계 이상일 때만 지명함
-            if (bestName != null && bestCos >= minCos) {
-                matches.put(cand.getAppid(), bestName);
             }
         }
         return matches;

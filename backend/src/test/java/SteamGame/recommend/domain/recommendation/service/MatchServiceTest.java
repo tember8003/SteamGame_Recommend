@@ -34,6 +34,9 @@ import org.mockito.ArgumentCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -405,18 +408,15 @@ class MatchServiceTest {
     }
 
     @Test
-    void tasteNamesNearestLikedGameAndOmitsDistantOnes() {
-        // 좋아요 900 과 가까운 후보 200 에는 지명 사유가 붙고 먼 후보 201 에는 안 붙어야 함
+    void tasteNamesCandidateInLikedNeighborsAndOmitsOthers() {
+        // 후보 200 은 좋아요 900 의 이웃 top-N 에 들어 지명되고, 이웃이 아닌 201 은 안 붙어야 함
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
         when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L), game(201L)));
         when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
                 .thenReturn(List.of(900L));
         when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Hollow Knight")));
-        Map<Long, float[]> vecs = new HashMap<>();
-        vecs.put(900L, new float[]{1f, 0f});
-        vecs.put(200L, new float[]{1f, 0f});    // cos 1 >= 0.5 이라 지명
-        vecs.put(201L, new float[]{0f, 1f});    // cos 0 < 0.5 이라 생략
-        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        stubLikedVecs(900L);
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(900L), anyInt())).thenReturn(List.of(200L));
         service.useRandom(new Random(1));
 
         MatchRequestDTO req = new MatchRequestDTO();
@@ -429,19 +429,17 @@ class MatchServiceTest {
     }
 
     @Test
-    void tastePicksNearestAmongMultipleLikedGames() {
-        // 좋아요가 여럿이면 후보와 가장 가까운 좋아요 이름이 뽑혀야 함, up 순서와 무관
+    void tastePicksNearerLikedGameAmongMultiple() {
+        // 후보 200 이 두 좋아요의 이웃에 다 들면 랭크가 더 앞선(가까운) 좋아요를 지명함, up 순서와 무관
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
         when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L)));
         when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
                 .thenReturn(List.of(900L, 901L));
         when(gameRepository.findByAppidIn(List.of(900L, 901L)))
                 .thenReturn(List.of(named(900L, "Far"), named(901L, "Near")));
-        Map<Long, float[]> vecs = new HashMap<>();
-        vecs.put(200L, new float[]{1f, 0f});
-        vecs.put(900L, new float[]{0.6f, 0.8f});   // cos 0.6
-        vecs.put(901L, new float[]{1f, 0f});       // cos 1.0, 더 가까움
-        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        stubLikedVecs(900L, 901L);
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(900L), anyInt())).thenReturn(List.of(300L, 200L)); // 200 은 랭크 1
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(901L), anyInt())).thenReturn(List.of(200L));       // 200 은 랭크 0, 더 가까움
         service.useRandom(new Random(1));
 
         MatchRequestDTO req = new MatchRequestDTO();
@@ -452,32 +450,49 @@ class MatchServiceTest {
     }
 
     @Test
-    void tasteNamesAtExactThresholdButNotBelow() {
-        // 임계와 정확히 같은 코사인은 지명하고 그 미만은 생략함
-        props.setExplainMinCos(1.0);   // 정확히 1.0 이라 float 오차 없는 경계
+    void tasteKeepsFirstSeenLikedGameOnEqualRank() {
+        // 후보 200 이 두 좋아요의 같은 랭크에 들면 up 에서 먼저 나온 좋아요를 유지함
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
-        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L), game(201L)));
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L)));
         when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
-                .thenReturn(List.of(900L));
-        when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Edge")));
-        Map<Long, float[]> vecs = new HashMap<>();
-        vecs.put(900L, new float[]{1f, 0f});
-        vecs.put(200L, new float[]{1f, 0f});       // cos 1.0 == 임계 이라 지명
-        vecs.put(201L, new float[]{0.8f, 0.6f});   // cos 0.8 < 1.0 이라 생략
-        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+                .thenReturn(List.of(900L, 901L));
+        when(gameRepository.findByAppidIn(List.of(900L, 901L)))
+                .thenReturn(List.of(named(900L, "First"), named(901L, "Second")));
+        stubLikedVecs(900L, 901L);
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(900L), anyInt())).thenReturn(List.of(200L)); // 랭크 0
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(901L), anyInt())).thenReturn(List.of(200L)); // 같은 랭크 0
         service.useRandom(new Random(1));
 
         MatchRequestDTO req = new MatchRequestDTO();
         req.setClientId("cid");
         MatchResultDTO r = service.recommend(req);
 
-        assertThat(itemFor(r, 200L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "Edge"));
-        assertThat(reasonCodesFor(r, 201L)).doesNotContain("BECAUSE_YOU_LIKED");
+        assertThat(itemFor(r, 200L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "First"));
+    }
+
+    @Test
+    void tasteQueriesNeighborsWithConfiguredK() {
+        // 이웃 조회 개수는 explainNeighborK 설정을 그대로 쓴다
+        props.setExplainNeighborK(12);
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(200L)));
+        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
+                .thenReturn(List.of(900L));
+        when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Seed")));
+        stubLikedVecs(900L);
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(900L), anyInt())).thenReturn(List.of(200L));
+        service.useRandom(new Random(1));
+
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setClientId("cid");
+        service.recommend(req);
+
+        verify(embeddingRepository).findNeighborAppids(anyString(), eq(900L), eq(12));
     }
 
     @Test
     void coldStartWithoutUpFeedbackOmitsTasteReason() {
-        // 좋아요가 없으면 어떤 후보에도 지명 사유가 붙지 않음
+        // 좋아요가 없으면 이웃 조회도 안 하고 어떤 후보에도 지명 사유가 붙지 않음
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
         when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool4());
 
@@ -487,20 +502,19 @@ class MatchServiceTest {
 
         assertThat(r.explanations()).allSatisfy(e ->
                 assertThat(codes(e.reasons())).doesNotContain("BECAUSE_YOU_LIKED"));
+        verify(embeddingRepository, never()).findNeighborAppids(anyString(), anyLong(), anyInt());
     }
 
     @Test
     void selfMatchDoesNotNameTheGameByItself() {
-        // 좋아요한 900 이 그대로 추천돼도 자기 자신을 지명하지 않고, 유일한 좋아요라 다른 후보도 못 지명함
+        // 좋아요한 900 은 이웃 쿼리가 자기를 빼므로 자기 자신을 지명하지 않고, 900 의 이웃인 201 은 900 을 지명함
         when(resolver.resolve(any())).thenReturn(emptyCriteria());
         when(gameService.matchQualityPool(any(), anyInt())).thenReturn(List.of(game(900L), game(201L)));
         when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
                 .thenReturn(List.of(900L));
         when(gameRepository.findByAppidIn(List.of(900L))).thenReturn(List.of(named(900L, "Self")));
-        Map<Long, float[]> vecs = new HashMap<>();
-        vecs.put(900L, new float[]{1f, 0f});
-        vecs.put(201L, new float[]{0f, 1f});    // 900 과 cos 0
-        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
+        stubLikedVecs(900L);
+        when(embeddingRepository.findNeighborAppids(anyString(), eq(900L), anyInt())).thenReturn(List.of(201L)); // seed 900 은 쿼리에서 빠짐
         service.useRandom(new Random(1));
 
         MatchRequestDTO req = new MatchRequestDTO();
@@ -508,7 +522,17 @@ class MatchServiceTest {
         MatchResultDTO r = service.recommend(req);
 
         assertThat(reasonCodesFor(r, 900L)).doesNotContain("BECAUSE_YOU_LIKED");
-        assertThat(reasonCodesFor(r, 201L)).doesNotContain("BECAUSE_YOU_LIKED");
+        assertThat(reasonCodesFor(r, 201L)).contains("BECAUSE_YOU_LIKED");
+        assertThat(itemFor(r, 201L, "BECAUSE_YOU_LIKED").params()).isEqualTo(Map.of("gameName", "Self"));
+    }
+
+    // 좋아요 appid 마다 시드 벡터가 있는 것처럼 보이게 함, 값은 이웃 조회를 스텁으로 덮으니 더미로 둠
+    private void stubLikedVecs(Long... appids) {
+        Map<Long, String> vecs = new HashMap<>();
+        for (Long appid : appids) {
+            vecs.put(appid, "[0]");
+        }
+        when(embeddingRepository.findEmbeddingTextsByAppids(any())).thenReturn(vecs);
     }
 
     private List<String> codes(List<ExplanationItem> items) {

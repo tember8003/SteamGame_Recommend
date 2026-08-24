@@ -100,6 +100,72 @@ class EmbeddingRepositoryTest extends PostgresTestBase {
     }
 
     @Test
+    void findNeighborAppids_returnsNearestFirst_excludesSeedAndUnembedded() {
+        game(350L, "Seed");
+        game(351L, "Near");
+        game(352L, "Far");
+        game(353L, "NoEmb");
+        repo.updateEmbedding(350L, vec(1.0, 0.0));
+        repo.updateEmbedding(351L, vec(0.9, 0.1));    // seed 와 가까움
+        repo.updateEmbedding(352L, vec(-1.0, 0.0));   // seed 와 반대라 멈
+        // 353 은 임베딩 없음 → 결과에서 빠짐
+
+        List<Long> neighbors = repo.findNeighborAppids(350L, 10);
+
+        assertThat(neighbors).containsExactly(351L, 352L);   // 가까운 순, seed 350 제외, 353 제외
+    }
+
+    @Test
+    void findNeighborAppids_respectsLimit_andEmptyWhenSeedUnembeddedOrKNonPositive() {
+        game(360L, "Seed");
+        game(361L, "A");
+        game(362L, "B");
+        game(363L, "NoEmbSeed");
+        repo.updateEmbedding(360L, vec(1.0, 0.0));
+        repo.updateEmbedding(361L, vec(0.9, 0.1));
+        repo.updateEmbedding(362L, vec(0.8, 0.2));
+
+        assertThat(repo.findNeighborAppids(360L, 1)).hasSize(1);      // LIMIT 적용
+        assertThat(repo.findNeighborAppids(363L, 10)).isEmpty();      // seed 임베딩 없음
+        assertThat(repo.findNeighborAppids(360L, 0)).isEmpty();       // k<=0 방어
+    }
+
+    @Test
+    void findEmbeddingTexts_returnsLiteralsForEmbedded_skipsUnembedded() {
+        game(370L, "A");
+        game(371L, "B");
+        game(372L, "NoEmb");
+        repo.updateEmbedding(370L, vec(1.0, 2.0));
+        repo.updateEmbedding(371L, vec(3.0, 4.0));
+        // 372 는 임베딩 없음 → 맵에서 빠짐
+
+        Map<Long, String> texts = repo.findEmbeddingTextsByAppids(List.of(370L, 371L, 372L));
+
+        assertThat(texts).containsOnlyKeys(370L, 371L);
+        // 배치로 읽은 리터럴을 그대로 이웃 조회에 넣으면 시드로 읽는 경로와 결과가 같아야 함
+        assertThat(repo.findNeighborAppids(texts.get(370L), 370L, 10))
+                .isEqualTo(repo.findNeighborAppids(370L, 10));
+    }
+
+    @Test
+    void findEmbeddingTexts_emptyInput_returnsEmptyMap() {
+        assertThat(repo.findEmbeddingTextsByAppids(List.of())).isEmpty();
+    }
+
+    @Test
+    void findNeighborAppids_withProvidedVector_returnsNeighbors_guardsNullAndNonPositiveK() {
+        game(380L, "Seed");
+        game(381L, "A");
+        repo.updateEmbedding(380L, vec(1.0, 0.0));
+        repo.updateEmbedding(381L, vec(0.9, 0.1));
+        String seedVec = repo.findEmbeddingTextsByAppids(List.of(380L)).get(380L);
+
+        assertThat(repo.findNeighborAppids(seedVec, 380L, 10)).containsExactly(381L); // seed 제외, 이웃 반환
+        assertThat(repo.findNeighborAppids(null, 380L, 10)).isEmpty();                // 벡터 null 방어
+        assertThat(repo.findNeighborAppids(seedVec, 380L, 0)).isEmpty();              // k<=0 방어
+    }
+
+    @Test
     void selectNextToEmbed_picksUnembedded_skipsEmbedded() {
         game(330L, "Needs");
         game(331L, "Has");
