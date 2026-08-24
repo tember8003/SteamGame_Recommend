@@ -7,7 +7,10 @@ import SteamGame.recommend.domain.game.dto.TextRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
+import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
+import SteamGame.recommend.domain.feedback.entity.FeedbackContext;
 import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
+import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -31,12 +36,15 @@ public class RecommendController {
     private final RecommendService recommendService;
     private final MatchService matchService;
     private final FeedbackSuppressionService suppressionService;
+    private final ImpressionService impressionService;
 
     public RecommendController(RecommendService recommendService, MatchService matchService,
-                              FeedbackSuppressionService suppressionService) {
+                              FeedbackSuppressionService suppressionService,
+                              ImpressionService impressionService) {
         this.recommendService = recommendService;
         this.matchService = matchService;
         this.suppressionService = suppressionService;
+        this.impressionService = impressionService;
     }
 
     // client_id 로 DOWN 을 병합한 제외 집합으로 호출하고, 억제가 실제로 더해졌는데 404 면 억제를 떼고 한 번 재시도함
@@ -54,6 +62,19 @@ public class RecommendController {
             }
             throw e;
         }
+    }
+
+    // 노출된 게임을 비동기로 적재한다, client_id 가 없거나 게임이 없으면 서비스에서 걸러진다
+    // appid 가 없는 게임은 걸러 한 건 때문에 배치 전체가 실패하지 않게 한다
+    private void logImpressions(FeedbackContext context, String clientId, String steamId, List<SteamAppDTO> games) {
+        if (games == null) {
+            return;
+        }
+        List<Long> appids = games.stream()
+                .map(SteamAppDTO::getAppid)
+                .filter(Objects::nonNull)
+                .toList();
+        impressionService.record(clientId, steamId, context, appids);
     }
 
     @Operation(summary = "Tag-based random recommendation")
@@ -78,6 +99,7 @@ public class RecommendController {
                             ex));
 
             log.info("Tag-based random recommendation successful: found {} games", recommendServiceGame.getRecommendedGame().size());
+            logImpressions(FeedbackContext.RANDOM, request.getClientId(), null, recommendServiceGame.getRecommendedGame());
             return ResponseEntity.ok(recommendServiceGame);
 
         } catch (Exception e) {
@@ -105,6 +127,7 @@ public class RecommendController {
 
             log.info("Text input-based recommendation successful: extracted tags={}, found {} games",
                     result.getUsedTags(), result.getRecommendedGame().size());
+            logImpressions(FeedbackContext.INPUT, dto.getClientId(), null, result.getRecommendedGame());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -132,6 +155,7 @@ public class RecommendController {
 
             log.info("Profile-based recommendation successful: steamId={}, extracted tags={}, found {} games",
                     dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
+            logImpressions(FeedbackContext.PROFILE, dto.getClientId(), dto.getSteamId(), result.getRecommendedGame());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -159,6 +183,7 @@ public class RecommendController {
 
             log.info("Recent play-based recommendation successful: steamId={}, extracted tags={}, found {} games",
                     dto.getSteamId(), result.getUsedTags(), result.getRecommendedGame().size());
+            logImpressions(FeedbackContext.RECENT, dto.getClientId(), dto.getSteamId(), result.getRecommendedGame());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -186,6 +211,7 @@ public class RecommendController {
 
             log.info("Similar game recommendation successful: gameName={}, extracted tags={}, found {} games\"",
                     dto.getGameName(), result.getUsedTags(), result.getRecommendedGame().size());
+            logImpressions(FeedbackContext.SIMILAR, dto.getClientId(), null, result.getRecommendedGame());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -198,6 +224,8 @@ public class RecommendController {
     @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/match")
     public ResponseEntity<MatchResultDTO> match(@Valid @RequestBody MatchRequestDTO req) {
-        return ResponseEntity.ok(matchService.recommend(req));
+        MatchResultDTO result = matchService.recommend(req);
+        logImpressions(FeedbackContext.MATCH, req.getClientId(), null, result.games());
+        return ResponseEntity.ok(result);
     }
 }

@@ -2,6 +2,7 @@ package SteamGame.recommend.config;
 
 import SteamGame.recommend.controller.RecommendController;
 import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
+import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
@@ -38,6 +39,7 @@ class SecurityConfigTest {
     // RecommendController 가 MatchService 를 주입받으므로 슬라이스 컨텍스트에도 목이 필요하다
     @MockitoBean MatchService matchService;
     @MockitoBean FeedbackSuppressionService suppressionService;
+    @MockitoBean ImpressionService impressionService;
 
     @BeforeEach
     void stubSuppression() {

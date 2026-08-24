@@ -2,6 +2,7 @@ package SteamGame.recommend.controller;
 
 import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.game.dto.TextRequestDTO;
+import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.service.MatchService;
 import SteamGame.recommend.domain.recommendation.service.RecommendService;
@@ -21,7 +22,8 @@ class RecommendControllerSuppressionTest {
     RecommendService recommendService = mock(RecommendService.class);
     MatchService matchService = mock(MatchService.class);
     FeedbackSuppressionService suppressionService = mock(FeedbackSuppressionService.class);
-    RecommendController controller = new RecommendController(recommendService, matchService, suppressionService);
+    ImpressionService impressionService = mock(ImpressionService.class);
+    RecommendController controller = new RecommendController(recommendService, matchService, suppressionService, impressionService);
 
     // 컨트롤러가 로그에서 getRecommendedGame().size(), getUsedTags() 를 부르므로 두 게터가 non-null 이어야 함
     // 스텁을 먼저 지역변수로 끝내 두고 thenReturn 에 넘김, thenReturn 인자 안에서 스텁하면 중첩 스텁이 됨
