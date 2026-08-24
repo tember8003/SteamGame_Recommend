@@ -45,7 +45,7 @@ body {
   min-height: 100vh;
   color: var(--text-primary);
   background: var(--bg-base);
-  font-family: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  font-family: var(--font-gmarket-sans), "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
