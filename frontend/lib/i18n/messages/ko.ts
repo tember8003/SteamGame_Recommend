@@ -89,7 +89,7 @@ export const ko: Messages = {
   },
   landing: {
     heroTitle: "다음 플레이를 찾아보세요.",
-    heroSubtitle: "AI 콘시어지의 안내로 멋진 Steam 게임을 발견하거나 완벽한 마인크래프트 모드팩을 만들어 보세요.",
+    heroSubtitle: "멋진 Steam 게임을 발견하거나 완벽한 마인크래프트 모드팩을 만들어 보세요.",
     steamPicks: "추천",
     steamDesc: "당신만을 위한 맞춤 게임 추천.",
     steamCta: "Steam 추천 둘러보기 →",
@@ -98,22 +98,7 @@ export const ko: Messages = {
     mcDesc: "당신의 모험에 딱 맞는 모드팩을 찾거나 만들어 보세요.",
     mcTags: ["모험", "기술", "마법", "탐험", "하드코어"],
     mcCta: "마인크래프트 모드 둘러보기 →",
-    mascotLabel: "마스코트",
-    bubbleGreeting: "안녕하세요, AI 콘시어지예요.",
-    bubbleHelp: "오늘 무엇을 도와드릴까요?",
     footer: "Valve 또는 Mojang 과 무관합니다. PLAYLOOM 은 독립 프로젝트입니다.",
-  },
-  concierge: {
-    head: "콘시어지에게 물어보기…",
-    placeholder: "게임, 모드팩, 플레이 방법 등 무엇이든 물어보세요…",
-    inputLabel: "콘시어지에게 물어보기",
-    send: "보내기",
-    quick: {
-      recommendSteam: "Steam 게임 추천",
-      buildModpack: "모드팩 만들기",
-      singleplayer: "싱글플레이",
-      lowSpec: "저사양",
-    },
   },
   hub: {
     title: "완벽한 게임을 찾아보세요",

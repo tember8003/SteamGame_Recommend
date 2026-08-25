@@ -2,8 +2,6 @@
 
 import Header from "@/components/Header";
 import Button from "@/components/ui/Button";
-import Concierge from "@/components/mascot/Concierge";
-import ConciergeBar from "@/components/landing/ConciergeBar";
 import { useT, useMessages } from "@/lib/i18n/useT";
 import { siSteam } from "simple-icons";
 import styles from "./page.module.css";
@@ -70,24 +68,6 @@ export default function Home() {
               {t("landing.mcCta")}
             </Button>
           </article>
-        </section>
-
-        <section className={styles.bottom}>
-          <ConciergeBar />
-          <aside className={styles.mascotPanel}>
-            <div className={styles.mascotHead}>
-              <span className={styles.spark}>✦</span> {t("landing.mascotLabel")}
-            </div>
-            <div className={styles.mascotInner}>
-              <div className={styles.bubble}>
-                <p>{t("landing.bubbleGreeting")}</p>
-                <p>{t("landing.bubbleHelp")}</p>
-              </div>
-              <div className={styles.mascotArt}>
-                <Concierge state="idle" />
-              </div>
-            </div>
-          </aside>
         </section>
 
         <footer className={styles.footer}>{t("landing.footer")}</footer>

@@ -87,7 +87,7 @@ export const en = {
   },
   landing: {
     heroTitle: "Find your next way to play.",
-    heroSubtitle: "Discover great Steam games or build the perfect Minecraft modpack, guided by your AI concierge.",
+    heroSubtitle: "Discover great Steam games or build the perfect Minecraft modpack.",
     steamPicks: "Picks",
     steamDesc: "Personalized game recommendations just for you.",
     steamCta: "Explore Steam Picks →",
@@ -96,22 +96,7 @@ export const en = {
     mcDesc: "Find or build the perfect modpack for your adventure.",
     mcTags: ["Adventure", "Tech", "Magic", "Exploration", "Hardcore"],
     mcCta: "Explore Minecraft Mods →",
-    mascotLabel: "mascot",
-    bubbleGreeting: "Hi, I'm your AI concierge.",
-    bubbleHelp: "How can I help you today?",
     footer: "Not affiliated with Valve or Mojang. PLAYLOOM is an independent project.",
-  },
-  concierge: {
-    head: "Ask concierge…",
-    placeholder: "Ask anything about games, modpacks, or how to play…",
-    inputLabel: "Ask the concierge",
-    send: "Send",
-    quick: {
-      recommendSteam: "Recommend Steam games",
-      buildModpack: "Build a modpack",
-      singleplayer: "Singleplayer",
-      lowSpec: "Low-spec",
-    },
   },
   hub: {
     title: "Find Your Perfect Game",

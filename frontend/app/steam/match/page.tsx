@@ -34,7 +34,7 @@ function isRateLimitError(error: unknown): boolean {
 function MatchContent() {
   const t = useT();
   const searchParams = useSearchParams();
-  // 랜딩에서 넘긴 ?q= 를 서술 박스 초기값으로만 씀(지연 초기화라 이후 변경엔 반응하지 않음, 자동 제출은 하지 않음)
+  // URL 의 ?q= 를 서술 박스 초기값으로만 씀(지연 초기화라 이후 변경엔 반응하지 않음, 자동 제출은 하지 않음)
   const [rawText, setRawText] = useState(() => searchParams.get("q") ?? "");
   const [sessionLength, setSessionLength] = useState<SessionValue>("");
   const [budgetUsd, setBudgetUsd] = useState("");

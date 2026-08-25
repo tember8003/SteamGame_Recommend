@@ -33,8 +33,8 @@ function isRateLimitError(error: unknown): boolean {
 function InputRecommendContent() {
   const t = useT();
   const searchParams = useSearchParams();
-  // 랜딩 ConciergeBar 가 넘긴 ?q= 를 입력창 초기값으로만 씀(지연 초기화라 이후 searchParams 변경엔 반응하지 않음,
-  // 자동 제출은 하지 않고 사용자가 버튼을 눌러야 추천이 돎)
+  // URL 의 ?q= 를 입력창 초기값으로만 씀(지연 초기화라 이후 searchParams 변경엔 반응하지 않음)
+  // 자동 제출은 하지 않고 사용자가 버튼을 눌러야 추천이 돎
   const [text, setText] = useState(() => searchParams.get("q") ?? "");
   const [review, setReview] = useState(1000);
   const [koreanOnly, setKoreanOnly] = useState(false);

@@ -150,63 +150,6 @@
   color: var(--text-secondary);
 }
 
-/* Bottom: concierge + mascot */
-.bottom {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 24px;
-  margin-top: 28px;
-  align-items: stretch;
-}
-
-.mascotPanel {
-  position: relative;
-  padding: 20px;
-  border-radius: var(--radius-card);
-  background: var(--glass-fill);
-  border: 1px solid rgba(155, 124, 240, 0.35);
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-
-.mascotHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.spark { color: var(--accent-violet); }
-
-.mascotInner {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  margin-top: 14px;
-}
-
-.bubble {
-  align-self: flex-start;
-  background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.bubble p + p {
-  margin-top: 6px;
-  color: var(--text-secondary);
-}
-
-.mascotArt {
-  flex: 1;
-  min-width: 120px;
-}
-
 .footer {
   text-align: center;
   margin-top: 44px;
@@ -216,5 +159,4 @@
 
 @media (max-width: 860px) {
   .modes { grid-template-columns: 1fr; }
-  .bottom { grid-template-columns: 1fr; }
 }
