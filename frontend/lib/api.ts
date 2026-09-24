@@ -9,6 +9,7 @@ import type {
   GraphNode,
   MatchOptions,
   MatchResult,
+  MetricsOverview,
   NeighborsResponse,
   RecommendationResult,
   RecommendOptions,
@@ -128,3 +129,23 @@ export const reviewGuessAnswer = (sessionId: string, roundIndex: number, selecte
 
 export const reviewGuessResult = (sessionId: string) =>
   getJson<ReviewGuessResult>(`/api/review-guess/${encodeURIComponent(sessionId)}/result`)
+
+// ── metrics ──
+
+// 지표 조회 인증 실패를 화면이 토큰 재입력으로 분기하도록 구분한다
+export class MetricsAuthError extends Error {
+  constructor() {
+    super('metrics auth failed')
+    this.name = 'MetricsAuthError'
+  }
+}
+
+// getJson 은 헤더를 싣지 못하므로 이 함수는 자체 fetch 로 토큰 헤더를 넣는다
+export async function metricsOverview(token: string): Promise<MetricsOverview> {
+  const res = await fetch(apiUrl('/api/metrics/overview'), {
+    headers: { 'X-Metrics-Token': token },
+  })
+  if (res.status === 401) throw new MetricsAuthError()
+  if (!res.ok) throw new Error(`GET /api/metrics/overview failed: ${res.status}`)
+  return res.json() as Promise<MetricsOverview>
+}

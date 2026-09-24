@@ -9,9 +9,8 @@
   --text-secondary: #b4b8cc;
   --text-muted: #8b90ad;
 
-  /* 액센트: 블루=Steam, 잔디 그린=Minecraft, 바이올렛=콘시어지 (솔리드) */
+  /* 액센트: 블루=Steam, 바이올렛 (솔리드) */
   --accent-steam: #4a9eff;
-  --accent-minecraft: #7bbf4a;
   --accent-violet: #9b7cf0;
 
   /* 글래스 표면 */
@@ -21,7 +20,6 @@
 
   /* 버튼 솔리드 (그라데이션 제거) */
   --btn-steam: #2f7de0;
-  --btn-minecraft: #4f8f38;
   --btn-violet: #6e56d6;
 
   /* 반경 */

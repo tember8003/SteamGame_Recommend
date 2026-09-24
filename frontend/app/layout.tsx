@@ -18,7 +18,7 @@ const gmarketSans = localFont({
 export const metadata: Metadata = {
   title: "PLAYLOOM — Find your next way to play",
   description:
-    "Discover great Steam games or build the perfect Minecraft modpack.",
+    "Discover great Steam games made for your taste.",
 };
 
 export default function RootLayout({

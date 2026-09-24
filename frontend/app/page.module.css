@@ -34,9 +34,8 @@
 
 /* Mode cards */
 .modes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .card {
@@ -54,12 +53,9 @@
 }
 
 .steamCard {
+  width: 100%;
+  max-width: 560px;
   border-color: rgba(74, 158, 255, 0.45);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-}
-
-.mcCard {
-  border-color: rgba(123, 191, 74, 0.4);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
@@ -88,17 +84,6 @@
   height: 34px;
 }
 
-.mcMark {
-  overflow: hidden;
-  background: none;
-}
-
-.mcMark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 .cardTitle {
   font-size: 2rem;
   font-weight: 800;
@@ -107,7 +92,6 @@
 }
 
 .steamAccent { color: var(--accent-steam); }
-.mcAccent { color: var(--accent-minecraft); }
 
 .cardDesc {
   max-width: 320px;
@@ -116,38 +100,9 @@
   line-height: 1.5;
 }
 
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.tag {
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
 .cardCta {
   width: 100%;
   margin-top: 24px;
-}
-
-.comingSoon {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--glass-border);
-  font-size: 0.72rem;
-  color: var(--text-secondary);
 }
 
 .footer {
@@ -155,8 +110,4 @@
   margin-top: 44px;
   color: var(--text-muted);
   font-size: 0.78rem;
-}
-
-@media (max-width: 860px) {
-  .modes { grid-template-columns: 1fr; }
 }

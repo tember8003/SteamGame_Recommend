@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./Button.module.css";
 
-type Variant = "steam" | "minecraft" | "violet" | "glass";
+type Variant = "steam" | "violet" | "glass";
 
 // 공통 버튼, href 있으면 내부 링크(next/link), disabled 면 button 으로 렌더함
 export default function Button({

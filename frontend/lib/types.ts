@@ -210,3 +210,26 @@ export interface FeedbackRequest {
   signal: FeedbackSignal
   rankPosition?: number | null
 }
+
+// ── metrics ──
+
+export interface ContextMetric {
+  context: FeedbackContext
+  impressions: number
+  up: number
+  down: number
+  click: number
+  upRate: number
+}
+
+export interface TopGame {
+  appid: number
+  name: string | null
+  impressions: number
+}
+
+export interface MetricsOverview {
+  totalImpressions: number
+  contexts: ContextMetric[]
+  topGames: TopGame[]
+}

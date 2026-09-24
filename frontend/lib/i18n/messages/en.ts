@@ -87,16 +87,11 @@ export const en = {
   },
   landing: {
     heroTitle: "Find your next way to play.",
-    heroSubtitle: "Discover great Steam games or build the perfect Minecraft modpack.",
+    heroSubtitle: "Discover great Steam games made for your taste.",
     steamPicks: "Picks",
     steamDesc: "Personalized game recommendations just for you.",
     steamCta: "Explore Steam Picks →",
-    comingSoon: "Coming soon",
-    mcModpacks: "Modpacks",
-    mcDesc: "Find or build the perfect modpack for your adventure.",
-    mcTags: ["Adventure", "Tech", "Magic", "Exploration", "Hardcore"],
-    mcCta: "Explore Minecraft Mods →",
-    footer: "Not affiliated with Valve or Mojang. PLAYLOOM is an independent project.",
+    footer: "Not affiliated with Valve. PLAYLOOM is an independent project.",
   },
   hub: {
     title: "Find Your Perfect Game",

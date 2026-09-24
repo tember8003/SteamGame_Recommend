@@ -89,16 +89,11 @@ export const ko: Messages = {
   },
   landing: {
     heroTitle: "다음 플레이를 찾아보세요.",
-    heroSubtitle: "멋진 Steam 게임을 발견하거나 완벽한 마인크래프트 모드팩을 만들어 보세요.",
+    heroSubtitle: "취향에 맞는 멋진 Steam 게임을 찾아보세요.",
     steamPicks: "추천",
     steamDesc: "당신만을 위한 맞춤 게임 추천.",
     steamCta: "Steam 추천 둘러보기 →",
-    comingSoon: "출시 예정",
-    mcModpacks: "모드팩",
-    mcDesc: "당신의 모험에 딱 맞는 모드팩을 찾거나 만들어 보세요.",
-    mcTags: ["모험", "기술", "마법", "탐험", "하드코어"],
-    mcCta: "마인크래프트 모드 둘러보기 →",
-    footer: "Valve 또는 Mojang 과 무관합니다. PLAYLOOM 은 독립 프로젝트입니다.",
+    footer: "Valve 와 무관합니다. PLAYLOOM 은 독립 프로젝트입니다.",
   },
   hub: {
     title: "완벽한 게임을 찾아보세요",
