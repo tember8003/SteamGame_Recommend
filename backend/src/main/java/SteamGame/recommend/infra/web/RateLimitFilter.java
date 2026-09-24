@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
-// 비싼 3개 엔드포인트만 IP당 토큰버킷으로 제한, 초과 시 429 + Retry-After 반환함
+// 지정한 엔드포인트만 IP당 토큰버킷으로 제한, 초과 시 429 + Retry-After 반환함
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -29,7 +29,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "/api/recommend/profile", "profile",
             "/api/recommend/recent-play", "recent-play",
             "/api/recommend/feedback", "feedback",
-            "/api/recommend/match", "match"
+            "/api/recommend/match", "match",
+            "/api/metrics/overview", "metrics"
     );
 
     private final RateLimitProperties props;
