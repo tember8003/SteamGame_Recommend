@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # 빌드 스테이지: gradle wrapper 로 bootJar 생성함
-FROM eclipse-temurin:17-jdk-jammy AS build
+# BUILDPLATFORM 으로 러너의 네이티브 아키텍처에서 빌드해 arm64 크로스빌드 때 gradle 컴파일이 에뮬레이션을 안 탄다, jar 는 아키텍처 중립이라 런타임 단계에서 그대로 얹는다
+FROM --platform=$BUILDPLATFORM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /app
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
