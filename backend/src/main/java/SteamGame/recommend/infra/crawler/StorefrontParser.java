@@ -29,7 +29,8 @@ public class StorefrontParser {
     public Optional<StorefrontDetail> parse(long appid, String json) {
         if (json == null || json.isBlank()) return Optional.empty();
         try {
-            JsonNode node = objectMapper.readTree(json).path(String.valueOf(appid));
+            JsonNode node = findEntry(objectMapper.readTree(json), appid);
+            if (node == null) return Optional.empty();
             if (!node.path("success").asBoolean(false)) return Optional.empty();
             JsonNode data = node.path("data");
 
@@ -52,6 +53,41 @@ public class StorefrontParser {
             log.error("Failed to parse storefront appdetails for appid {}", appid, ex);
             return Optional.empty();
         }
+    }
+
+    // Steam 이 바깥 키를 요청 appid 가 아닌 값으로 주는 경우가 있어 data.steam_appid 로 먼저 찾는다
+    // 키가 appid 와 같아도 steam_appid 가 다른 게임을 가리키면 그 게임 정보라 버린다, steam_appid 가 없는 옛 형식만 키로 받는다
+    private static JsonNode findEntry(JsonNode root, long appid) {
+        if (root == null || !root.isObject()) return null;
+        for (var entry : root.properties()) {
+            Long steamAppid = steamAppidOf(entry.getValue());
+            if (steamAppid != null && steamAppid == appid) {
+                return entry.getValue();
+            }
+        }
+        JsonNode byKey = root.get(String.valueOf(appid));
+        if (byKey != null && steamAppidOf(byKey) != null) {
+            byKey = null;
+        }
+        if (byKey == null && !root.isEmpty()) {
+            log.warn("appdetails 응답에서 appid {} 항목을 찾지 못함, 받은 키 {}", appid,
+                    root.properties().iterator().next().getKey());
+        }
+        return byKey;
+    }
+
+    // data.steam_appid 를 숫자와 숫자 문자열 모두에서 읽는다, 없거나 못 읽으면 null
+    private static Long steamAppidOf(JsonNode entry) {
+        JsonNode n = entry.path("data").path("steam_appid");
+        if (n.isNumber()) return n.asLong();
+        if (n.isTextual()) {
+            try {
+                return Long.parseLong(n.asText().trim());
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private static String text(JsonNode data, String field) {

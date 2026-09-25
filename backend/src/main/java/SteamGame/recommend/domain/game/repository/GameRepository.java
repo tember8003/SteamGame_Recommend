@@ -75,6 +75,20 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                                           @Param("korean_check") Boolean korean_check,
                                           @Param("free") Boolean free);
 
+    // 리뷰 맞히기 정답 후보, 긍정, 부정 리뷰 본문과 이미지가 모두 있는 게임만 무작위로 고른다
+    // 50개는 7라운드에 필요한 정답 7개보다 넉넉하게 잡아, 보기 부족으로 건너뛰는 후보가 있어도 라운드를 채우려는 값이다
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid
+    WHERE r.total_reviews >= :review
+        AND r.positive_review_text IS NOT NULL AND r.positive_review_text <> ''
+        AND r.negative_review_text IS NOT NULL AND r.negative_review_text <> ''
+        AND g.image_url IS NOT NULL AND g.image_url <> ''
+    ORDER BY RANDOM()
+    LIMIT 50
+""", nativeQuery = true)
+    List<Game> findReviewGuessCandidates(@Param("review") int review);
+
     // 코사인 유사도 최근접 상위 k개. 하드 필터는 태그 매칭 대신 임베딩 유사도로 정렬.
     // 빈 exclude 집합은 excludeCount=0 가드로 NOT IN 을 무력화(sentinel [-1] 바인딩)
     @Query(value = """

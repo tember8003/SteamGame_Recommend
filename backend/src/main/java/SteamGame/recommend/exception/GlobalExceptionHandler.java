@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
@@ -105,6 +106,32 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    // 코드가 상태를 정해 던진 예외는 그 상태 그대로 돌려준다, 범용 처리기로 떨어지면 전부 500 이 됨
+    // 5xx 사유에는 외부 제공자 이름 같은 내부 정보가 들어 있어 응답에는 일반 문구만 싣고 사유는 로그에만 남긴다
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException e) {
+        HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
+        String errorCode = status != null ? status.name() : "HTTP_" + e.getStatusCode().value();
+        String message;
+
+        if (e.getStatusCode().is5xxServerError()) {
+            log.error("Response status error: {} {}", e.getStatusCode().value(), e.getReason(), e);
+            message = "There was a temporary problem with the system, please try again in a moment.";
+        } else {
+            message = e.getReason() != null ? e.getReason()
+                    : (status != null ? status.getReasonPhrase() : errorCode);
+            log.warn("Response status error: {} {}", e.getStatusCode().value(), message);
+        }
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .errorCode(errorCode)
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(e.getStatusCode()).body(errorResponse);
     }
 
     //normal exception

@@ -64,6 +64,44 @@ class StorefrontParserTest {
     }
 
     @Test
+    void outerKeyDiffersFromAppid_butSteamAppidMatches_parses() {
+        // Steam 이 바깥 키를 요청 appid 가 아닌 값으로 주는 경우, data.steam_appid 로 찾아야 함
+        String json = """
+            {"3494100":{"success":true,"data":{
+              "steam_appid":1172470,"name":"Apex Legends",
+              "header_image":"https://img/1172470.jpg","is_free":true}}}
+            """;
+
+        StorefrontDetail d = parser.parse(1172470L, json).orElseThrow();
+
+        assertThat(d.name()).isEqualTo("Apex Legends");
+        assertThat(d.imageUrl()).isEqualTo("https://img/1172470.jpg");
+    }
+
+    @Test
+    void outerKeyAndSteamAppidBothPointElsewhere_yieldsEmpty() {
+        // 다른 게임을 가리키는 응답이면 그 게임 정보를 이 appid 에 저장하지 않음
+        String json = "{\"999\":{\"success\":true,\"data\":{\"steam_appid\":555,\"name\":\"Other\"}}}";
+
+        assertThat(parser.parse(111L, json)).isEmpty();
+    }
+
+    @Test
+    void sameOuterKeyButSteamAppidPointsElsewhere_yieldsEmpty() {
+        // 키가 요청 appid 와 같아도 data.steam_appid 가 다른 게임이면 그 게임 정보를 저장하지 않음
+        String json = "{\"111\":{\"success\":true,\"data\":{\"steam_appid\":999,\"name\":\"Other\"}}}";
+
+        assertThat(parser.parse(111L, json)).isEmpty();
+    }
+
+    @Test
+    void steamAppidAsString_stillMatches() {
+        String json = "{\"5\":{\"success\":true,\"data\":{\"steam_appid\":\"42\",\"name\":\"Quoted\"}}}";
+
+        assertThat(parser.parse(42L, json).orElseThrow().name()).isEqualTo("Quoted");
+    }
+
+    @Test
     void successFalse_orBlankName_yieldsEmpty() {
         assertThat(parser.parse(99L, "{\"99\":{\"success\":false}}")).isEmpty();
         assertThat(parser.parse(99L, "{\"99\":{\"success\":true,\"data\":{\"name\":\"\"}}}")).isEmpty();
