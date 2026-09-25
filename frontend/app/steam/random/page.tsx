@@ -38,6 +38,10 @@ function isRateLimitError(error: unknown): boolean {
   return error instanceof Error && /\b429\b/.test(error.message);
 }
 
+function isNoMatchError(error: unknown): boolean {
+  return error instanceof Error && /\b404\b/.test(error.message);
+}
+
 // 원본 random.html(태그를 고르면 그 태그들로 게임을 추천받는 화면)을 /steam/random 라우트로 옮김
 export default function RandomRecommendPage() {
   const t = useT();
@@ -78,6 +82,12 @@ export default function RandomRecommendPage() {
       setShownAppids((prev) => mergeShownAppids(isFresh ? [] : prev, data.recommendedGame));
       setStatus("idle");
     } catch (error) {
+      // 조건에 맞는 게임이 없다는 404 는 오류가 아니라 빈 결과로 보여준다
+      if (isNoMatchError(error)) {
+        setResult({ usedTags: selectedTags, recommendedGame: [], review: [] });
+        setStatus("idle");
+        return;
+      }
       setResult(null);
       setStatus(isRateLimitError(error) ? "rateLimited" : "error");
     }
