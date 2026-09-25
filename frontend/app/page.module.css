@@ -11,31 +11,11 @@
   padding: 24px clamp(16px, 4vw, 40px) 64px;
 }
 
-/* Hero */
-.hero {
-  text-align: center;
-  padding: 52px 0 40px;
-}
-
-.title {
-  font-size: clamp(2.6rem, 6.5vw, 4.6rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.02;
-}
-
-.subtitle {
-  max-width: 620px;
-  margin: 18px auto 0;
-  color: var(--text-secondary);
-  font-size: clamp(1rem, 2vw, 1.15rem);
-  line-height: 1.6;
-}
-
 /* Mode cards */
 .modes {
   display: flex;
   justify-content: center;
+  padding-top: 52px;
 }
 
 .card {

@@ -88,8 +88,6 @@ export const ko: Messages = {
     loading: "불러오는 중…",
   },
   landing: {
-    heroTitle: "다음 플레이를 찾아보세요.",
-    heroSubtitle: "취향에 맞는 멋진 Steam 게임을 찾아보세요.",
     steamPicks: "추천",
     steamDesc: "당신만을 위한 맞춤 게임 추천.",
     steamCta: "Steam 추천 둘러보기 →",

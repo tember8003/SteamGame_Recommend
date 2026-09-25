@@ -86,8 +86,6 @@ export const en = {
     loading: "Loading…",
   },
   landing: {
-    heroTitle: "Find your next way to play.",
-    heroSubtitle: "Discover great Steam games made for your taste.",
     steamPicks: "Picks",
     steamDesc: "Personalized game recommendations just for you.",
     steamCta: "Explore Steam Picks →",

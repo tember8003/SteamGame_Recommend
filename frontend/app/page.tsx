@@ -13,11 +13,6 @@ export default function Home() {
       <Header />
 
       <main className={styles.main}>
-        <section className={styles.hero}>
-          <h1 className={styles.title}>{t("landing.heroTitle")}</h1>
-          <p className={styles.subtitle}>{t("landing.heroSubtitle")}</p>
-        </section>
-
         <section className={styles.modes}>
           <article className={`${styles.card} ${styles.steamCard}`}>
             <div className={styles.cardBody}>
