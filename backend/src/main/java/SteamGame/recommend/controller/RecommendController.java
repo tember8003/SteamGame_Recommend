@@ -86,11 +86,13 @@ public class RecommendController {
                     request.getTags(), request.getReview(), request.getKorean_check(), request.getFree_check());
 
             Boolean excludedCheck = request.getExcludedTag() != null;
+            // tags 를 빼고 보낸 요청은 태그 조건 없음으로 본다, null 이면 태그 목록 변환에서 NPE 로 500 이 됨
+            String[] tags = request.getTags() != null ? request.getTags() : new String[0];
 
             RecommendationResultDTO recommendServiceGame = withSuppressionFallback(
                     request.getClientId(), request.getExcludeAppids(),
                     ex -> recommendService.findGame(
-                            request.getTags(),
+                            tags,
                             request.getReview(),
                             request.getKorean_check(),
                             request.getFree_check(),
