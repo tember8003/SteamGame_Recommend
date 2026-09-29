@@ -8,14 +8,57 @@ on:
       - '**/*.md'
       - 'electron/**'
       - 'frontend/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'electron/**'
+      - 'frontend/**'
   workflow_dispatch:
 
+# PR 테스트가 배포 대기열을 막지 않게 PR 은 브랜치별 그룹으로 나누고, 새 커밋이 오면 이전 실행을 취소함
 concurrency:
-  group: deploy
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('test-{0}', github.ref) || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # 윈도우에서 커밋한 gradlew 는 CRLF 라 셔뱅이 깨지므로 Dockerfile 과 같이 LF 로 바꾸고 실행 권한을 줌
+      - run: sed -i 's/\r$//' gradlew && chmod +x gradlew
+
+      # Testcontainers 가 러너의 Docker 로 Postgres 를 띄움
+      - run: ./gradlew --no-daemon test
+
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            backend/build/reports/tests/test
+            backend/build/test-results/test
+          retention-days: 7
+
   build-and-push:
+    needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
