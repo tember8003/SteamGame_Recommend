@@ -21,14 +21,14 @@ public class EmbeddingRepository {
         this.jdbc = jdbc;
     }
 
-    // 임베딩이 없거나(신규) 마지막 크롤 이후 갱신 안 된(stale) 게임 n개, 인기순
+    // 임베딩이 없는 게임을 먼저, 그다음 리뷰 많은 순으로 고름, 재임베딩 대상이 신작을 밀어내지 않게 함
     public List<Long> selectNextToEmbed(int n) {
         return jdbc.queryForList("""
             SELECT appid FROM games
             WHERE embedding IS NULL
                OR (last_crawled_at IS NOT NULL
                    AND (embedding_updated_at IS NULL OR last_crawled_at > embedding_updated_at))
-            ORDER BY owners_estimate DESC NULLS LAST
+            ORDER BY (embedding IS NULL) DESC, review_count DESC NULLS LAST
             LIMIT ?""", Long.class, n);
     }
 

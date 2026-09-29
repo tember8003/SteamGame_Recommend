@@ -10,23 +10,23 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.crawler.run", havingValue = "seed")
-public class SeedCrawlerRunner implements ApplicationRunner {
+@ConditionalOnProperty(name = "app.crawler.run", havingValue = "catalog")
+public class CatalogSyncRunner implements ApplicationRunner {
 
-    private final SeedCrawlerService service;
+    private final CatalogSyncService service;
     private final ConfigurableApplicationContext context;
 
-    public SeedCrawlerRunner(SeedCrawlerService service, ConfigurableApplicationContext context) {
+    public CatalogSyncRunner(CatalogSyncService service, ConfigurableApplicationContext context) {
         this.service = service;
         this.context = context;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        log.info("=== SteamSpy seed crawler starting ===");
-        SeedCrawlerService.SeedResult result = service.runSeed();
-        log.info("=== SteamSpy seed done: pages={}, gamesUpserted={}, capped={} ===",
-                result.pagesFetched(), result.gamesUpserted(), result.cappedByMaxPages());
+        log.info("=== steam catalog sync starting ===");
+        CatalogSyncService.SyncResult r = service.runSync();
+        log.info("=== steam catalog sync done: pages={}, saved={}, failed={}, stop={} ===",
+                r.pages(), r.saved(), r.failed(), r.stopReason().label());
         int exitCode = SpringApplication.exit(context, () -> 0);
         System.exit(exitCode);
     }

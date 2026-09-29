@@ -1,6 +1,5 @@
 package SteamGame.recommend.infra.crawler;
 
-import SteamGame.recommend.infra.crawler.dto.AppTag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -12,23 +11,15 @@ import java.util.List;
 @Service
 public class DetailCrawlerService {
 
-    private final SteamSpyClient spyClient;
     private final SteamStoreClient storeClient;
-    private final SteamSpyAppDetailsParser tagsParser;
-    private final StorefrontParser storefrontParser;
     private final AppReviewsParser reviewsParser;
     private final DetailUpsertRepository upsert;
     private final JdbcTemplate jdbc;
     private final CrawlerProperties props;
 
-    public DetailCrawlerService(SteamSpyClient spyClient, SteamStoreClient storeClient,
-                                SteamSpyAppDetailsParser tagsParser, StorefrontParser storefrontParser,
-                                AppReviewsParser reviewsParser, DetailUpsertRepository upsert,
-                                JdbcTemplate jdbc, CrawlerProperties props) {
-        this.spyClient = spyClient;
+    public DetailCrawlerService(SteamStoreClient storeClient, AppReviewsParser reviewsParser,
+                                DetailUpsertRepository upsert, JdbcTemplate jdbc, CrawlerProperties props) {
         this.storeClient = storeClient;
-        this.tagsParser = tagsParser;
-        this.storefrontParser = storefrontParser;
         this.reviewsParser = reviewsParser;
         this.upsert = upsert;
         this.jdbc = jdbc;
@@ -44,23 +35,10 @@ public class DetailCrawlerService {
 
         for (Long appid : appids) {
             try {
-                List<AppTag> tags = tagsParser.parseTags(spyClient.fetchAppDetails(appid));
-                // upsertTags 는 DELETE 후 재삽입 방식이라, 빈 파싱 결과(진짜 태그 없는 게임이거나
-                // SteamSpy 의 일시적 빈 응답)로 교체하면 다음 성공 크롤링 전까지 기존 가중 태그가 날아감
-                // 파싱 결과가 비면 교체를 건너뛰어 기존 태그를 보존
-                if (!tags.isEmpty()) {
-                    upsert.upsertTags(appid, tags);
-                }
-                sleep(props.getDetailDelayMs());
-
-                storefrontParser.parse(appid, storeClient.fetchAppDetails(appid))
-                        .ifPresent(upsert::upsertStorefront);
-                sleep(props.getDetailDelayMs());
-
+                // 태그와 게임 정보는 catalog 배치가 맡고 여기서는 리뷰 본문만 받음
                 reviewsParser.parse(appid, storeClient.fetchAppReviews(appid), props.getReviewSampleMaxChars())
                         .ifPresent(upsert::upsertReviewDetail);
                 sleep(props.getDetailDelayMs());
-
                 processed++;
             } catch (Exception e) {
                 failed++;

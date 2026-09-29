@@ -22,7 +22,7 @@ public class GraphRepository {
         return jdbc.query("""
                 SELECT appid, name, image_url FROM games
                 WHERE embedding IS NOT NULL AND name ILIKE ?
-                ORDER BY owners_estimate DESC NULLS LAST
+                ORDER BY review_count DESC NULLS LAST
                 LIMIT ?""",
                 (rs, i) -> new GraphNode(rs.getLong("appid"), rs.getString("name"), rs.getString("image_url")),
                 "%" + q + "%", limit);

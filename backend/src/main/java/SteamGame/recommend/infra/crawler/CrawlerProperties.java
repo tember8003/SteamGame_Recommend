@@ -3,20 +3,13 @@ package SteamGame.recommend.infra.crawler;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @ConfigurationProperties(prefix = "app.crawler")
 public class CrawlerProperties {
-    private String steamspyBaseUrl = "https://steamspy.com/api.php";
-    private long pageDelayMs = 60000;
-    private int maxPages = 100;
     private int minReviews = 50;
 
-    public String getSteamspyBaseUrl() { return steamspyBaseUrl; }
-    public void setSteamspyBaseUrl(String steamspyBaseUrl) { this.steamspyBaseUrl = steamspyBaseUrl; }
-    public long getPageDelayMs() { return pageDelayMs; }
-    public void setPageDelayMs(long pageDelayMs) { this.pageDelayMs = pageDelayMs; }
-    public int getMaxPages() { return maxPages; }
-    public void setMaxPages(int maxPages) { this.maxPages = maxPages; }
     public int getMinReviews() { return minReviews; }
     public void setMinReviews(int minReviews) { this.minReviews = minReviews; }
 
@@ -33,4 +26,21 @@ public class CrawlerProperties {
     public void setDailyDetailBatchSize(int dailyDetailBatchSize) { this.dailyDetailBatchSize = dailyDetailBatchSize; }
     public int getReviewSampleMaxChars() { return reviewSampleMaxChars; }
     public void setReviewSampleMaxChars(int reviewSampleMaxChars) { this.reviewSampleMaxChars = reviewSampleMaxChars; }
+
+    private String steamApiBaseUrl = "https://api.steampowered.com";
+    private int catalogPageSize = 1000;
+    private int catalogMaxPages = 200;
+    private long catalogCallDelayMs = 1000;
+    private List<Long> catalogRetryBackoffMs = List.of(30000L, 60000L, 120000L);
+
+    public String getSteamApiBaseUrl() { return steamApiBaseUrl; }
+    public void setSteamApiBaseUrl(String steamApiBaseUrl) { this.steamApiBaseUrl = steamApiBaseUrl; }
+    public int getCatalogPageSize() { return catalogPageSize; }
+    public void setCatalogPageSize(int catalogPageSize) { this.catalogPageSize = catalogPageSize; }
+    public int getCatalogMaxPages() { return catalogMaxPages; }
+    public void setCatalogMaxPages(int catalogMaxPages) { this.catalogMaxPages = catalogMaxPages; }
+    public long getCatalogCallDelayMs() { return catalogCallDelayMs; }
+    public void setCatalogCallDelayMs(long catalogCallDelayMs) { this.catalogCallDelayMs = catalogCallDelayMs; }
+    public List<Long> getCatalogRetryBackoffMs() { return catalogRetryBackoffMs; }
+    public void setCatalogRetryBackoffMs(List<Long> catalogRetryBackoffMs) { this.catalogRetryBackoffMs = catalogRetryBackoffMs; }
 }
