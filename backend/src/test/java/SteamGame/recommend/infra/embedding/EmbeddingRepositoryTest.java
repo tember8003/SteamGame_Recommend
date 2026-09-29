@@ -176,4 +176,30 @@ class EmbeddingRepositoryTest extends PostgresTestBase {
         assertThat(next).contains(330L);
         assertThat(next).doesNotContain(331L);
     }
+
+    @Test
+    void selectNextToEmbed_ordersByReviewCount_notOwners() {
+        game(340L, "FewReviews");
+        game(341L, "ManyReviews");
+        jdbc.update("UPDATE games SET review_count = 60, owners_estimate = 999999999 WHERE appid = 340");
+        jdbc.update("UPDATE games SET review_count = 90000, owners_estimate = 1 WHERE appid = 341");
+
+        List<Long> next = repo.selectNextToEmbed(50);
+
+        assertThat(next.indexOf(341L)).isLessThan(next.indexOf(340L));
+    }
+
+    @Test
+    void selectNextToEmbed_putsUnembeddedBeforeStale_evenWithFewerReviews() {
+        game(350L, "NewFew");
+        game(351L, "StalePopular");
+        jdbc.update("UPDATE games SET review_count = 60 WHERE appid = 350");
+        repo.updateEmbedding(351L, vec(1.0));
+        jdbc.update("UPDATE games SET review_count = 900000, last_crawled_at = now() + interval '1 day' WHERE appid = 351");
+
+        List<Long> next = repo.selectNextToEmbed(50);
+
+        assertThat(next).contains(350L, 351L);
+        assertThat(next.indexOf(350L)).isLessThan(next.indexOf(351L));
+    }
 }

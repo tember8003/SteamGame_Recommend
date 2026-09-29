@@ -71,4 +71,16 @@ class GraphRepositoryTest extends PostgresTestBase {
         game(421L, "Other", vec(1.0));
         assertThat(repo.findNeighbors(420L, 5)).isEmpty();
     }
+
+    @Test
+    void search_ordersByReviewCount_notOwners() {
+        game(430L, "Order Few", vec(1.0));
+        game(431L, "Order Many", vec(0.9, 0.1));
+        jdbc.update("UPDATE games SET review_count = 60, owners_estimate = 999999999 WHERE appid = 430");
+        jdbc.update("UPDATE games SET review_count = 90000, owners_estimate = 1 WHERE appid = 431");
+
+        List<GraphNode> hits = repo.searchByName("order", 10);
+
+        assertThat(hits).extracting(GraphNode::appid).containsExactly(431L, 430L);
+    }
 }

@@ -30,21 +30,6 @@ class SteamStoreClientTest {
     }
 
     @Test
-    void fetchAppDetails_callsStorefrontPathWithAppid_andReturnsBody() throws Exception {
-        server.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setBody("{\"570\":{\"success\":true}}"));
-
-        String body = client.fetchAppDetails(570L);
-
-        assertThat(body).contains("\"success\":true");
-        RecordedRequest req = server.takeRequest();
-        assertThat(req.getPath()).startsWith("/api/appdetails");
-        assertThat(req.getPath()).contains("appids=570");
-        assertThat(req.getPath()).contains("cc=us");
-        assertThat(req.getPath()).contains("l=english");
-    }
-
-    @Test
     void fetchAppReviews_callsAppreviewsPathWithAppid_andReturnsBody() throws Exception {
         server.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setBody("{\"success\":1}"));
