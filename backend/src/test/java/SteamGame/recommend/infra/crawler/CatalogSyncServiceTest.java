@@ -52,17 +52,31 @@ class CatalogSyncServiceTest {
     }
 
     @Test
-    void stopsWhenWholePageIsBelowMinReviews() {
-        page(0, qp(2, List.of(game(1, 900), game(2, 800))));
-        page(2, qp(2, List.of(game(3, 49), game(4, 10))));
+    void pageWithNoQualifyingGames_isSkipped_andRunContinues() {
+        page(0, qp(2, List.of(game(1, 900), game(2, 800)), 5));
+        page(2, qp(2, List.of(game(3, 49), game(4, 10)), 5));
+        page(4, qp(1, List.of(game(5, 700)), 5));
+        page(6, qp(0, List.of(), 5));
 
         CatalogSyncService.SyncResult r = service.runSync();
 
-        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.BELOW_MIN_REVIEWS);
-        assertThat(r.pages()).isEqualTo(2);
+        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.END_OF_RESULTS);
+        assertThat(r.pages()).isEqualTo(4);
+        assertThat(r.saved()).isEqualTo(3);
+        verify(upsert).upsertItem(game(5, 700));
+        verify(upsert, never()).upsertItem(game(3, 49));
+    }
+
+    @Test
+    void leadingPagesWithoutQualifyingGames_thenSaves_endsNormally() {
+        page(0, qp(2, List.of(game(1, 3), game(2, 0)), 4));
+        page(2, qp(2, List.of(game(3, 900), game(4, 800)), 4));
+        page(4, qp(0, List.of(), 4));
+
+        CatalogSyncService.SyncResult r = service.runSync();
+
+        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.END_OF_RESULTS);
         assertThat(r.saved()).isEqualTo(2);
-        verify(upsert, times(2)).upsertItem(any());
-        verify(client, never()).fetchQueryPage(4, 2);
     }
 
     @Test
@@ -79,15 +93,15 @@ class CatalogSyncServiceTest {
     }
 
     @Test
-    void stopsAtMaxPages() {
+    void hittingMaxPagesBeforeTheEnd_fails() {
         for (int start = 0; start < 10; start += 2) {
-            page(start, qp(2, List.of(game(start + 100, 999))));
+            page(start, qp(2, List.of(game(start + 100, 999)), 100000));
         }
 
-        CatalogSyncService.SyncResult r = service.runSync();
-
-        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.MAX_PAGES);
-        assertThat(r.pages()).isEqualTo(5);
+        assertThatThrownBy(() -> service.runSync())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("catalogMaxPages");
+        verify(upsert, times(5)).upsertItem(any());
     }
 
     @Test
@@ -167,8 +181,10 @@ class CatalogSyncServiceTest {
     }
 
     @Test
-    void firstPageAllBelowMin_withNothingSaved_fails() {
-        page(0, qp(2, List.of(game(1, 0), game(2, 10))));
+    void wholeRunWithNothingQualifying_fails() {
+        page(0, qp(2, List.of(game(1, 0), game(2, 10)), 4));
+        page(2, qp(2, List.of(game(3, 5), game(4, 1)), 4));
+        page(4, qp(0, List.of(), 4));
 
         assertThatThrownBy(() -> service.runSync())
                 .isInstanceOf(IllegalStateException.class)
@@ -201,19 +217,19 @@ class CatalogSyncServiceTest {
     @Test
     void successNote_carriesLabelSkippedAndUnknownTags() {
         when(jdbc.queryForObject(anyString(), eq(Long.class), any(Object[].class))).thenReturn(7L);
-        page(0, new StoreItemParser.QueryPage(3, List.of(game(1, 900), game(2, 800)), 0, 4));
-        page(2, qp(2, List.of(game(3, 1), game(4, 2))));
+        page(0, new StoreItemParser.QueryPage(3, List.of(game(1, 900), game(2, 800)), 4, 4));
+        page(2, qp(2, List.of(game(3, 1), game(4, 2)), 4));
+        page(4, qp(0, List.of(), 4));
 
         service.runSync();
 
         verify(jdbc).update(anyString(), any(), eq(2), eq(0),
-                eq("pages=2 stop=below-min-reviews skipped=1 unknownTags=4"), eq(7L));
+                eq("pages=3 stop=end-of-results skipped=1 unknownTags=4"), eq(7L));
     }
 
     @Test
     void stopReason_labels() {
+        assertThat(CatalogSyncService.StopReason.values()).hasSize(1);
         assertThat(CatalogSyncService.StopReason.END_OF_RESULTS.label()).isEqualTo("end-of-results");
-        assertThat(CatalogSyncService.StopReason.BELOW_MIN_REVIEWS.label()).isEqualTo("below-min-reviews");
-        assertThat(CatalogSyncService.StopReason.MAX_PAGES.label()).isEqualTo("max-pages");
     }
 }

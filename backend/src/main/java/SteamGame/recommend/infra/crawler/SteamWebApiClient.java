@@ -16,8 +16,9 @@ import java.util.List;
 @Component
 public class SteamWebApiClient {
 
-    // 리뷰 수 많은 순, 실측으로 확인한 IStoreQueryService 정렬 값
-    static final int SORT_BY_REVIEWS = 30;
+    // 같은 요청에 늘 같은 순서를 주고 전체를 한 번씩만 돌려주는 정렬을 씀
+    // 리뷰 순(30)은 같은 요청에도 순서가 달라 페이지를 넘기면 게임이 빠지고 겹침
+    static final int SORT_STABLE = 2;
 
     private final WebClient webClient;
     private final CrawlerProperties props;
@@ -44,7 +45,7 @@ public class SteamWebApiClient {
         ObjectNode query = input.putObject("query");
         query.put("start", start);
         query.put("count", count);
-        query.put("sort", SORT_BY_REVIEWS);
+        query.put("sort", SORT_STABLE);
         ObjectNode filters = query.putObject("filters");
         filters.put("released_only", true);
         filters.putObject("type_filters").put("include_games", true);
