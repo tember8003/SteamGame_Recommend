@@ -14,9 +14,7 @@ import java.util.Map;
 public class CatalogSyncService {
 
     public enum StopReason {
-        END_OF_RESULTS("end-of-results"),
-        BELOW_MIN_REVIEWS("below-min-reviews"),
-        MAX_PAGES("max-pages");
+        END_OF_RESULTS("end-of-results");
 
         private final String label;
 
@@ -45,7 +43,7 @@ public class CatalogSyncService {
     public SyncResult runSync() {
         Long logId = startCrawlLog();
         int pages = 0, saved = 0, failed = 0, skipped = 0, unknownTags = 0;
-        StopReason reason = StopReason.MAX_PAGES;
+        StopReason reason = null;
         try {
             Map<Integer, String> tagNames = parser.parseTagList(client.fetchTagList());
             // 이름표 없이 저장하면 게임마다 태그가 통째로 비어 버리므로 시작 전에 멈춤
@@ -59,31 +57,25 @@ public class CatalogSyncService {
 
                 if (p.rawCount() == 0) {
                     // 전체 개수를 다 지난 빈 페이지만 진짜 끝이고, 그 밖의 빈 응답은 요청 제한이나 응답 누락일 수 있어 실패로 처리함
-                    if (p.totalMatching() > 0 && (long) page * size >= p.totalMatching() && saved > 0) {
+                    if (p.totalMatching() > 0 && (long) page * size >= p.totalMatching()) {
                         reason = StopReason.END_OF_RESULTS;
                         break;
                     }
                     throw new IllegalStateException("page " + page + " 에서 결과가 비어 있음, 전체 "
                             + p.totalMatching() + " 개 중 start " + (page * size));
                 }
-                // 게임이 있는데 하나도 못 읽었으면 "모두 기준 미만"과 구분해 실패로 처리함
+                // 게임이 있는데 하나도 못 읽었으면 응답 형식이 바뀐 것으로 보고 실패로 처리함
                 if (p.items().isEmpty()) {
                     throw new IllegalStateException("page " + page + " 에서 읽을 수 있는 게임이 없음");
                 }
                 skipped += p.rawCount() - p.items().size();
                 unknownTags += p.unknownTags();
 
+                // 정렬이 리뷰 순이 아니라 기준을 넘는 게임이 없는 페이지도 흔하므로 멈추지 않고 넘어감
                 List<StoreItem> keep = p.items().stream()
                         .filter(i -> i.reviewCount() >= props.getMinReviews())
                         .toList();
-                if (keep.isEmpty()) {
-                    // 저장한 게임이 없는데 전부 기준 미만이면 리뷰 수 필드가 깨진 것으로 봄
-                    if (saved == 0) {
-                        throw new IllegalStateException("page " + page + " 까지 리뷰 기준을 넘는 게임이 하나도 없음");
-                    }
-                    reason = StopReason.BELOW_MIN_REVIEWS;
-                    break;
-                }
+                if (keep.isEmpty()) continue;
 
                 int pageSaved = 0;
                 Exception lastError = null;
@@ -105,15 +97,21 @@ public class CatalogSyncService {
                 log.info("steam catalog: page {} saved {} of {} ({} below min)",
                         page, pageSaved, p.rawCount(), p.items().size() - keep.size());
             }
+            // 상한에 닿아 끝까지 못 돌았으면 일부만 갱신된 것이라 성공으로 남기지 않음
+            if (reason == null) {
+                throw new IllegalStateException("catalogMaxPages=" + props.getCatalogMaxPages()
+                        + " 에 닿아 결과 끝까지 돌지 못함");
+            }
+            // 전체를 돌고도 저장이 0이면 리뷰 수 필드가 깨진 것으로 봄
+            if (saved == 0) {
+                throw new IllegalStateException(pages + " 페이지를 돌았는데 리뷰 기준을 넘는 게임이 하나도 없음");
+            }
         } catch (RuntimeException ex) {
             log.error("steam catalog sync failed", ex);
             finishCrawlLog(logId, saved, failed + 1, "FAILED: " + ex.getMessage());
             throw ex;
         }
 
-        if (reason == StopReason.MAX_PAGES) {
-            log.warn("steam catalog: hit catalogMaxPages={}, catalog may be truncated", props.getCatalogMaxPages());
-        }
         finishCrawlLog(logId, saved, failed, "pages=" + pages + " stop=" + reason.label()
                 + " skipped=" + skipped + " unknownTags=" + unknownTags);
         return new SyncResult(pages, saved, failed, reason);

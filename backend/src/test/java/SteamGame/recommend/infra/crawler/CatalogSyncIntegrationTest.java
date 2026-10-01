@@ -28,7 +28,7 @@ class CatalogSyncIntegrationTest extends PostgresTestBase {
     static final String TAGS = "{\"response\":{\"tags\":[{\"tagid\":1,\"name\":\"CatSyncTagA\"},"
             + "{\"tagid\":2,\"name\":\"CatSyncTagB\"},{\"tagid\":19,\"name\":\"Action\"}]}}";
 
-    static final String PAGE0 = "{\"response\":{\"metadata\":{\"total_matching_records\":130000},\"store_items\":["
+    static final String PAGE0 = "{\"response\":{\"metadata\":{\"total_matching_records\":3},\"store_items\":["
             + "{\"appid\":880001,\"name\":\"Hit Game\",\"tags\":[{\"tagid\":1,\"weight\":500},{\"tagid\":19,\"weight\":400}],"
             + "\"reviews\":{\"summary_filtered\":{\"review_count\":1200,\"percent_positive\":91,\"review_score_label\":\"Very Positive\"}},"
             + "\"basic_info\":{\"short_description\":\"new desc\",\"developers\":[{\"name\":\"Dev\"}],\"publishers\":[{\"name\":\"Pub\"}]},"
@@ -36,8 +36,10 @@ class CatalogSyncIntegrationTest extends PostgresTestBase {
             + "{\"appid\":880002,\"name\":\"Tiny Game\",\"tags\":[{\"tagid\":2,\"weight\":5}],"
             + "\"reviews\":{\"summary_filtered\":{\"review_count\":10}}}]}}";
 
-    static final String PAGE1 = "{\"response\":{\"metadata\":{\"total_matching_records\":130000},\"store_items\":["
+    static final String PAGE1 = "{\"response\":{\"metadata\":{\"total_matching_records\":3},\"store_items\":["
             + "{\"appid\":880003,\"name\":\"Tail Game\",\"reviews\":{\"summary_filtered\":{\"review_count\":3}}}]}}";
+
+    static final String END_PAGE = "{\"response\":{\"metadata\":{\"total_matching_records\":3}}}";
 
     static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -62,7 +64,9 @@ class CatalogSyncIntegrationTest extends PostgresTestBase {
                 if (path.startsWith("/IStoreService/GetTagList")) {
                     body = TAGS;
                 } else if (path.startsWith("/IStoreQueryService/Query")) {
-                    body = queryStart(url.queryParameter("input_json")) == 0 ? PAGE0 : PAGE1;
+                    // 기준을 넘는 게임이 없는 페이지가 먼저 오고, 그 다음 페이지에서 저장한 뒤 전체 개수를 넘으면 끝남
+                    int start = queryStart(url.queryParameter("input_json"));
+                    body = start == 0 ? PAGE1 : start == 1000 ? PAGE0 : END_PAGE;
                 } else {
                     return new MockResponse().setResponseCode(404);
                 }
@@ -96,14 +100,14 @@ class CatalogSyncIntegrationTest extends PostgresTestBase {
     }
 
     @Test
-    void syncsQualifyingGames_keepsReviewText_andStopsBelowMin() {
+    void syncsQualifyingGames_keepsReviewText_andEndsAtTotal() {
         // detail 이 이미 받아 둔 본문이 있는 게임을 미리 넣어 둠
         jdbc.update("INSERT INTO games (appid, name) VALUES (880001, 'Old Name')");
         jdbc.update("INSERT INTO reviews (appid, total_reviews, positive_review_text) VALUES (880001, 1, 'keep this')");
 
         CatalogSyncService.SyncResult r = service.runSync();
 
-        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.BELOW_MIN_REVIEWS);
+        assertThat(r.stopReason()).isEqualTo(CatalogSyncService.StopReason.END_OF_RESULTS);
         assertThat(r.saved()).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT name FROM games WHERE appid=880001", String.class)).isEqualTo("Hit Game");
         assertThat(jdbc.queryForObject("SELECT genres FROM games WHERE appid=880001", String.class)).isEqualTo("Action");
@@ -117,6 +121,6 @@ class CatalogSyncIntegrationTest extends PostgresTestBase {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM games WHERE appid IN (880002, 880003)", Integer.class)).isZero();
         assertThat(jdbc.queryForObject(
                 "SELECT note FROM crawl_log WHERE batch_type='steam_catalog' AND finished_at IS NOT NULL", String.class))
-                .isEqualTo("pages=2 stop=below-min-reviews skipped=0 unknownTags=0");
+                .isEqualTo("pages=3 stop=end-of-results skipped=0 unknownTags=0");
     }
 }

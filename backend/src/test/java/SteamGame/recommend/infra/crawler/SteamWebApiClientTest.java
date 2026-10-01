@@ -62,7 +62,7 @@ class SteamWebApiClientTest {
         JsonNode input = om.readTree(req.getRequestUrl().queryParameter("input_json"));
         assertThat(input.at("/query/start").asInt()).isEqualTo(2000);
         assertThat(input.at("/query/count").asInt()).isEqualTo(1000);
-        assertThat(input.at("/query/sort").asInt()).isEqualTo(30);
+        assertThat(input.at("/query/sort").asInt()).isEqualTo(2);
         assertThat(input.at("/query/filters/released_only").asBoolean()).isTrue();
         assertThat(input.at("/query/filters/type_filters/include_games").asBoolean()).isTrue();
         assertThat(input.at("/data_request/include_tag_count").asInt()).isEqualTo(20);
