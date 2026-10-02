@@ -11,14 +11,27 @@ import static org.mockito.Mockito.when;
 
 class CatalogSyncRunnerTest {
 
+    final CatalogSyncService service = mock(CatalogSyncService.class);
+    final TagCooccurrenceRefresher refresher = mock(TagCooccurrenceRefresher.class);
+    final ConfigurableApplicationContext context = mock(ConfigurableApplicationContext.class);
+    final CatalogSyncRunner runner = new CatalogSyncRunner(service, refresher, context);
+
     @Test
-    void run_rethrows_whenSyncFails_andDoesNotCloseContext() {
-        CatalogSyncService service = mock(CatalogSyncService.class);
-        ConfigurableApplicationContext context = mock(ConfigurableApplicationContext.class);
+    void run_rethrows_whenSyncFails_andDoesNotRefreshOrCloseContext() {
         IllegalStateException boom = new IllegalStateException("sync broke");
         when(service.runSync()).thenThrow(boom);
 
-        CatalogSyncRunner runner = new CatalogSyncRunner(service, context);
+        assertThatThrownBy(() -> runner.run(null)).isSameAs(boom);
+        verify(refresher, never()).refresh();
+        verify(context, never()).close();
+    }
+
+    @Test
+    void run_rethrows_whenRefreshFails_afterSuccessfulSync() {
+        when(service.runSync()).thenReturn(
+                new CatalogSyncService.SyncResult(3, 10, 0, CatalogSyncService.StopReason.END_OF_RESULTS));
+        IllegalStateException boom = new IllegalStateException("refresh broke");
+        when(refresher.refresh()).thenThrow(boom);
 
         assertThatThrownBy(() -> runner.run(null)).isSameAs(boom);
         verify(context, never()).close();

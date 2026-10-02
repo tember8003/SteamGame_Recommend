@@ -13,6 +13,7 @@ class CatalogSyncRunnerGatingTest {
     @Configuration
     static class StubBeans {
         @Bean CatalogSyncService catalogSyncService() { return mock(CatalogSyncService.class); }
+        @Bean TagCooccurrenceRefresher tagCooccurrenceRefresher() { return mock(TagCooccurrenceRefresher.class); }
     }
 
     final ApplicationContextRunner runner = new ApplicationContextRunner()
