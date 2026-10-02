@@ -1,1 +1,10 @@
+// 플러그인에 딸린 라이브러리를 Maven Central 에서 바로 받게 함
+// 플러그인 포털이 Maven Central 로 넘겨주는 단계가 잠시 실패하면 Docker 빌드가 깨진 적이 있음
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'recommend'
