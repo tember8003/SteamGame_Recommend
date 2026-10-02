@@ -14,10 +14,13 @@ import org.springframework.stereotype.Component;
 public class CatalogSyncRunner implements ApplicationRunner {
 
     private final CatalogSyncService service;
+    private final TagCooccurrenceRefresher cooccurrenceRefresher;
     private final ConfigurableApplicationContext context;
 
-    public CatalogSyncRunner(CatalogSyncService service, ConfigurableApplicationContext context) {
+    public CatalogSyncRunner(CatalogSyncService service, TagCooccurrenceRefresher cooccurrenceRefresher,
+                             ConfigurableApplicationContext context) {
         this.service = service;
+        this.cooccurrenceRefresher = cooccurrenceRefresher;
         this.context = context;
     }
 
@@ -27,6 +30,9 @@ public class CatalogSyncRunner implements ApplicationRunner {
         CatalogSyncService.SyncResult r = service.runSync();
         log.info("=== steam catalog sync done: pages={}, saved={}, failed={}, stop={} ===",
                 r.pages(), r.saved(), r.failed(), r.stopReason().label());
+        // 태그가 매일 바뀌므로 동기화가 성공한 뒤에만 태그 쌍 통계를 다시 계산함
+        int pairs = cooccurrenceRefresher.refresh();
+        log.info("=== tag cooccurrence done: pairs={} ===", pairs);
         int exitCode = SpringApplication.exit(context, () -> 0);
         System.exit(exitCode);
     }
