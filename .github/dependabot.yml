@@ -1,0 +1,8 @@
+# 워크플로의 외부 Action 을 커밋으로 고정해 두어 새 버전이 저절로 들어오지 않으므로 갱신 PR 을 받음
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
