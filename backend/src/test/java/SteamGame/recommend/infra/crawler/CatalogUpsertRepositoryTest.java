@@ -96,15 +96,6 @@ public class CatalogUpsertRepositoryTest extends PostgresTestBase {
         assertThat(jdbc.queryForObject("SELECT total_reviews FROM reviews WHERE appid=570", Integer.class)).isEqualTo(300);
     }
 
-    @Test
-    void upsertItem_doesNotTouchOwnersEstimate() {
-        jdbc.update("INSERT INTO games (appid, name, owners_estimate) VALUES (570, 'Old', 5000)");
-
-        repo.upsertItem(item("desc", List.of(), 1));
-
-        assertThat(jdbc.queryForObject("SELECT owners_estimate FROM games WHERE appid=570", Long.class)).isEqualTo(5000L);
-    }
-
     static StoreItem sparse(Integer price, boolean isFree, Boolean korean) {
         return new StoreItem(570L, "Dota 2", null, null, isFree, korean, null, price,
                 null, null, null, 100, null, null, List.of());

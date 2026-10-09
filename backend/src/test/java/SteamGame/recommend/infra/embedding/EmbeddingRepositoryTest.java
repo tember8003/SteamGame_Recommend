@@ -178,11 +178,11 @@ class EmbeddingRepositoryTest extends PostgresTestBase {
     }
 
     @Test
-    void selectNextToEmbed_ordersByReviewCount_notOwners() {
+    void selectNextToEmbed_ordersByReviewCount() {
         game(340L, "FewReviews");
         game(341L, "ManyReviews");
-        jdbc.update("UPDATE games SET review_count = 60, owners_estimate = 999999999 WHERE appid = 340");
-        jdbc.update("UPDATE games SET review_count = 90000, owners_estimate = 1 WHERE appid = 341");
+        jdbc.update("UPDATE games SET review_count = 60 WHERE appid = 340");
+        jdbc.update("UPDATE games SET review_count = 90000 WHERE appid = 341");
 
         List<Long> next = repo.selectNextToEmbed(50);
 

@@ -23,7 +23,6 @@ public class CatalogUpsertRepository {
     // is_free 는 스팀이 유료 게임에서 필드를 빼므로 없으면 false 로 보고 그대로 덮음
     // 가격은 무료면 null 로 비우고 유료인데 값이 없으면 기존 값을 지킴
     // korean_support 는 언어 목록이 없어 null 이면 기존 값을 지키고 새 행은 false 로 넣음, 칼럼이 NOT NULL 이라 필요함
-    // owners_estimate 는 스팀이 주지 않아 건드리지 않음
     private static final String UPSERT_GAME = """
         INSERT INTO games (appid, name, description, image_url, is_free, korean_support, genres, price,
                            release_date, developer, publisher, review_count)
