@@ -65,7 +65,7 @@ jobs:
       # Create GitHub Release
       # 저장소 쓰기 권한을 받는 외부 Action 이라 바뀔 수 있는 태그 대신 커밋으로 고정함
       - name: Create Release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: |
             backend/electron/dist/*.exe
