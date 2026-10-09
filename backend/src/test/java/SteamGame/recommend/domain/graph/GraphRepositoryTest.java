@@ -36,8 +36,8 @@ class GraphRepositoryTest extends PostgresTestBase {
     }
 
     private void game(long appid, String name, float[] emb) {
-        jdbc.update("INSERT INTO games (appid, name, image_url, genres, owners_estimate) VALUES (?, ?, ?, ?, ?)",
-                appid, name, "img" + appid, "Action", 1000L);
+        jdbc.update("INSERT INTO games (appid, name, image_url, genres) VALUES (?, ?, ?, ?)",
+                appid, name, "img" + appid, "Action");
         if (emb != null) embRepo.updateEmbedding(appid, emb);
     }
 
@@ -73,11 +73,11 @@ class GraphRepositoryTest extends PostgresTestBase {
     }
 
     @Test
-    void search_ordersByReviewCount_notOwners() {
+    void search_ordersByReviewCount() {
         game(430L, "Order Few", vec(1.0));
         game(431L, "Order Many", vec(0.9, 0.1));
-        jdbc.update("UPDATE games SET review_count = 60, owners_estimate = 999999999 WHERE appid = 430");
-        jdbc.update("UPDATE games SET review_count = 90000, owners_estimate = 1 WHERE appid = 431");
+        jdbc.update("UPDATE games SET review_count = 60 WHERE appid = 430");
+        jdbc.update("UPDATE games SET review_count = 90000 WHERE appid = 431");
 
         List<GraphNode> hits = repo.searchByName("order", 10);
 

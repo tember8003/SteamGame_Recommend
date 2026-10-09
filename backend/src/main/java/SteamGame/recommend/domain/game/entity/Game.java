@@ -38,9 +38,6 @@ public class Game {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
-    @Column(name = "owners_estimate")
-    private Long ownersEstimate;
-
     @Column(name = "genres", length = 500)
     private String genres;
 

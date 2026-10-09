@@ -80,12 +80,13 @@ class DetailUpsertRepositoryTest extends PostgresTestBase {
     @Test
     void selectNextToCrawl_amongNeverCrawled_prefersMoreReviews() {
         repo.markCrawled(appid, OffsetDateTime.now());
-        long hi = 700010L, lo = 700011L;
-        jdbc.update("INSERT INTO games (appid, name, review_count, owners_estimate) VALUES (?,?,?,?)", hi, "Hi", 90000, 1L);
-        jdbc.update("INSERT INTO games (appid, name, review_count, owners_estimate) VALUES (?,?,?,?)", lo, "Lo", 60, 999999999L);
+        // 리뷰가 적은 쪽을 먼저 넣고 appid 도 작게 줌, 삽입 순서나 appid 순서로는 통과하지 못하게 함
+        long lo = 700010L, hi = 700011L;
+        jdbc.update("INSERT INTO games (appid, name, review_count) VALUES (?,?,?)", lo, "Lo", 60);
+        jdbc.update("INSERT INTO games (appid, name, review_count) VALUES (?,?,?)", hi, "Hi", 90000);
         try {
             List<Long> next = repo.selectNextToCrawl(2);
-            assertThat(next).containsExactly(hi, lo);   // owners_estimate 가 아니라 리뷰 수로 줄 세움
+            assertThat(next).containsExactly(hi, lo);   // 리뷰 수로 줄 세움
         } finally {
             jdbc.update("DELETE FROM games WHERE appid IN (?,?)", hi, lo);
         }
