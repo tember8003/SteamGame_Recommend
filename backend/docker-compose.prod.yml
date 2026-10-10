@@ -57,6 +57,8 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      # cpus 1.5 에서는 스레드 1개일 때 학습이 더 빠르다
+      OMP_NUM_THREADS: "1"
     # 학습 중에도 앱이 응답하게 CPU 와 메모리를 남긴다
     cpus: "1.5"
     mem_limit: 3g
