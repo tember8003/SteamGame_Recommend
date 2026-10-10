@@ -77,6 +77,17 @@ public class RecommendController {
         impressionService.record(clientId, steamId, context, appids);
     }
 
+    // 비슷한 게임 추천은 게임마다 고른 순위기를 함께 남긴다, 출처 목록은 appid 목록과 같은 순서로 넘긴다
+    private void logSimilarImpressions(String clientId, List<SteamAppDTO> games) {
+        if (games == null) {
+            return;
+        }
+        List<SteamAppDTO> logged = games.stream().filter(game -> game.getAppid() != null).toList();
+        impressionService.record(clientId, null, FeedbackContext.SIMILAR,
+                logged.stream().map(SteamAppDTO::getAppid).toList(),
+                logged.stream().map(SteamAppDTO::getSource).toList());
+    }
+
     @Operation(summary = "Tag-based random recommendation")
     @ApiResponse(responseCode = "200", description = "Success")
     @PostMapping("/random")
@@ -213,7 +224,7 @@ public class RecommendController {
 
             log.info("Similar game recommendation successful: gameName={}, extracted tags={}, found {} games\"",
                     dto.getGameName(), result.getUsedTags(), result.getRecommendedGame().size());
-            logImpressions(FeedbackContext.SIMILAR, dto.getClientId(), null, result.getRecommendedGame());
+            logSimilarImpressions(dto.getClientId(), result.getRecommendedGame());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {

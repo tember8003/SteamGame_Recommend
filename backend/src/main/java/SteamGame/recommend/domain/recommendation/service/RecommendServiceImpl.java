@@ -3,10 +3,13 @@ package SteamGame.recommend.domain.recommendation.service;
 import SteamGame.recommend.domain.game.entity.Game;
 import SteamGame.recommend.domain.game.repository.GameRepository;
 import SteamGame.recommend.domain.game.service.GameService;
+import SteamGame.recommend.domain.impression.entity.ImpressionSource;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.recommendation.entity.TagPairKey;
+import SteamGame.recommend.domain.recommendation.similar.RecommendProperties;
+import SteamGame.recommend.domain.recommendation.similar.SimilarInterleaveRecommender;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.infra.api.GeminiApiService;
 import SteamGame.recommend.infra.api.GeminiEmbeddingService;
@@ -48,6 +51,8 @@ public class RecommendServiceImpl implements RecommendService {
     private final GeminiEmbeddingService geminiEmbeddingService;
     private final EmbeddingRepository embeddingRepository;
     private final EmbeddingProperties embeddingProperties;
+    private final RecommendProperties recommendProperties;
+    private final SimilarInterleaveRecommender similarInterleaveRecommender;
 
     public RecommendServiceImpl(
             SteamApiService steamApiService,
@@ -60,7 +65,9 @@ public class RecommendServiceImpl implements RecommendService {
             CooccurrenceService cooccurrenceService,
             GeminiEmbeddingService geminiEmbeddingService,
             EmbeddingRepository embeddingRepository,
-            EmbeddingProperties embeddingProperties
+            EmbeddingProperties embeddingProperties,
+            RecommendProperties recommendProperties,
+            SimilarInterleaveRecommender similarInterleaveRecommender
     ) {
         this.steamApiService = steamApiService;
         this.geminiApiService = geminiApiService;
@@ -73,6 +80,18 @@ public class RecommendServiceImpl implements RecommendService {
         this.geminiEmbeddingService = geminiEmbeddingService;
         this.embeddingRepository = embeddingRepository;
         this.embeddingProperties = embeddingProperties;
+        this.recommendProperties = recommendProperties;
+        this.similarInterleaveRecommender = similarInterleaveRecommender;
+    }
+
+    // 출처가 비어 있는 게임에만 출처를 붙인다, 섞기 결과가 이미 붙인 출처는 덮지 않는다
+    private static List<SteamAppDTO> markSource(List<SteamAppDTO> games, ImpressionSource source) {
+        games.forEach(game -> {
+            if (game.getSource() == null) {
+                game.setSource(source);
+            }
+        });
+        return games;
     }
 
     // 벡터 결과가 목표 수(resultSize)보다 적으면 태그 폴백으로 슬롯을 채운다.
@@ -358,19 +377,37 @@ public class RecommendServiceImpl implements RecommendService {
 
         List<String> topTags = tagService.getTopTags(selectedTags,TOP_TAGS_COUNT);
 
+        Set<Long> exclude = (excludeAppids != null) ? new HashSet<>(excludeAppids) : new HashSet<>();
+        exclude.add(selectedAppId);
+
+        // 플래그가 켜져 있으면 설명문 임베딩과 태그 구조 임베딩 결과를 섞는다, 둘 다 비면 아래 기존 경로로 내려간다
+        if (recommendProperties.isSimilarInterleaveEnabled()) {
+            List<SteamAppDTO> mixed = new ArrayList<>(similarInterleaveRecommender.recommend(
+                    selectedAppId, selectedGame.get().getName(), review, koreanCheck, freeCheck, exclude));
+            if (!mixed.isEmpty()) {
+                List<SteamAppDTO> ranked = topUp(mixed, picked -> {
+                    Set<Long> ex = new HashSet<>(picked);
+                    ex.addAll(exclude);
+                    return markSource(recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex),
+                            ImpressionSource.TAG);
+                });
+                return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
+            }
+        }
+
         // 벡터 우선: 시드 게임 임베딩으로 최근접 추천(시드 제외)
         float[] seedVec = embeddingRepository.findEmbeddingByAppid(selectedAppId);
         if (seedVec != null) {
-            Set<Long> exclude = (excludeAppids != null) ? new HashSet<>(excludeAppids) : new HashSet<>();
-            exclude.add(selectedAppId);
             List<SteamAppDTO> ranked = gameService.findNearestSampled(seedVec, review, koreanCheck, freeCheck,
                     false, null, exclude,
                     embeddingProperties.getCandidatePoolK(), embeddingProperties.getResultSize());
             if (!ranked.isEmpty()) {
+                markSource(ranked, ImpressionSource.GEMINI);
                 ranked = topUp(ranked, picked -> {
                     Set<Long> ex = new HashSet<>(picked);
                     ex.addAll(exclude);
-                    return recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex);
+                    return markSource(recommendWithCooccurrence(topTags, review, koreanCheck, freeCheck, ex),
+                            ImpressionSource.TAG);
                 });
                 return new RecommendationResultDTO(topTags, ranked, gameService.ResponseList(ranked));
             }
@@ -397,6 +434,7 @@ public class RecommendServiceImpl implements RecommendService {
             );
         }
 
+        markSource(resultGames, ImpressionSource.TAG);
         List<ReviewResponseDTO> reviewResponseDTOS = gameService.ResponseList(resultGames);
         return new RecommendationResultDTO(topTags, resultGames,reviewResponseDTOS);
     }

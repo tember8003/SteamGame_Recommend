@@ -47,6 +47,15 @@ public class EmbeddingRepository {
                 appid);
     }
 
+    // 태그 구조 벡터(GNN)를 pgvector 리터럴 텍스트로 읽음, 없으면 null
+    // 최근접 쿼리에 리터럴로 그대로 넘겨 float 변환을 오가지 않게 함
+    public String findTagEmbeddingText(long appid) {
+        return jdbc.query(
+                "SELECT tag_embedding::text FROM games WHERE appid = ? AND tag_embedding IS NOT NULL",
+                rs -> rs.next() ? rs.getString(1) : null,
+                appid);
+    }
+
     // 보유/최근 게임들의 평균 임베딩 (taste 벡터), 매칭 임베딩이 없으면 null
     public float[] findMeanEmbeddingByAppids(List<Long> appids) {
         if (appids == null || appids.isEmpty()) {

@@ -6,6 +6,7 @@ import SteamGame.recommend.domain.game.dto.GameNameRequestDTO;
 import SteamGame.recommend.domain.game.dto.GameRequestDTO;
 import SteamGame.recommend.domain.game.dto.SteamIdRequestDTO;
 import SteamGame.recommend.domain.game.dto.TextRequestDTO;
+import SteamGame.recommend.domain.impression.entity.ImpressionSource;
 import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
@@ -83,7 +84,23 @@ class RecommendControllerImpressionTest {
 
         controller.randomGameBySimilarGame(dto);
 
-        verify(impressionService).record("cid", null, FeedbackContext.SIMILAR, List.of(2L));
+        verify(impressionService).record("cid", null, FeedbackContext.SIMILAR, List.of(2L),
+                java.util.Arrays.asList((ImpressionSource) null));
+    }
+
+    @Test
+    void similarPassesSourcePerGame() {
+        RecommendationResultDTO r = recResult(2L, 3L);
+        r.getRecommendedGame().get(0).setSource(ImpressionSource.GEMINI);
+        r.getRecommendedGame().get(1).setSource(ImpressionSource.GNN);
+        when(recommendService.recommendBySimilarGame(any(), anyInt(), any(), any(), any())).thenReturn(r);
+        GameNameRequestDTO dto = new GameNameRequestDTO();
+        dto.setClientId("cid");
+
+        controller.randomGameBySimilarGame(dto);
+
+        verify(impressionService).record("cid", null, FeedbackContext.SIMILAR, List.of(2L, 3L),
+                List.of(ImpressionSource.GEMINI, ImpressionSource.GNN));
     }
 
     @Test

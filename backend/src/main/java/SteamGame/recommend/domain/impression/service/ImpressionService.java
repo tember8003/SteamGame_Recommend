@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.impression.service;
 
 import SteamGame.recommend.domain.feedback.entity.FeedbackContext;
+import SteamGame.recommend.domain.impression.entity.ImpressionSource;
 import SteamGame.recommend.domain.impression.entity.RecommendationImpression;
 import SteamGame.recommend.domain.impression.repository.RecommendationImpressionRepository;
 import org.slf4j.Logger;
@@ -26,15 +27,22 @@ public class ImpressionService {
     // client_id 나 노출이 없으면 남기지 않고, 적재 실패는 삼켜 추천 응답에 영향을 주지 않는다
     @Async("impressionExecutor")
     public void record(String clientId, String steamId, FeedbackContext context, List<Long> appids) {
+        record(clientId, steamId, context, appids, null);
+    }
+
+    // sources 는 appids 와 같은 순서의 출처 목록, 개수가 어긋나면 출처를 모두 비운다
+    @Async("impressionExecutor")
+    public void record(String clientId, String steamId, FeedbackContext context, List<Long> appids,
+                       List<ImpressionSource> sources) {
         if (clientId == null || clientId.isBlank() || appids == null || appids.isEmpty()) {
             return;
         }
+        boolean aligned = sources != null && sources.size() == appids.size();
         try {
             List<RecommendationImpression> rows = new ArrayList<>();
-            int rank = 1;
-            for (Long appid : appids) {
-                rows.add(new RecommendationImpression(clientId, steamId, appid, context, rank));
-                rank++;
+            for (int i = 0; i < appids.size(); i++) {
+                ImpressionSource source = aligned ? sources.get(i) : null;
+                rows.add(new RecommendationImpression(clientId, steamId, appids.get(i), context, i + 1, source));
             }
             repository.saveAll(rows);
         } catch (Exception e) {
