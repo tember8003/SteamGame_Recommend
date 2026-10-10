@@ -40,13 +40,24 @@ public class RecommendationImpression {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    // 비슷한 게임 추천에서만 채우고 다른 추천은 null 로 둔다
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", length = 10)
+    private ImpressionSource source;
+
     // id 와 createdAt 은 저장 시 생성되므로 받지 않는다
     public RecommendationImpression(String clientId, String steamId, Long appid,
                                     FeedbackContext context, Integer rankPosition) {
+        this(clientId, steamId, appid, context, rankPosition, null);
+    }
+
+    public RecommendationImpression(String clientId, String steamId, Long appid,
+                                    FeedbackContext context, Integer rankPosition, ImpressionSource source) {
         this.clientId = clientId;
         this.steamId = steamId;
         this.appid = appid;
         this.context = context;
         this.rankPosition = rankPosition;
+        this.source = source;
     }
 }

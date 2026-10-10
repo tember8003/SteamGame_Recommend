@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.impression.service;
 
 import SteamGame.recommend.domain.feedback.entity.FeedbackContext;
+import SteamGame.recommend.domain.impression.entity.ImpressionSource;
 import SteamGame.recommend.domain.impression.entity.RecommendationImpression;
 import SteamGame.recommend.domain.impression.repository.RecommendationImpressionRepository;
 import org.junit.jupiter.api.Test;
@@ -62,5 +63,38 @@ class ImpressionServiceTest {
         // 적재 실패가 밖으로 새어 추천 응답을 깨면 안 됨
         assertThatCode(() -> service.record("cid", null, FeedbackContext.SIMILAR, List.of(1L)))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void recordsSourcePerAppid() {
+        service.record("cid", null, FeedbackContext.SIMILAR, List.of(10L, 20L, 30L),
+                List.of(ImpressionSource.GEMINI, ImpressionSource.GNN, ImpressionSource.TAG));
+
+        ArgumentCaptor<List<RecommendationImpression>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repo).saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(RecommendationImpression::getSource)
+                .containsExactly(ImpressionSource.GEMINI, ImpressionSource.GNN, ImpressionSource.TAG);
+    }
+
+    // 개수가 어긋나면 어느 출처가 어느 게임인지 알 수 없어 출처를 비운다
+    @Test
+    @SuppressWarnings("unchecked")
+    void mismatchedSourcesAreStoredAsNull() {
+        service.record("cid", null, FeedbackContext.SIMILAR, List.of(10L, 20L), List.of(ImpressionSource.GNN));
+
+        ArgumentCaptor<List<RecommendationImpression>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repo).saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(RecommendationImpression::getSource).containsExactly(null, null);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fourArgumentRecordStoresNullSource() {
+        service.record("cid", null, FeedbackContext.INPUT, List.of(10L));
+
+        ArgumentCaptor<List<RecommendationImpression>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repo).saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(RecommendationImpression::getSource).containsExactly((ImpressionSource) null);
     }
 }

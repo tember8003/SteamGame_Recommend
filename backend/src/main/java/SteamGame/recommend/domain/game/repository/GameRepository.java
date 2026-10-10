@@ -122,6 +122,27 @@ public interface GameRepository extends JpaRepository<Game, Long> {
                                    @Param("excludedTag") List<String> excludedTag,
                                    @Param("k") int k);
 
+    // 태그 구조 벡터(GNN) 최근접, 비슷한 게임 추천의 GNN 순위기가 쓴다
+    // 비슷한 게임 추천은 제외 태그를 쓰지 않아 그 조건은 넣지 않음
+    @Query(value = """
+    SELECT g.* FROM games g
+    INNER JOIN reviews r ON g.appid = r.appid
+    WHERE g.tag_embedding IS NOT NULL
+        AND r.total_reviews >= :review
+        AND (:korean_check IS NULL OR g.korean_support = :korean_check)
+        AND (:free IS NULL OR g.is_free = :free)
+        AND (:excludeCount = 0 OR g.appid NOT IN (:excludeAppids))
+    ORDER BY g.tag_embedding <=> CAST(:qvec AS vector)
+    LIMIT :k
+""", nativeQuery = true)
+    List<Game> findNearestByTagVector(@Param("qvec") String qvec,
+                                      @Param("review") int review,
+                                      @Param("korean_check") Boolean korean_check,
+                                      @Param("free") Boolean free,
+                                      @Param("excludeAppids") List<Long> excludeAppids,
+                                      @Param("excludeCount") int excludeCount,
+                                      @Param("k") int k);
+
     // 예산과 코옵 하드필터를 더한 임베딩 최근접 정렬, 예산 지정 시 price가 null인 게임은 무료가 아니면 자동 제외됨
     // requireCoop=false면 coopTags에 sentinel(__none__)을 바인딩해 IN()이 비는 상황을 피함
     @Query(value = """

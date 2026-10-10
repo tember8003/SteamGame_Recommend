@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.impression.repository;
 
 import SteamGame.recommend.domain.feedback.entity.FeedbackContext;
+import SteamGame.recommend.domain.impression.entity.ImpressionSource;
 import SteamGame.recommend.domain.impression.entity.RecommendationImpression;
 import SteamGame.recommend.support.PostgresTestBase;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -34,5 +36,19 @@ class RecommendationImpressionRepositoryTest extends PostgresTestBase {
         assertThat(rows).extracting(RecommendationImpression::getAppid).containsExactlyInAnyOrder(10L, 20L);
         assertThat(rows).extracting(RecommendationImpression::getContext)
                 .containsExactlyInAnyOrder(FeedbackContext.MATCH, FeedbackContext.PROFILE);
+    }
+
+    @Test
+    void persistsSourceAndNullSource() {
+        RecommendationImpression withSource =
+                new RecommendationImpression("cid", null, 30L, FeedbackContext.SIMILAR, 1, ImpressionSource.GNN);
+        RecommendationImpression withoutSource =
+                new RecommendationImpression("cid", null, 40L, FeedbackContext.INPUT, 1);
+
+        repo.saveAll(List.of(withSource, withoutSource));
+
+        assertThat(repo.findAll())
+                .extracting(RecommendationImpression::getAppid, RecommendationImpression::getSource)
+                .containsExactlyInAnyOrder(tuple(30L, ImpressionSource.GNN), tuple(40L, null));
     }
 }
