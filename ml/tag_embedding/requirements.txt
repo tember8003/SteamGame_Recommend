@@ -1,0 +1,4 @@
+torch_geometric==2.8.0.post1
+numpy==2.5.3
+psycopg[binary]==3.3.6
+pytest==9.1.1
