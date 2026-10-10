@@ -41,6 +41,28 @@ services:
       retries: 10
       start_period: 60s
 
+  # 태그 구조 임베딩 학습 배치, 서버에서 빌드한 이미지를 docker compose run --rm tagemb 로만 실행한다
+  # batch 프로필이라 배포의 up -d 에는 뜨지 않는다
+  tagemb:
+    image: sgr-tagemb:latest
+    container_name: sgr-tagemb
+    profiles: ["batch"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # 앱의 다른 비밀값은 넘기지 않고 DB 접속값만 준다
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    # 학습 중에도 앱이 응답하게 CPU 와 메모리를 남긴다
+    cpus: "1.5"
+    mem_limit: 3g
+    networks:
+      - appnet
+
   caddy:
     image: caddy:2
     container_name: sgr-caddy
