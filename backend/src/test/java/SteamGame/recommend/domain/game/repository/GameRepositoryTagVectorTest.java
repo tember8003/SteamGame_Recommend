@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,6 +80,24 @@ class GameRepositoryTagVectorTest extends PostgresTestBase {
         List<Game> result = gameRepository.findNearestByTagVector(vec(1.0), 50, null, null, List.of(510L), 1, 10);
 
         assertThat(result).extracting(Game::getAppid).containsExactly(511L);
+    }
+
+    // 가까운 70개가 리뷰 조건에서 빠져도 인덱스를 더 훑어 30개를 거리 순서대로 채워야 한다
+    @Test
+    void fillsRequestedCountWhenNearestCandidatesAreFilteredOut() {
+        for (int i = 0; i < 100; i++) {
+            long appid = 600L + i;
+            game(appid, "G" + i, i < 70 ? 10 : 100, true);
+            tagEmbed(appid, 1.0, i * 0.01);
+        }
+        // 행이 적으면 순차 탐색과 정렬을 골라 인덱스를 타지 않으므로 막는다, 개수 부족은 인덱스 경로에서만 드러남
+        jdbc.execute("SET LOCAL enable_seqscan = off");
+        jdbc.execute("SET LOCAL enable_sort = off");
+
+        List<Game> result = gameRepository.findNearestByTagVector(vec(1.0), 50, null, null, NO_EXCLUDE, 0, 30);
+
+        assertThat(result).extracting(Game::getAppid)
+                .containsExactlyElementsOf(LongStream.range(670L, 700L).boxed().toList());
     }
 
     @Test
