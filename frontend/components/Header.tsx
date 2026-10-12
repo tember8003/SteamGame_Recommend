@@ -1,9 +1,9 @@
 import Link from "next/link";
 import styles from "./Header.module.css";
-import HeaderActions from "./HeaderActions";
 import HeaderTagline from "./HeaderTagline";
+import LanguageToggle from "./LanguageToggle";
 
-// 상단 브랜드 바, 언어 토글은 연결됨, Login/Signup 은 아직 비활성 자리표시자
+// 상단 브랜드 바, 왼쪽은 로고와 부제, 오른쪽은 언어 토글
 export default function Header() {
   return (
     <header className={styles.header}>
@@ -32,7 +32,7 @@ export default function Header() {
       </Link>
 
       <div className={styles.actions}>
-        <HeaderActions />
+        <LanguageToggle />
       </div>
     </header>
   );

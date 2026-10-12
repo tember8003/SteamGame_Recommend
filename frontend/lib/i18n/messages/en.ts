@@ -23,8 +23,6 @@ export const en = {
   },
   header: {
     language: "Language",
-    login: "Log in",
-    signup: "Sign up",
     tagline: "Steam game recommendations",
   },
   gameCard: {

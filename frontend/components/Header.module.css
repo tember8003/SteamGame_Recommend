@@ -40,36 +40,9 @@
   gap: 10px;
 }
 
-/* 좁은 화면에서는 부제와 비활성 자리표시자 버튼을 숨겨 헤더가 한 줄에 들어가게 함 */
-/* 버튼은 Button.module.css 의 display 보다 앞서야 해서 .actions 를 붙여 우선순위를 올림 */
-/* 로그인을 실제로 붙이면 버튼 숨김은 빼야 함, 남겨 두면 모바일에서 로그인 버튼이 사라짐 */
+/* 좁은 화면에서는 부제를 숨겨 헤더가 한 줄에 들어가게 함 */
 @media (max-width: 640px) {
-  .tagline,
-  .actions .placeholderBtn {
+  .tagline {
     display: none;
   }
-}
-
-.iconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-btn);
-  background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-  cursor: pointer;
-  backdrop-filter: blur(var(--glass-blur));
-}
-
-.iconBtn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.iconBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
