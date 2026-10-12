@@ -1,6 +1,7 @@
 import Link from "next/link";
 import styles from "./Header.module.css";
 import HeaderActions from "./HeaderActions";
+import HeaderTagline from "./HeaderTagline";
 
 // 상단 브랜드 바, 언어 토글은 연결됨, Login/Signup 은 아직 비활성 자리표시자
 export default function Header() {
@@ -27,6 +28,7 @@ export default function Header() {
           />
         </svg>
         <span className={styles.wordmark}>PLAYLOOM</span>
+        <HeaderTagline />
       </Link>
 
       <div className={styles.actions}>

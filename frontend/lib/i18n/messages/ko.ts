@@ -27,6 +27,7 @@ export const ko: Messages = {
     language: "언어",
     login: "로그인",
     signup: "회원가입",
+    tagline: "Steam 게임 추천",
   },
   gameCard: {
     like: "이 게임 좋아요",

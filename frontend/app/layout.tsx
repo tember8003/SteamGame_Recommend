@@ -16,7 +16,7 @@ const gmarketSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PLAYLOOM — Find your next way to play",
+  title: "PLAYLOOM: Steam 게임 추천",
   description:
     "Discover great Steam games made for your taste.",
 };
