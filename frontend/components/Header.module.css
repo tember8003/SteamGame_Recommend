@@ -26,10 +26,28 @@
   font-size: 1.05rem;
 }
 
+.tagline {
+  padding-left: 10px;
+  border-left: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 .actions {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* 좁은 화면에서는 부제와 비활성 자리표시자 버튼을 숨겨 헤더가 한 줄에 들어가게 함 */
+/* 버튼은 Button.module.css 의 display 보다 앞서야 해서 .actions 를 붙여 우선순위를 올림 */
+/* 로그인을 실제로 붙이면 버튼 숨김은 빼야 함, 남겨 두면 모바일에서 로그인 버튼이 사라짐 */
+@media (max-width: 640px) {
+  .tagline,
+  .actions .placeholderBtn {
+    display: none;
+  }
 }
 
 .iconBtn {
