@@ -16,7 +16,7 @@ const gmarketSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Gamelode: Steam 게임 추천",
+  title: "Playalike: Steam 게임 추천",
   description:
     "Discover great Steam games made for your taste.",
 };
