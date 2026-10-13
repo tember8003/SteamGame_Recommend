@@ -90,7 +90,7 @@ export const ko: Messages = {
     steamPicks: "추천",
     steamDesc: "당신만을 위한 맞춤 게임 추천.",
     steamCta: "Steam 추천 둘러보기 →",
-    footer: "Valve 와 무관합니다. PLAYLOOM 은 독립 프로젝트입니다.",
+    footer: "Valve 와 무관합니다. Gamelode 는 독립 프로젝트입니다.",
   },
   hub: {
     title: "완벽한 게임을 찾아보세요",

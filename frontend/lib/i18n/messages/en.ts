@@ -88,7 +88,7 @@ export const en = {
     steamPicks: "Picks",
     steamDesc: "Personalized game recommendations just for you.",
     steamCta: "Explore Steam Picks →",
-    footer: "Not affiliated with Valve. PLAYLOOM is an independent project.",
+    footer: "Not affiliated with Valve. Gamelode is an independent project.",
   },
   hub: {
     title: "Find Your Perfect Game",
