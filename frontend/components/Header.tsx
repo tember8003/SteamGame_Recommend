@@ -7,7 +7,7 @@ import LanguageToggle from "./LanguageToggle";
 export default function Header() {
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.brand} aria-label="Gamelode home">
+      <Link href="/" className={styles.brand} aria-label="Playalike home">
         <svg className={styles.logo} viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <defs>
             <linearGradient id="ploom" x1="0" y1="0" x2="1" y2="1">
@@ -27,7 +27,7 @@ export default function Header() {
             opacity="0.85"
           />
         </svg>
-        <span className={styles.wordmark}>GAMELODE</span>
+        <span className={styles.wordmark}>PLAYALIKE</span>
         <HeaderTagline />
       </Link>
 
