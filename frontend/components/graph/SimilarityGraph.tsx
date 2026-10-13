@@ -74,6 +74,21 @@ const CY_STYLE: cytoscape.StylesheetJson = [
   { selector: "edge.ring", style: { width: "mapData(similarity, 0.6, 1, 1, 2.2)", opacity: 0.7 } },
   // 가지끼리 같은 게임을 공유할 때 잇는 선, 구조를 가리지 않게 가장 흐리게 그린다
   { selector: "edge.cross", style: { width: 0.6, opacity: 0.2, "line-style": "dashed" } },
+  // 마우스를 올린 노드는 잘린 이름 전체를 어두운 상자에 담아 보여 주고, 다른 노드와 선 위에 그린다
+  {
+    selector: "node.hovered",
+    style: {
+      "text-max-width": "400px",
+      "font-size": "11px",
+      color: "#fff",
+      "text-background-color": "#0b0b16",
+      "text-background-opacity": 0.85,
+      "text-background-padding": "4px",
+      "text-background-shape": "roundrectangle",
+      "border-color": "#00d4ff",
+      "z-index": 999,
+    },
+  },
 ];
 
 // image 가 있을 때만 데이터에 넣는다, 빈 문자열을 넣으면 node[image] 셀렉터가 걸려
@@ -365,6 +380,16 @@ export default function SimilarityGraph() {
     });
     cy.on("tap", "node", (evt: cytoscape.EventObjectNode) => {
       void expandRef.current(evt.target.id());
+    });
+    // 마우스를 올리면 잘린 이름 전체를 보이고, 눌러서 펼칠 수 있다는 걸 커서로 알린다
+    const container = containerRef.current;
+    cy.on("mouseover", "node", (evt: cytoscape.EventObjectNode) => {
+      evt.target.addClass("hovered");
+      container.style.cursor = "pointer";
+    });
+    cy.on("mouseout", "node", (evt: cytoscape.EventObjectNode) => {
+      evt.target.removeClass("hovered");
+      container.style.cursor = "";
     });
     cyRef.current = cy;
 
