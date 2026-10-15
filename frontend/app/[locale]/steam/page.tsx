@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import GlassPanel from "@/components/ui/GlassPanel";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { localeHref } from "@/lib/i18n/routing";
 import { useT } from "@/lib/i18n/useT";
 import styles from "./page.module.css";
 
@@ -150,10 +152,11 @@ const GAME_CARDS: FeatureCard[] = [
 // 안쪽에 실제 버튼,링크를 또 넣지 않아 중첩 인터랙티브 요소를 피함
 function FeatureCard({ card, accent }: { card: FeatureCard; accent: "rec" | "game" }) {
   const t = useT();
+  const locale = useLocale();
   const accentCls = accent === "rec" ? styles.recAccent : styles.gameAccent;
   return (
     <GlassPanel as="article" className={`${styles.card} ${accentCls}`}>
-      <Link href={card.href} className={styles.cardLink}>
+      <Link href={localeHref(locale, card.href)} className={styles.cardLink}>
         <span className={styles.icon}>{card.icon}</span>
         <h3 className={styles.cardTitle}>{t(`hub.cards.${card.key}.title`)}</h3>
         <p className={styles.cardDesc}>{t(`hub.cards.${card.key}.desc`)}</p>

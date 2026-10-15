@@ -11,6 +11,8 @@ vi.mock("@/lib/api", () => ({
 const mockGet = vi.fn();
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({ get: mockGet }),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/en",
 }));
 
 import { recommendInput } from "@/lib/api";

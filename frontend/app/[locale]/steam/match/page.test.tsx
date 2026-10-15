@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 
 vi.mock("@/lib/api", () => ({ recommendMatch: vi.fn() }));
 const mockGet = vi.fn();
-vi.mock("next/navigation", () => ({ useSearchParams: () => ({ get: mockGet }) }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => ({ get: mockGet }), useRouter: () => ({ push: vi.fn() }), usePathname: () => "/en" }));
 
 import { recommendMatch } from "@/lib/api";
 import MatchPage from "./page";

@@ -2,12 +2,15 @@
 
 import Header from "@/components/Header";
 import Button from "@/components/ui/Button";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { localeHref } from "@/lib/i18n/routing";
 import { useT } from "@/lib/i18n/useT";
 import { siSteam } from "simple-icons";
 import styles from "./page.module.css";
 
 export default function Home() {
   const t = useT();
+  const locale = useLocale();
   return (
     <div className={styles.page}>
       <Header />
@@ -26,7 +29,7 @@ export default function Home() {
               </h2>
               <p className={styles.cardDesc}>{t("landing.steamDesc")}</p>
             </div>
-            <Button variant="steam" href="/steam" className={styles.cardCta}>
+            <Button variant="steam" href={localeHref(locale, "/steam")} className={styles.cardCta}>
               {t("landing.steamCta")}
             </Button>
           </article>
