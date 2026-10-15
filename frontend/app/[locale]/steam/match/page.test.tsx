@@ -3,10 +3,9 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/api", () => ({ recommendMatch: vi.fn() }));
-const mockGet = vi.fn();
-vi.mock("next/navigation", () => ({ useSearchParams: () => ({ get: mockGet }), useRouter: () => ({ push: vi.fn() }), usePathname: () => "/en" }));
 
 import { recommendMatch } from "@/lib/api";
+import MatchView from "./MatchView";
 import MatchPage from "./page";
 
 afterEach(() => {
@@ -16,14 +15,12 @@ afterEach(() => {
 
 describe("MatchPage", () => {
   it("rawText 와 구조화 컨트롤이 모두 비면 제출하지 않는다", () => {
-    mockGet.mockReturnValue(null);
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
     expect(recommendMatch).not.toHaveBeenCalled();
   });
 
   it("rawText 가 있으면 recommendMatch 를 부르고 결과를 렌더한다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: false },
       games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
@@ -32,7 +29,7 @@ describe("MatchPage", () => {
       shortfall: false,
     });
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy co-op" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
@@ -41,7 +38,6 @@ describe("MatchPage", () => {
   });
 
   it("nlParseFailed 면 안내 문구를 함께 보여준다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: true },
       games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
@@ -50,7 +46,7 @@ describe("MatchPage", () => {
       shortfall: false,
     });
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "???" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
@@ -58,7 +54,6 @@ describe("MatchPage", () => {
   });
 
   it("결과가 0건이면 no matches 안내를 보여준다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: false },
       games: [],
@@ -67,7 +62,7 @@ describe("MatchPage", () => {
       shortfall: false,
     });
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
@@ -75,12 +70,11 @@ describe("MatchPage", () => {
   });
 
   it("429 면 rateLimited 안내를 보여준다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockRejectedValue(
       new Error("POST /api/recommend/match failed: 429")
     );
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
@@ -88,10 +82,9 @@ describe("MatchPage", () => {
   });
 
   it("그 밖의 오류는 error 안내를 보여준다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockRejectedValue(new Error("boom"));
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
@@ -99,7 +92,6 @@ describe("MatchPage", () => {
   });
 
   it("다시추천은 이미 나온 appid 를 excludeAppids 로 넘긴다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: false },
       games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
@@ -108,7 +100,7 @@ describe("MatchPage", () => {
       shortfall: false,
     });
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
@@ -124,7 +116,6 @@ describe("MatchPage", () => {
   });
 
   it("세션 길이 세그먼트에서 Short 를 고르면 페이로드에 SHORT 를 싣는다", async () => {
-    mockGet.mockReturnValue(null);
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: false },
       games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
@@ -133,11 +124,17 @@ describe("MatchPage", () => {
       shortfall: false,
     });
 
-    render(<MatchPage />);
+    render(<MatchView initialQuery="" />);
     fireEvent.click(screen.getByRole("radio", { name: "Short" }));
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
     await waitFor(() => expect(recommendMatch).toHaveBeenCalledTimes(1));
     expect(vi.mocked(recommendMatch).mock.calls[0][0].sessionLength).toBe("SHORT");
+  });
+
+  it("?q= 를 서버에서 읽어 서술 입력창을 채운다", async () => {
+    render(await MatchPage({ searchParams: Promise.resolve({ q: ["roguelike", "x"] }) }));
+    expect(screen.getByDisplayValue("roguelike")).toBeInTheDocument();
+    expect(recommendMatch).not.toHaveBeenCalled();
   });
 });

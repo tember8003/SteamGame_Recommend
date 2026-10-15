@@ -7,39 +7,35 @@ vi.mock("@/lib/api", () => ({
   recommendInput: vi.fn(),
 }));
 
-// useSearchParams 가 반환할 값을 테스트마다 바꿔야 하므로 next/navigation 을 목킹함
-const mockGet = vi.fn();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({ get: mockGet }),
-  useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => "/en",
-}));
-
 import { recommendInput } from "@/lib/api";
-import InputRecommendPage from "./page";
+import InputPage from "./page";
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-describe("InputRecommendPage ?q= 프리필", () => {
-  it("?q= 값이 있으면 입력창 초기값으로 채우고, recommendInput 은 호출하지 않는다", () => {
-    mockGet.mockImplementation((key: string) => (key === "q" ? "cozy" : null));
+async function renderPage(query: Record<string, string | string[] | undefined>) {
+  render(await InputPage({ searchParams: Promise.resolve(query) }));
+  return screen.getByLabelText("Game Features") as HTMLTextAreaElement;
+}
 
-    render(<InputRecommendPage />);
-
-    const textarea = screen.getByLabelText("Game Features") as HTMLTextAreaElement;
-    expect(textarea.value).toBe("cozy");
+describe("InputPage ?q= 프리필", () => {
+  it("?q= 값이 있으면 입력창 초기값으로 채우고, recommendInput 은 호출하지 않는다", async () => {
+    expect((await renderPage({ q: "cozy" })).value).toBe("cozy");
     expect(recommendInput).not.toHaveBeenCalled();
   });
 
-  it("?q= 가 없으면 입력창이 빈 문자열로 시작한다", () => {
-    mockGet.mockReturnValue(null);
+  it("?q= 가 없으면 입력창이 빈 문자열로 시작한다", async () => {
+    expect((await renderPage({})).value).toBe("");
+  });
 
-    render(<InputRecommendPage />);
+  it("?q= 가 두 번 오면 첫 값을 쓴다", async () => {
+    expect((await renderPage({ q: ["a", "b"] })).value).toBe("a");
+  });
 
-    const textarea = screen.getByLabelText("Game Features") as HTMLTextAreaElement;
-    expect(textarea.value).toBe("");
+  it("서버에서 그릴 제목이 있다", async () => {
+    await renderPage({});
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 });

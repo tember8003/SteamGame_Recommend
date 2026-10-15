@@ -235,6 +235,7 @@ export const ko: Messages = {
   },
   graph: {
     title: "유사도 그래프",
+    subtitle: "비슷한 게임끼리 이어진 연결망으로 게임을 탐색합니다",
     loading: "그래프 불러오는 중...",
     searchPlaceholder: "게임 검색 후 선택",
     hint: "게임을 검색해 시작하세요. 노드를 클릭하면 이웃이 펼쳐집니다.",

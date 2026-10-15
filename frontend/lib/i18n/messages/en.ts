@@ -233,6 +233,7 @@ export const en = {
   },
   graph: {
     title: "Similarity Graph",
+    subtitle: "Explore games as a network connected by similarity",
     loading: "Loading graph...",
     searchPlaceholder: "Search and select a game",
     hint: "Search for a game to start. Click a node to expand its neighbors.",
