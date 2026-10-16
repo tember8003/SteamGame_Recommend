@@ -7,6 +7,7 @@ import LanguageToggle from "../LanguageToggle";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(usePathname).mockReturnValue("/en");
   window.history.pushState({}, "", "/");
 });
 

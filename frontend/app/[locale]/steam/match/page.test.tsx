@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 
 vi.mock("@/lib/api", () => ({ recommendMatch: vi.fn() }));
 
 import { recommendMatch } from "@/lib/api";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { ko } from "@/lib/i18n/messages/ko";
 import MatchView from "./MatchView";
 import MatchPage from "./page";
 
@@ -136,5 +139,16 @@ describe("MatchPage", () => {
     render(await MatchPage({ searchParams: Promise.resolve({ q: ["roguelike", "x"] }) }));
     expect(screen.getByDisplayValue("roguelike")).toBeInTheDocument();
     expect(recommendMatch).not.toHaveBeenCalled();
+  });
+
+  it("서버 HTML 에 제목, 프리필, 한국어 문구가 들어 있고 로딩 문구는 없다", async () => {
+    const html = renderToString(
+      <LocaleProvider locale="ko">{await MatchPage({ searchParams: Promise.resolve({ q: "cozy" }) })}</LocaleProvider>
+    );
+    expect(html).toContain("<h1");
+    expect(html).toContain("cozy");
+    expect(html).toContain(ko.match.title);
+    expect(html).not.toContain("Loading");
+    expect(html).not.toContain("불러오는 중");
   });
 });

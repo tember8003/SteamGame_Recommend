@@ -4,7 +4,6 @@ import type { Messages } from "./en";
 export const ko: Messages = {
   common: {
     any: "모두",
-    loading: "불러오는 중…",
     errorTitle: "오류가 발생했어요",
     tryAgainLater: "잠시 후 다시 시도해 주세요",
     rateTitle: "요청이 너무 많아요",
@@ -84,7 +83,6 @@ export const ko: Messages = {
     errorHint: "잠시 후 다시 시도해 주세요",
     rateTitle: "요청이 너무 많아요",
     rateHint: "잠시 기다렸다가 다시 시도해 주세요",
-    loading: "불러오는 중…",
   },
   meta: {
     home: {

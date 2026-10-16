@@ -6,7 +6,7 @@ import { INDEX_ROUTES, SITE_URL } from "@/lib/seo/routes";
 // 실제 수정 시각을 알 수 없어서 lastModified 는 넣지 않는다, 빌드 시각을 넣으면 거짓 신호가 된다
 export default function sitemap(): MetadataRoute.Sitemap {
   return Object.values(INDEX_ROUTES).flatMap((path) => {
-    const languages = { ko: `${SITE_URL}/ko${path}`, en: `${SITE_URL}/en${path}` };
+    const languages = Object.fromEntries(LOCALES.map((l) => [l, `${SITE_URL}/${l}${path}`]));
     return LOCALES.map((locale) => ({
       url: `${SITE_URL}/${locale}${path}`,
       alternates: { languages },

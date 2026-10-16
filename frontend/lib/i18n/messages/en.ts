@@ -2,7 +2,6 @@
 export const en = {
   common: {
     any: "Any",
-    loading: "Loading…",
     errorTitle: "An error occurred",
     tryAgainLater: "Please try again later.",
     rateTitle: "Too many requests",
@@ -82,7 +81,6 @@ export const en = {
     errorHint: "Please try again later.",
     rateTitle: "Too many requests",
     rateHint: "Please wait a moment before trying again.",
-    loading: "Loading…",
   },
   meta: {
     home: {

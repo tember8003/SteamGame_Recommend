@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
+import { DEFAULT_LOCALE, isLocale, LOCALES, type Locale } from "@/lib/i18n/locales";
 import { getMessages } from "@/lib/i18n/messages";
 import { INDEX_ROUTES, SITE_NAME, type RouteKey } from "./routes";
 
@@ -18,7 +18,10 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
     alternates: {
       canonical: url,
       // x-default 는 언어를 골라 옮겨 주는 언어 없는 주소다
-      languages: { ko: `/ko${path}`, en: `/en${path}`, "x-default": path === "" ? "/" : path },
+      languages: {
+        ...Object.fromEntries(LOCALES.map((l) => [l, `/${l}${path}`])),
+        "x-default": path === "" ? "/" : path,
+      },
     },
     openGraph: {
       title,
