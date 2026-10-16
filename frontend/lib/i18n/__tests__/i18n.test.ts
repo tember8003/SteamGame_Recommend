@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { makeT } from "../useT";
 import { en } from "../messages/en";
 import { ko } from "../messages/ko";
+import { getMessages } from "../messages";
 
 describe("makeT", () => {
   it("점경로로 리프 문구를 찾는다", () => {
@@ -17,5 +18,12 @@ describe("makeT", () => {
   it("아예 없는 키는 키 문자열을 그대로 돌려준다", () => {
     const t = makeT(en);
     expect(t("nope.nada")).toBe("nope.nada");
+  });
+});
+
+describe("getMessages", () => {
+  it("언어에 맞는 카탈로그를 준다", () => {
+    expect(getMessages("ko")).toBe(ko);
+    expect(getMessages("en")).toBe(en);
   });
 });

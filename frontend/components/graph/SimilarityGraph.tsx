@@ -471,7 +471,6 @@ export default function SimilarityGraph() {
   return (
     <div className={styles.body}>
       <GlassPanel as="div" className={styles.toolbar}>
-        <h1 className={styles.title}>{t("graph.title")}</h1>
         <div ref={wrapperRef} className={styles.searchWrapper}>
           <input
             type="text"

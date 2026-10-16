@@ -1,13 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import styles from "./Header.module.css";
 import HeaderTagline from "./HeaderTagline";
 import LanguageToggle from "./LanguageToggle";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { localeHref } from "@/lib/i18n/routing";
 
 // 상단 브랜드 바, 왼쪽은 로고와 부제, 오른쪽은 언어 토글
 export default function Header() {
+  const locale = useLocale();
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.brand} aria-label="Playalike home">
+      <Link href={localeHref(locale, "/")} className={styles.brand} aria-label="Playalike home">
         <svg className={styles.logo} viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <defs>
             <linearGradient id="ploom" x1="0" y1="0" x2="1" y2="1">

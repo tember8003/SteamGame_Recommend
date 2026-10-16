@@ -2,7 +2,6 @@
 export const en = {
   common: {
     any: "Any",
-    loading: "Loading…",
     errorTitle: "An error occurred",
     tryAgainLater: "Please try again later.",
     rateTitle: "Too many requests",
@@ -82,7 +81,57 @@ export const en = {
     errorHint: "Please try again later.",
     rateTitle: "Too many requests",
     rateHint: "Please wait a moment before trying again.",
-    loading: "Loading…",
+  },
+  meta: {
+    home: {
+      title: "Playalike: Steam game recommendations",
+      description: "Find Steam games that match your taste. Get picks from tags, a short description, your Steam profile, or a game you already love.",
+    },
+    steam: {
+      title: "All recommendation tools",
+      description: "Choose how to find your next Steam game: random picks by tag, your own description, requirement match, profile, recent play, similar games, a similarity graph, and two mini games.",
+    },
+    random: {
+      title: "Random Steam games by tag",
+      description: "Pick the genres and styles you like and get random Steam games with those tags, filtered by review count, Korean support, and free games only.",
+    },
+    input: {
+      title: "Steam game recommendations from your description",
+      description: "Describe the game you want in your own words and get Steam games whose tags match that description.",
+    },
+    match: {
+      title: "Steam games matched to your requirements",
+      description: "Describe what you want, then set session length, budget, and player count. Each pick comes with reasons and caveats.",
+    },
+    profile: {
+      title: "Steam recommendations from your profile",
+      description: "Enter your Steam ID and get games that fit the play style shown in your library. Only public profiles can be analyzed.",
+    },
+    recent: {
+      title: "Recommendations from your recent play",
+      description: "Get Steam games based on what you played over the last two weeks.",
+    },
+    similar: {
+      title: "Find Steam games similar to one you like",
+      description: "Search for a Steam game you enjoyed and see games with similar tags.",
+    },
+    graph: {
+      title: "Steam game similarity graph",
+      description: "Explore Steam games as a network. Similar games are linked, and clicking a game opens its neighbors.",
+    },
+    choice: {
+      title: "Game Choice: find your taste in 7 rounds",
+      description: "Pick one of two Steam games in each of 7 rounds and find out what kind of games you prefer.",
+    },
+    reviewGuess: {
+      title: "Review Guess: which Steam game is this?",
+      description: "Read real Steam user reviews and guess which game they were written about.",
+    },
+  },
+  notFound: {
+    title: "Page not found",
+    desc: "The page you are looking for does not exist.",
+    home: "Go to home",
   },
   landing: {
     steamPicks: "Picks",
@@ -182,6 +231,7 @@ export const en = {
   },
   graph: {
     title: "Similarity Graph",
+    subtitle: "Explore games as a network connected by similarity",
     loading: "Loading graph...",
     searchPlaceholder: "Search and select a game",
     hint: "Search for a game to start. Click a node to expand its neighbors.",
