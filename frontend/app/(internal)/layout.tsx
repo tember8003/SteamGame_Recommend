@@ -3,8 +3,10 @@ import "../globals.css";
 import { gmarketSans } from "../fonts";
 import CosmicBackground from "@/components/CosmicBackground";
 
+// 토큰이 필요한 내부 화면이라 검색 결과에 나오지 않게 한다
 export const metadata: Metadata = {
   title: "지표 | Playalike",
+  robots: { index: false, follow: false },
 };
 
 // 내부 지표 화면 전용 루트 레이아웃, 화면 문구가 한국어라 lang 은 ko 로 둔다
