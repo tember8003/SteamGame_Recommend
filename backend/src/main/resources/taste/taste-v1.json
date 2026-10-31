@@ -1,0 +1,1366 @@
+{
+  "version": "v1",
+  "axes": [
+    {
+      "id": "EG",
+      "left": {
+        "code": "E",
+        "label": {
+          "ko": "탐험",
+          "en": "Explore"
+        }
+      },
+      "right": {
+        "code": "G",
+        "label": {
+          "ko": "성장",
+          "en": "Grow"
+        }
+      }
+    },
+    {
+      "id": "NM",
+      "left": {
+        "code": "N",
+        "label": {
+          "ko": "서사",
+          "en": "Story"
+        }
+      },
+      "right": {
+        "code": "M",
+        "label": {
+          "ko": "시스템",
+          "en": "Systems"
+        }
+      }
+    },
+    {
+      "id": "HC",
+      "left": {
+        "code": "H",
+        "label": {
+          "ko": "도전",
+          "en": "Challenge"
+        }
+      },
+      "right": {
+        "code": "C",
+        "label": {
+          "ko": "여유",
+          "en": "Chill"
+        }
+      }
+    },
+    {
+      "id": "SP",
+      "left": {
+        "code": "S",
+        "label": {
+          "ko": "솔로",
+          "en": "Solo"
+        }
+      },
+      "right": {
+        "code": "P",
+        "label": {
+          "ko": "파티",
+          "en": "Party"
+        }
+      }
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "axis": "EG",
+      "text": {
+        "ko": "새 게임을 켜면 가장 먼저 하는 일은?",
+        "en": "What's the first thing you do in a new game?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "E",
+          "text": {
+            "ko": "일단 미지의 장소로 떠나 본다",
+            "en": "Head off into the unknown"
+          }
+        },
+        {
+          "key": "B",
+          "side": "G",
+          "text": {
+            "ko": "성장 시스템부터 확인한다",
+            "en": "Check out the progression system"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "axis": "NM",
+      "text": {
+        "ko": "더 기억에 남는 것은?",
+        "en": "Which sticks with you more?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "N",
+          "text": {
+            "ko": "NPC의 이야기",
+            "en": "An NPC's story"
+          }
+        },
+        {
+          "key": "B",
+          "side": "M",
+          "text": {
+            "ko": "전략이 멋지게 들어맞은 순간",
+            "en": "The moment a strategy works perfectly"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "axis": "HC",
+      "text": {
+        "ko": "어려운 보스를 만나면?",
+        "en": "You hit a really tough boss. What now?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "H",
+          "text": {
+            "ko": "될 때까지 반복해서 도전한다",
+            "en": "Retry until it works"
+          }
+        },
+        {
+          "key": "B",
+          "side": "C",
+          "text": {
+            "ko": "일단 넘기고 다른 콘텐츠를 즐긴다",
+            "en": "Skip it for now and enjoy other content"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "axis": "SP",
+      "text": {
+        "ko": "어떤 환경에서 게임하는 게 좋아요?",
+        "en": "How do you like to play?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "S",
+          "text": {
+            "ko": "혼자서 푹 빠져서",
+            "en": "Alone, fully immersed"
+          }
+        },
+        {
+          "key": "B",
+          "side": "P",
+          "text": {
+            "ko": "친구와 함께",
+            "en": "Together with friends"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "axis": "EG",
+      "text": {
+        "ko": "어떤 보상이 더 짜릿해요?",
+        "en": "Which reward feels better?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "E",
+          "text": {
+            "ko": "숨겨진 지역을 발견하는 것",
+            "en": "Finding a hidden area"
+          }
+        },
+        {
+          "key": "B",
+          "side": "G",
+          "text": {
+            "ko": "강력한 장비를 얻는 것",
+            "en": "Getting powerful gear"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "axis": "NM",
+      "text": {
+        "ko": "더 흥미로운 것은?",
+        "en": "Which is more interesting?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "N",
+          "text": {
+            "ko": "캐릭터들의 관계",
+            "en": "How the characters relate to each other"
+          }
+        },
+        {
+          "key": "B",
+          "side": "M",
+          "text": {
+            "ko": "정교하게 짜인 게임 메커니즘",
+            "en": "A finely tuned game mechanic"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "axis": "HC",
+      "text": {
+        "ko": "게임에서 실패했을 때는?",
+        "en": "What do you do when you fail?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "H",
+          "text": {
+            "ko": "공략을 고쳐서 바로 재도전한다",
+            "en": "Fix the strategy and try again right away"
+          }
+        },
+        {
+          "key": "B",
+          "side": "C",
+          "text": {
+            "ko": "여유롭게 다른 활동을 한다",
+            "en": "Take it easy and do something else"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "axis": "SP",
+      "text": {
+        "ko": "어떤 플레이를 더 좋아해요?",
+        "en": "Which kind of play do you prefer?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "S",
+          "text": {
+            "ko": "싱글 캠페인",
+            "en": "A single-player campaign"
+          }
+        },
+        {
+          "key": "B",
+          "side": "P",
+          "text": {
+            "ko": "협동 플레이",
+            "en": "Co-op play"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "axis": "EG",
+      "text": {
+        "ko": "자유 시간이 생기면?",
+        "en": "You get some free time in a game. What do you do?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "E",
+          "text": {
+            "ko": "새로운 지역을 탐사한다",
+            "en": "Explore a new region"
+          }
+        },
+        {
+          "key": "B",
+          "side": "G",
+          "text": {
+            "ko": "기존 캐릭터를 강화한다",
+            "en": "Power up an existing character"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "axis": "NM",
+      "text": {
+        "ko": "게임에서 더 중요한 것은?",
+        "en": "What matters more in a game?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "N",
+          "text": {
+            "ko": "흥미로운 선택과 결말",
+            "en": "Interesting choices and endings"
+          }
+        },
+        {
+          "key": "B",
+          "side": "M",
+          "text": {
+            "ko": "전략적인 최적화",
+            "en": "Strategic optimization"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "axis": "HC",
+      "text": {
+        "ko": "최고 난도 콘텐츠는?",
+        "en": "The hardest content in the game?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "H",
+          "text": {
+            "ko": "도전하고 싶다",
+            "en": "I want to take it on"
+          }
+        },
+        {
+          "key": "B",
+          "side": "C",
+          "text": {
+            "ko": "부담 없이 즐기고 싶다",
+            "en": "I just want to enjoy the game stress-free"
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "axis": "SP",
+      "text": {
+        "ko": "게임 속 성취는?",
+        "en": "What counts as an achievement?"
+      },
+      "options": [
+        {
+          "key": "A",
+          "side": "S",
+          "text": {
+            "ko": "나만의 이야기를 완성하는 것",
+            "en": "Finishing my own story"
+          }
+        },
+        {
+          "key": "B",
+          "side": "P",
+          "text": {
+            "ko": "친구들과 함께 이룬 공동 성취",
+            "en": "Something we achieved together with friends"
+          }
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "code": "GMHS",
+      "name": {
+        "ko": "제국의 설계자",
+        "en": "The Empire Architect"
+      },
+      "oneLiner": {
+        "ko": "혼자 판을 짜서 끝내 제국을 세우는 사람",
+        "en": "Plans the whole map alone and builds an empire anyway"
+      },
+      "description": {
+        "ko": "숫자와 표를 보면 마음이 편해지는 타입이에요. 까다로운 조건일수록 계획을 더 촘촘히 짜고, 혼자 천천히 키워 낸 결과물에서 가장 큰 보람을 느껴요. 한 판이 몇 시간씩 이어져도 지루하지 않아요.",
+        "en": "Spreadsheets feel like home to you. The tougher the rules, the tighter your plan, and nothing beats watching something you grew slowly on your own. A single run can last hours and never get boring."
+      },
+      "traits": {
+        "ko": "성장, 시스템, 도전, 솔로",
+        "en": "Growth, Systems, Challenge, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Strategy",
+          "weight": 1.0
+        },
+        {
+          "tag": "Grand Strategy",
+          "weight": 0.9
+        },
+        {
+          "tag": "Management",
+          "weight": 0.85
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.8
+        },
+        {
+          "tag": "Resource Management",
+          "weight": 0.7
+        },
+        {
+          "tag": "Colony Sim",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        294100,
+        233860,
+        1158310
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 제국의 설계자!",
+          "en": "I'm an Empire Architect!"
+        },
+        "text": {
+          "ko": "혼자 판을 짜서 제국을 세우는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Apparently I plan alone and build empires. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GMHP",
+      "name": {
+        "ko": "공략대 지휘관",
+        "en": "The Raid Commander"
+      },
+      "oneLiner": {
+        "ko": "작전은 제가 짤 테니 다들 따라와요",
+        "en": "I'll draw up the plan, everybody follow me"
+      },
+      "description": {
+        "ko": "팀이 어려운 상대 앞에 서면 어느새 작전을 정리하고 있는 사람이에요. 역할을 나누고 순서를 맞추는 일이 즐겁고, 다 같이 어려운 판을 깨는 순간이 최고예요. 실패해도 바로 다음 작전을 꺼내요.",
+        "en": "When the team faces a hard enemy, you are already sorting out the plan. You enjoy splitting roles and lining up the order, and clearing a tough run together is the best feeling. Even after a failure, the next plan is ready."
+      },
+      "traits": {
+        "ko": "성장, 시스템, 도전, 파티",
+        "en": "Growth, Systems, Challenge, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Tactical",
+          "weight": 1.0
+        },
+        {
+          "tag": "Team-Based",
+          "weight": 0.9
+        },
+        {
+          "tag": "Co-op",
+          "weight": 0.9
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.8
+        },
+        {
+          "tag": "Online Co-Op",
+          "weight": 0.7
+        },
+        {
+          "tag": "Strategy",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        548430,
+        553850,
+        632360,
+        550
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 공략대 지휘관!",
+          "en": "I'm a Raid Commander!"
+        },
+        "text": {
+          "ko": "작전은 내가 짤 테니 다들 따라오래요. 너는 어떤 게임 유형이야?",
+          "en": "I'll draw up the plan, and everyone follows. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GMCS",
+      "name": {
+        "ko": "차분한 운영자",
+        "en": "The Calm Operator"
+      },
+      "oneLiner": {
+        "ko": "조용히 돌아가는 공장을 보며 흐뭇해하는 사람",
+        "en": "Smiles at a quietly humming factory"
+      },
+      "description": {
+        "ko": "서두르지 않고 하나씩 쌓아 올리는 걸 좋아해요. 컨베이어가 돌고 도시가 자리 잡는 모습을 바라보면 마음이 느긋해져요. 혼자 천천히 효율을 다듬는 시간이 가장 좋은 휴식이에요.",
+        "en": "You like stacking things up one by one without rushing. Watching the conveyor belts run and the city settle in puts you at ease. Slowly polishing efficiency on your own is your favorite way to rest."
+      },
+      "traits": {
+        "ko": "성장, 시스템, 여유, 솔로",
+        "en": "Growth, Systems, Chill, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Automation",
+          "weight": 1.0
+        },
+        {
+          "tag": "Management",
+          "weight": 0.9
+        },
+        {
+          "tag": "Resource Management",
+          "weight": 0.85
+        },
+        {
+          "tag": "City Builder",
+          "weight": 0.8
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.7
+        },
+        {
+          "tag": "Relaxing",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        427520,
+        255710,
+        1366540,
+        535930
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 차분한 운영자!",
+          "en": "I'm a Calm Operator!"
+        },
+        "text": {
+          "ko": "조용히 돌아가는 공장을 보면 마음이 편해지는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Apparently a quietly humming factory makes me happy. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GMCP",
+      "name": {
+        "ko": "협동 관리자",
+        "en": "The Co-op Manager"
+      },
+      "oneLiner": {
+        "ko": "함께 굴리는 살림이 제일 즐거운 사람",
+        "en": "Loves running things together with friends"
+      },
+      "description": {
+        "ko": "친구들과 일을 나눠 맡아 하나의 살림을 꾸려 가는 게 즐거워요. 누가 무엇을 맡을지 정하고, 같이 만든 기지가 커지는 걸 보면 뿌듯해요. 승패보다 같이 굴러가는 분위기가 중요해요.",
+        "en": "You enjoy splitting up the chores with friends and running one household together. Deciding who handles what and watching your shared base grow feels great. The easygoing flow matters more than winning."
+      },
+      "traits": {
+        "ko": "성장, 시스템, 여유, 파티",
+        "en": "Growth, Systems, Chill, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Co-op",
+          "weight": 1.0
+        },
+        {
+          "tag": "Management",
+          "weight": 0.9
+        },
+        {
+          "tag": "Local Co-Op",
+          "weight": 0.85
+        },
+        {
+          "tag": "Base Building",
+          "weight": 0.8
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.7
+        },
+        {
+          "tag": "Cute",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        728880,
+        526870,
+        648800
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 협동 관리자!",
+          "en": "I'm a Co-op Manager!"
+        },
+        "text": {
+          "ko": "친구들과 같이 살림을 굴릴 때 가장 신나는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Running things together with friends is my thing. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "ENHS",
+      "name": {
+        "ko": "이야기 속 모험가",
+        "en": "The Storybound Adventurer"
+      },
+      "oneLiner": {
+        "ko": "어려운 길도 이야기가 있으면 걸어가는 사람",
+        "en": "Walks the hard road if there's a story at the end"
+      },
+      "description": {
+        "ko": "낯선 세계의 구석구석을 뒤지며 숨은 이야기를 모으는 걸 좋아해요. 길이 험해도 그 끝에 무언가 있다고 믿으면 계속 나아가요. 혼자 분위기에 푹 잠겨 보스에 도전하는 시간이 소중해요.",
+        "en": "You love poking into every corner of a strange world and collecting its hidden stories. The road can be rough, but if you believe something waits at the end, you keep going. Challenging a boss alone, soaked in the atmosphere, is precious time."
+      },
+      "traits": {
+        "ko": "탐험, 서사, 도전, 솔로",
+        "en": "Exploration, Story, Challenge, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Exploration",
+          "weight": 1.0
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.95
+        },
+        {
+          "tag": "Metroidvania",
+          "weight": 0.9
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.8
+        },
+        {
+          "tag": "Souls-like",
+          "weight": 0.8
+        },
+        {
+          "tag": "Atmospheric",
+          "weight": 0.7
+        },
+        {
+          "tag": "Lore-Rich",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        367520,
+        1245620,
+        374320
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 이야기 속 모험가!",
+          "en": "I'm a Storybound Adventurer!"
+        },
+        "text": {
+          "ko": "어려운 길도 이야기가 있으면 걸어가는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Apparently I'll walk any hard road if there's a story. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "ENHP",
+      "name": {
+        "ko": "떠돌이 원정대장",
+        "en": "The Wandering Expedition Leader"
+      },
+      "oneLiner": {
+        "ko": "지도 끝까지 같이 가 볼 사람 모여라",
+        "en": "Who's coming with me to the edge of the map?"
+      },
+      "description": {
+        "ko": "친구들을 모아 넓은 세계로 떠나는 걸 좋아해요. 위험한 곳일수록 같이 가면 더 재미있고, 돌아와서 나누는 무용담이 최고의 보상이에요. 길잡이 역할이 은근히 잘 어울려요.",
+        "en": "You like gathering friends and heading out into a big world. The more dangerous the place, the more fun it is together, and the tall tales told afterward are the best reward. The guide role suits you more than you think."
+      },
+      "traits": {
+        "ko": "탐험, 서사, 도전, 파티",
+        "en": "Exploration, Story, Challenge, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Exploration",
+          "weight": 1.0
+        },
+        {
+          "tag": "Open World",
+          "weight": 0.9
+        },
+        {
+          "tag": "Online Co-Op",
+          "weight": 0.9
+        },
+        {
+          "tag": "Survival",
+          "weight": 0.8
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.7
+        },
+        {
+          "tag": "Co-op",
+          "weight": 0.6
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        582010,
+        1172620,
+        892970
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 떠돌이 원정대장!",
+          "en": "I'm a Wandering Expedition Leader!"
+        },
+        "text": {
+          "ko": "친구들과 지도 끝까지 가 보는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I'm the one who leads friends to the edge of the map. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "ENCS",
+      "name": {
+        "ko": "느긋한 방랑자",
+        "en": "The Easygoing Wanderer"
+      },
+      "oneLiner": {
+        "ko": "목적지 없이 걷는 길이 제일 좋은 사람",
+        "en": "Likes the road best when it has no destination"
+      },
+      "description": {
+        "ko": "서두를 이유가 없는 게임을 좋아해요. 풍경을 보며 걷다가 마음에 드는 곳에서 한참 머무르기도 해요. 혼자만의 속도로 이야기를 천천히 음미하는 시간이 가장 편안해요.",
+        "en": "You like games with no reason to hurry. You walk along, enjoy the scenery, and sometimes stay a long while at a spot you like. Savoring a story at your own pace is the most comfortable time for you."
+      },
+      "traits": {
+        "ko": "탐험, 서사, 여유, 솔로",
+        "en": "Exploration, Story, Chill, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Exploration",
+          "weight": 1.0
+        },
+        {
+          "tag": "Atmospheric",
+          "weight": 0.95
+        },
+        {
+          "tag": "Walking Simulator",
+          "weight": 0.9
+        },
+        {
+          "tag": "Relaxing",
+          "weight": 0.85
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.7
+        },
+        {
+          "tag": "Cozy",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        383870,
+        1055540,
+        753640,
+        638230
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 느긋한 방랑자!",
+          "en": "I'm an Easygoing Wanderer!"
+        },
+        "text": {
+          "ko": "목적지 없이 걷는 길이 제일 좋은 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Apparently I love a road with no destination. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "ENCP",
+      "name": {
+        "ko": "수다쟁이 탐험가",
+        "en": "The Chatty Explorer"
+      },
+      "oneLiner": {
+        "ko": "같이 걸으며 수다 떠는 게 모험의 절반",
+        "en": "Half the adventure is chatting along the way"
+      },
+      "description": {
+        "ko": "새로운 곳을 구경하면서 친구와 이야기 나누는 시간이 즐거워요. 길을 잘못 들어도 웃음이 나오면 그것도 좋은 추억이에요. 이기고 지는 것보다 같이 겪은 장면이 오래 남아요.",
+        "en": "You enjoy sightseeing in new places while chatting with a friend. Even a wrong turn is a good memory if it makes you laugh. The scenes you went through together last longer than winning or losing."
+      },
+      "traits": {
+        "ko": "탐험, 서사, 여유, 파티",
+        "en": "Exploration, Story, Chill, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Exploration",
+          "weight": 1.0
+        },
+        {
+          "tag": "Co-op",
+          "weight": 0.95
+        },
+        {
+          "tag": "Local Co-Op",
+          "weight": 0.9
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.7
+        },
+        {
+          "tag": "Cute",
+          "weight": 0.6
+        },
+        {
+          "tag": "Relaxing",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        1426210,
+        1222700,
+        477160
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 수다쟁이 탐험가!",
+          "en": "I'm a Chatty Explorer!"
+        },
+        "text": {
+          "ko": "같이 걸으며 수다 떠는 게 모험의 절반이래요. 너는 어떤 게임 유형이야?",
+          "en": "Half the adventure is chatting along the way, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "EMHS",
+      "name": {
+        "ko": "극한 개척자",
+        "en": "The Extreme Pioneer"
+      },
+      "oneLiner": {
+        "ko": "아무것도 없는 곳에서 살아남는 맛을 아는 사람",
+        "en": "Knows the thrill of surviving with nothing"
+      },
+      "description": {
+        "ko": "맨손으로 시작해서 하나씩 갖춰 가는 과정이 즐거워요. 식량과 장비를 계산하며 위험한 곳으로 한 발씩 나아가요. 혼자 버텨 낸 밤이 쌓일수록 자신감도 쌓여요.",
+        "en": "You enjoy starting empty-handed and gearing up one piece at a time. You count your food and tools, then step into dangerous places a little at a time. Every night you survive alone adds to your confidence."
+      },
+      "traits": {
+        "ko": "탐험, 시스템, 도전, 솔로",
+        "en": "Exploration, Systems, Challenge, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Survival",
+          "weight": 1.0
+        },
+        {
+          "tag": "Exploration",
+          "weight": 0.9
+        },
+        {
+          "tag": "Sandbox",
+          "weight": 0.85
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.8
+        },
+        {
+          "tag": "Open World",
+          "weight": 0.6
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        264710,
+        305620,
+        219740,
+        881100
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 극한 개척자!",
+          "en": "I'm an Extreme Pioneer!"
+        },
+        "text": {
+          "ko": "아무것도 없는 곳에서 살아남는 맛을 아는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I know the thrill of surviving with nothing, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "EMHP",
+      "name": {
+        "ko": "전장 선봉대",
+        "en": "The Frontline Vanguard"
+      },
+      "oneLiner": {
+        "ko": "제일 먼저 뛰어들고 제일 크게 웃는 사람",
+        "en": "First to charge in, loudest to laugh"
+      },
+      "description": {
+        "ko": "위험한 곳에 가장 먼저 발을 들이는 쪽이에요. 팀과 호흡을 맞춰 거점을 지키거나 빼앗는 긴장감이 즐거워요. 한 판 한 판 예측 못 한 일이 터질수록 더 신나요.",
+        "en": "You are the one who steps into danger first. The tension of holding or taking a position in sync with your team is exciting. The more unexpected things happen in each match, the more fun it gets."
+      },
+      "traits": {
+        "ko": "탐험, 시스템, 도전, 파티",
+        "en": "Exploration, Systems, Challenge, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Survival",
+          "weight": 1.0
+        },
+        {
+          "tag": "PvP",
+          "weight": 0.95
+        },
+        {
+          "tag": "Open World",
+          "weight": 0.85
+        },
+        {
+          "tag": "Team-Based",
+          "weight": 0.8
+        },
+        {
+          "tag": "Online Co-Op",
+          "weight": 0.7
+        },
+        {
+          "tag": "Competitive",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        252490,
+        251570,
+        108600
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 전장 선봉대!",
+          "en": "I'm a Frontline Vanguard!"
+        },
+        "text": {
+          "ko": "제일 먼저 뛰어들고 제일 크게 웃는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "First to charge in and loudest to laugh, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "EMCS",
+      "name": {
+        "ko": "샌드박스 유랑자",
+        "en": "The Sandbox Drifter"
+      },
+      "oneLiner": {
+        "ko": "정해진 목표 없이 내 맘대로 만지작거리는 사람",
+        "en": "Tinkers around with no fixed goal"
+      },
+      "description": {
+        "ko": "규칙 안에서 이것저것 시험해 보는 걸 좋아해요. 목표가 없어도 괜찮고, 오히려 자유로울수록 아이디어가 샘솟아요. 혼자 느긋하게 세상을 만지작거리다 보면 하루가 훌쩍 지나가요.",
+        "en": "You like trying things out within the rules. Having no goal is fine, and the freer it is, the more ideas you get. Tinkering with the world at your own pace, a whole day can slip by."
+      },
+      "traits": {
+        "ko": "탐험, 시스템, 여유, 솔로",
+        "en": "Exploration, Systems, Chill, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "Sandbox",
+          "weight": 1.0
+        },
+        {
+          "tag": "Exploration",
+          "weight": 0.9
+        },
+        {
+          "tag": "Open World",
+          "weight": 0.8
+        },
+        {
+          "tag": "Relaxing",
+          "weight": 0.7
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.6
+        },
+        {
+          "tag": "Atmospheric",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        105600,
+        275850,
+        220200
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 샌드박스 유랑자!",
+          "en": "I'm a Sandbox Drifter!"
+        },
+        "text": {
+          "ko": "정해진 목표 없이 내 맘대로 만지작거리는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I tinker around with no fixed goal, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "EMCP",
+      "name": {
+        "ko": "모험 설계자",
+        "en": "The Adventure Designer"
+      },
+      "oneLiner": {
+        "ko": "친구들과 놀 판을 직접 만드는 사람",
+        "en": "Builds the playground for friends to play in"
+      },
+      "description": {
+        "ko": "같이 놀 공간을 직접 만들고 꾸미는 걸 좋아해요. 친구들이 이상한 방법으로 놀아도 그게 또 하나의 재미라고 생각해요. 규칙을 비틀어 새로운 놀이를 만들어 내는 데 재능이 있어요.",
+        "en": "You love building and decorating a place to play in together. When friends play in strange ways, you see that as one more kind of fun. You have a knack for bending the rules into a brand-new game."
+      },
+      "traits": {
+        "ko": "탐험, 시스템, 여유, 파티",
+        "en": "Exploration, Systems, Chill, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Sandbox",
+          "weight": 1.0
+        },
+        {
+          "tag": "Co-op",
+          "weight": 0.9
+        },
+        {
+          "tag": "Exploration",
+          "weight": 0.85
+        },
+        {
+          "tag": "Online Co-Op",
+          "weight": 0.8
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.6
+        },
+        {
+          "tag": "Cute",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        4000,
+        1621690,
+        322330
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 모험 설계자!",
+          "en": "I'm an Adventure Designer!"
+        },
+        "text": {
+          "ko": "친구들과 놀 판을 직접 만드는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I build the playground for my friends, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GNHS",
+      "name": {
+        "ko": "서사의 수호자",
+        "en": "The Guardian of Stories"
+      },
+      "oneLiner": {
+        "ko": "선택 하나하나를 끝까지 책임지는 사람",
+        "en": "Owns every choice all the way to the end"
+      },
+      "description": {
+        "ko": "이야기 속 선택을 가볍게 넘기지 않아요. 동료를 키우고 장비를 갖추며 어려운 결말까지 끝까지 가요. 혼자 오래 붙잡고 있던 이야기가 마무리될 때 가장 크게 감동해요.",
+        "en": "You never take a story choice lightly. You grow your companions, gear up, and see even the hard endings through. You are most moved when a story you held onto alone for a long time finally wraps up."
+      },
+      "traits": {
+        "ko": "성장, 서사, 도전, 솔로",
+        "en": "Growth, Story, Challenge, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "RPG",
+          "weight": 1.0
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.95
+        },
+        {
+          "tag": "Choices Matter",
+          "weight": 0.9
+        },
+        {
+          "tag": "Party-Based RPG",
+          "weight": 0.8
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.7
+        },
+        {
+          "tag": "Multiple Endings",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        1086940,
+        435150,
+        292030
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 서사의 수호자!",
+          "en": "I'm a Guardian of Stories!"
+        },
+        "text": {
+          "ko": "선택 하나하나를 끝까지 책임지는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I own every choice all the way to the end, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GNHP",
+      "name": {
+        "ko": "길드의 영웅",
+        "en": "The Guild Hero"
+      },
+      "oneLiner": {
+        "ko": "길드 채팅창에서 제일 바쁜 사람",
+        "en": "The busiest voice in the guild chat"
+      },
+      "description": {
+        "ko": "동료들과 함께 키운 캐릭터로 큰 목표에 도전하는 걸 좋아해요. 장비를 맞추고 일정을 조율하는 일도 즐거워요. 길드 사람들이 믿고 찾는 든든한 역할이 잘 어울려요.",
+        "en": "You like taking on big goals with a character you grew together with your mates. Even matching gear and arranging schedules is fun. The dependable role that guild members count on suits you well."
+      },
+      "traits": {
+        "ko": "성장, 서사, 도전, 파티",
+        "en": "Growth, Story, Challenge, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "MMORPG",
+          "weight": 1.0
+        },
+        {
+          "tag": "Massively Multiplayer",
+          "weight": 0.95
+        },
+        {
+          "tag": "RPG",
+          "weight": 0.85
+        },
+        {
+          "tag": "Loot",
+          "weight": 0.8
+        },
+        {
+          "tag": "Hack and Slash",
+          "weight": 0.7
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.5
+        },
+        {
+          "tag": "Lore-Rich",
+          "weight": 0.4
+        }
+      ],
+      "featuredAppids": [
+        39210,
+        1599340,
+        1284210,
+        238960
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 길드의 영웅!",
+          "en": "I'm a Guild Hero!"
+        },
+        "text": {
+          "ko": "길드 채팅창에서 제일 바쁜 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I'm the busiest voice in the guild chat, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GNCS",
+      "name": {
+        "ko": "세계관 수집가",
+        "en": "The Lore Collector"
+      },
+      "oneLiner": {
+        "ko": "설정집을 읽다가 밤을 새우는 사람",
+        "en": "Stays up all night reading the lore"
+      },
+      "description": {
+        "ko": "게임 속 인물과 세계의 설정을 하나하나 모으는 걸 좋아해요. 대사 한 줄에 숨은 의미를 곱씹으며 천천히 즐겨요. 혼자만의 시간에 좋아하는 세계에 푹 빠져 있을 때 가장 행복해요.",
+        "en": "You like collecting every detail about the characters and the world. You chew over the hidden meaning in a single line of dialogue and enjoy it slowly. You are happiest when you are alone and deep in a world you love."
+      },
+      "traits": {
+        "ko": "성장, 서사, 여유, 솔로",
+        "en": "Growth, Story, Chill, Solo"
+      },
+      "tagWeights": [
+        {
+          "tag": "JRPG",
+          "weight": 1.0
+        },
+        {
+          "tag": "Lore-Rich",
+          "weight": 0.95
+        },
+        {
+          "tag": "Story Rich",
+          "weight": 0.9
+        },
+        {
+          "tag": "Choices Matter",
+          "weight": 0.7
+        },
+        {
+          "tag": "Character Customization",
+          "weight": 0.6
+        },
+        {
+          "tag": "Relaxing",
+          "weight": 0.5
+        }
+      ],
+      "featuredAppids": [
+        1687950,
+        632470,
+        921570
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 세계관 수집가!",
+          "en": "I'm a Lore Collector!"
+        },
+        "text": {
+          "ko": "설정집을 읽다가 밤을 새우는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I stay up all night reading the lore, apparently. What's your game type?"
+        }
+      }
+    },
+    {
+      "code": "GNCP",
+      "name": {
+        "ko": "마을의 해결사",
+        "en": "The Village Fixer"
+      },
+      "oneLiner": {
+        "ko": "이웃 부탁이라면 일단 팔을 걷어붙이는 사람",
+        "en": "Rolls up their sleeves for any neighbor's request"
+      },
+      "description": {
+        "ko": "작은 마을에서 이웃을 돕고 농작물을 가꾸는 하루가 좋아요. 친구와 같이 집을 꾸미고 밭을 일구면 시간 가는 줄 몰라요. 천천히 쌓이는 정이 가장 큰 보상이에요.",
+        "en": "You like a day of helping the neighbors and tending crops in a small village. Decorating a house and working a field with a friend makes the time fly. The warmth that builds up slowly is the biggest reward."
+      },
+      "traits": {
+        "ko": "성장, 서사, 여유, 파티",
+        "en": "Growth, Story, Chill, Party"
+      },
+      "tagWeights": [
+        {
+          "tag": "Farming Sim",
+          "weight": 1.0
+        },
+        {
+          "tag": "Life Sim",
+          "weight": 0.95
+        },
+        {
+          "tag": "Cozy",
+          "weight": 0.9
+        },
+        {
+          "tag": "Wholesome",
+          "weight": 0.85
+        },
+        {
+          "tag": "Co-op",
+          "weight": 0.7
+        },
+        {
+          "tag": "Crafting",
+          "weight": 0.6
+        }
+      ],
+      "featuredAppids": [
+        413150,
+        1401590,
+        1158160
+      ],
+      "share": {
+        "title": {
+          "ko": "나는 마을의 해결사!",
+          "en": "I'm a Village Fixer!"
+        },
+        "text": {
+          "ko": "이웃 부탁이라면 일단 팔을 걷어붙이는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I roll up my sleeves for any neighbor's request, apparently. What's your game type?"
+        }
+      }
+    }
+  ]
+}
