@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import MatchResults from "@/components/MatchResults";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -100,10 +101,7 @@ export default function MatchView({ initialQuery }: { initialQuery: string }) {
       <Header />
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("match.title")}</h1>
-          <p className={styles.subtitle}>{t("match.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="explorer" title={t("match.title")} subtitle={t("match.subtitle")} />
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>

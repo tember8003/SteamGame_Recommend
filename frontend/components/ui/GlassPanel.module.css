@@ -1,7 +1,8 @@
 .panel {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 4px solid var(--pixel-edge);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--wood-dark), 5px 5px var(--pixel-shadow);
 }

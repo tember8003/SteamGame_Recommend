@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import { useT } from "@/lib/i18n/useT";
 import styles from "./page.module.css";
 
@@ -24,13 +25,10 @@ export default function GraphPage() {
   return (
     <>
       <Header />
-      <div className={styles.page}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("graph.title")}</h1>
-          <p className={styles.subtitle}>{t("graph.subtitle")}</p>
-        </section>
+      <main className={styles.page}>
+        <WorkshopIntro place="explorer" title={t("graph.title")} subtitle={t("graph.subtitle")} />
         <SimilarityGraph />
-      </div>
+      </main>
     </>
   );
 }

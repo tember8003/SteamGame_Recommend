@@ -7,6 +7,13 @@ import SteamHubPage from "../page";
 afterEach(() => cleanup());
 
 describe("SteamHubPage", () => {
+  it("세 장소의 안내판에서 기존 아홉 기능을 모두 고를 수 있다", () => {
+    render(<LocaleProvider locale="ko"><SteamHubPage /></LocaleProvider>);
+    for (const name of ["취향 점술소", "게임 탐색소", "플레이 기록관"]) {
+      expect(screen.getByRole("region", { name })).toBeVisible();
+    }
+    expect(screen.getByRole("main").querySelectorAll("a")).toHaveLength(9);
+  });
   it("match 페이지로 가는 카드를 렌더한다", () => {
     render(
       <LocaleProvider locale="en">

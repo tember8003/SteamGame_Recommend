@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import { useT } from "@/lib/i18n/useT";
 import { reviewGuessAnswer, reviewGuessResult, reviewGuessStart } from "@/lib/api";
@@ -223,10 +224,7 @@ export default function ReviewGuessPage() {
       ) : null}
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("reviewGuess.title")}</h1>
-          <p className={styles.subtitle}>{t("reviewGuess.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="fortune" title={t("reviewGuess.title")} subtitle={t("reviewGuess.subtitle")} />
 
         {phase === "start" ? (
           <GlassPanel as="section" className={styles.card}>

@@ -7,8 +7,8 @@
 /* 사용된 태그 칩 */
 .usedTags {
   background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
+  border: 2px solid var(--glass-border);
+  border-radius: 0;
   padding: 16px 18px;
 }
 
@@ -27,17 +27,17 @@
 
 .tag {
   padding: 4px 12px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   background: var(--accent-steam);
   color: var(--bg-base);
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 700;
 }
 
 /* 게임 목록 */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 22px;
 }
 
@@ -55,20 +55,7 @@
 }
 
 .recommendAgainBtn {
-  padding: 11px 26px;
-  border-radius: var(--radius-btn);
-  border: none;
-  background: var(--btn-steam);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease;
-}
-
-.recommendAgainBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
+  composes: primary from "./ui/PixelPrimitives.module.css";
 }
 
 .recommendAgainBtn:focus-visible {

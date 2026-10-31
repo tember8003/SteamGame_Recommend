@@ -2,21 +2,21 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 2px var(--wood-dark), 5px 5px var(--pixel-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(74, 158, 255, 0.45);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(74, 158, 255, 0.18);
+  border-color: rgba(225, 193, 131, 0.45);
+  box-shadow: inset 0 0 0 2px var(--accent-steam), 5px 7px var(--pixel-shadow);
 }
 
 .media {
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(74, 158, 255, 0.14), rgba(155, 124, 240, 0.12));
+  background: var(--field-fill);
 }
 
 .image {
@@ -48,7 +48,7 @@
 
 .desc {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 14px;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -73,11 +73,11 @@
 
 .reasonChip {
   padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(74, 158, 255, 0.14);
-  border: 1px solid rgba(74, 158, 255, 0.3);
+  border-radius: 0;
+  background: rgba(225, 193, 131, 0.14);
+  border: 2px solid rgba(225, 193, 131, 0.3);
   color: var(--accent-steam);
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -91,7 +91,7 @@
 
 .caveat {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -105,11 +105,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
   background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
+  border: 2px solid var(--glass-border);
   color: var(--text-secondary);
   opacity: 1;
   cursor: pointer;
@@ -137,7 +137,7 @@
 .feedbackBtnActive {
   color: var(--accent-steam);
   border-color: var(--accent-steam);
-  background: rgba(74, 158, 255, 0.16);
+  background: rgba(225, 193, 131, 0.16);
 }
 
 /* 같은 카드에서 반대 반응이 눌렸을 때 옅게 처리함(원본의 opacity 0.4 대응) */
@@ -151,7 +151,7 @@
   gap: 8px;
   margin-top: auto;
   padding-top: 10px;
-  font-size: 0.85rem;
+  font-size: 14px;
   font-weight: 600;
   color: var(--accent-steam);
   transition: gap 0.15s ease, color 0.15s ease;
@@ -166,7 +166,7 @@
 .storeLink:focus-visible {
   outline: 2px solid var(--accent-steam);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .storeIcon {

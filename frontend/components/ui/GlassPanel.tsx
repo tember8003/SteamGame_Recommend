@@ -1,7 +1,7 @@
 import type { ElementType, HTMLAttributes, ReactNode } from "react";
 import styles from "./GlassPanel.module.css";
 
-// 반투명 글래스 표면 컨테이너, 카드,패널 등에서 공통 배경으로 재사용함
+// 기존 호출부와 이름을 유지하면서 목재 테두리 패널을 공통으로 제공한다.
 export default function GlassPanel({
   as: Tag = "div",
   children,

@@ -1,12 +1,14 @@
 .header {
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: 50;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  padding: 0 clamp(16px, 4vw, 40px);
+  min-height: 64px;
+  gap: 0 12px;
+  padding: 12px clamp(16px, 4vw, 40px);
 }
 
 .brand {
@@ -21,16 +23,22 @@
 }
 
 .wordmark {
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.18em;
   font-size: 1.05rem;
 }
 
+.navigation { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding-top: 12px; margin-top: 12px; border-top: 2px solid var(--wood-dark); }
+.navigation a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 2px solid transparent; color: var(--text-secondary); font-size: 12px; }
+.navigation a:hover { border-color: var(--wood-light); color: var(--text-primary); background: var(--panel-deep); }
+.navigation a[aria-current] { color: var(--accent-steam); border-color: var(--wood-light); background: var(--panel-deep); box-shadow: 3px 3px var(--pixel-shadow); }
+@media (max-width: 700px) { .navigation { gap: 2px 4px; } .navigation a { padding-inline: 8px; } .wordmark { letter-spacing: 0.1em; } }
+
 .tagline {
   padding-left: 10px;
-  border-left: 1px solid var(--glass-border);
+  border-left: 2px solid var(--glass-border);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 14px;
   white-space: nowrap;
 }
 

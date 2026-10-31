@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { gmarketSans } from "../fonts";
-import CosmicBackground from "@/components/CosmicBackground";
+import VillageBackground from "@/components/VillageBackground";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { isLocale, LOCALES } from "@/lib/i18n/locales";
 import { metadataFor } from "@/lib/seo/metadata";
@@ -30,7 +30,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={gmarketSans.variable}>
       <body>
-        <CosmicBackground />
+        <VillageBackground />
         <LocaleProvider locale={locale}>{children}</LocaleProvider>
       </body>
     </html>
