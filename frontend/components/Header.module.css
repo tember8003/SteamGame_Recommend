@@ -29,7 +29,7 @@
 }
 
 .navigation { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding-top: 12px; margin-top: 12px; border-top: 2px solid var(--wood-dark); }
-.navigation a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 2px solid transparent; color: var(--text-secondary); font-size: 12px; }
+.navigation a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; }
 .navigation a:hover { border-color: var(--wood-light); color: var(--text-primary); background: var(--panel-deep); }
 .navigation a[aria-current] { color: var(--accent-steam); border-color: var(--wood-light); background: var(--panel-deep); box-shadow: 3px 3px var(--pixel-shadow); }
 @media (max-width: 700px) { .navigation { gap: 2px 4px; } .navigation a { padding-inline: 8px; } .wordmark { letter-spacing: 0.1em; } }
