@@ -1,28 +1,28 @@
 /* 리뷰 패널 */
 .reviewSection {
   background: var(--glass-fill);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
+  border: 2px solid var(--glass-border);
+  border-radius: 0;
   padding: 14px 16px;
 }
 
 .reviewHeader h4 {
   color: var(--accent-steam);
-  font-size: 0.85rem;
+  font-size: 14px;
   font-weight: 700;
   margin-bottom: 10px;
 }
 
 .reviewStats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 70px), 1fr));
   gap: 10px;
 }
 
 .statItem {
   background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
+  border: 2px solid var(--glass-border);
+  border-radius: 0;
   padding: 8px;
   text-align: center;
 }
@@ -35,7 +35,7 @@
 }
 
 .statLabel {
-  font-size: 0.68rem;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -43,7 +43,7 @@
 .ratingBar {
   height: 5px;
   background: var(--glass-border);
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   overflow: hidden;
   margin-top: 6px;
 }
@@ -51,13 +51,13 @@
 .ratingFill {
   height: 100%;
   background: var(--accent-steam);
-  border-radius: var(--radius-pill);
+  border-radius: 0;
 }
 
 .noReviewData {
   color: var(--text-muted);
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 14px;
   padding: 10px 0;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .reviewTextHeader {
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -90,10 +90,10 @@
 
 .reviewTextContent {
   background: rgba(0, 0, 0, 0.22);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
+  border: 2px solid var(--glass-border);
+  border-radius: 0;
   padding: 10px;
-  font-size: 0.78rem;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--text-secondary);
 }
@@ -104,7 +104,7 @@
   border: none;
   color: var(--accent-steam);
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 600;
   margin-top: 6px;
   padding: 2px 0;

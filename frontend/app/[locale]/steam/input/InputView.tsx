@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
 import { useT } from "@/lib/i18n/useT";
@@ -93,10 +94,7 @@ export default function InputView({ initialQuery }: { initialQuery: string }) {
       <Header />
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("input.title")}</h1>
-          <p className={styles.subtitle}>{t("input.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="explorer" title={t("input.title")} subtitle={t("input.subtitle")} />
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>

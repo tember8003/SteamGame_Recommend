@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
 import { useT } from "@/lib/i18n/useT";
@@ -120,10 +121,7 @@ export default function RandomRecommendPage() {
       ) : null}
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("random.title")}</h1>
-          <p className={styles.subtitle}>{t("random.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="explorer" title={t("random.title")} subtitle={t("random.subtitle")} />
 
         <div className={styles.layout}>
           <div className={styles.leftPanel}>

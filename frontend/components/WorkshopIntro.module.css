@@ -1,0 +1,9 @@
+.intro { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 180px; padding: 24px 32px; margin: 12px 0 32px; border: 4px solid var(--pixel-edge); border-top: 8px solid var(--wood-light); background: var(--panel-deep); box-shadow: inset 0 0 0 2px var(--wood-dark), 6px 6px var(--pixel-shadow); }
+.copy { min-width: 0; }
+.location { color: var(--accent-steam); font-size: 12px; margin-bottom: 12px; letter-spacing: 0.08em; }
+.location span { margin-right: 8px; }
+.intro h1 { font-size: 28px; line-height: 1.5; font-weight: 700; text-wrap: balance; word-break: keep-all; text-shadow: 2px 2px var(--pixel-shadow); }
+.subtitle { margin-top: 10px; max-width: 680px; color: var(--text-secondary); font-size: 14px; line-height: 1.8; word-break: keep-all; }
+.shop { width: 180px; height: 135px; flex: 0 0 auto; object-fit: contain; image-rendering: pixelated; }
+.seal { width: 84px; height: 84px; flex: 0 0 auto; display: grid; place-items: center; border: 4px double var(--wood-light); color: var(--accent-steam); font-size: 36px; }
+@media (max-width: 700px) { .intro { padding: 20px; margin-bottom: 24px; gap: 12px; align-items: start; } .intro h1 { font-size: 24px; } .shop { width: 92px; height: 84px; position: absolute; right: 14px; top: -12px; opacity: 0.85; } .location { padding-right: 76px; min-height: 24px; } .copy { position: relative; z-index: 1; width: 100%; } .intro h1 { padding-top: 12px; } .seal { display: none; } }

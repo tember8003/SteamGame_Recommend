@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import Button from "@/components/ui/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localeHref } from "@/lib/i18n/routing";
@@ -15,10 +16,7 @@ export default function NotFound() {
     <div className={styles.page}>
       <Header />
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("notFound.title")}</h1>
-          <p className={styles.subtitle}>{t("notFound.desc")}</p>
-        </section>
+        <WorkshopIntro place="village" title={t("notFound.title")} subtitle={t("notFound.desc")} />
         <Button variant="glass" href={localeHref(locale, "/")}>
           {t("notFound.home")}
         </Button>

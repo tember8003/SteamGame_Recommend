@@ -1,0 +1,1 @@
+.landscape { position: fixed; z-index: -1; inset: 0; pointer-events: none; background: linear-gradient(180deg, #10212c66, #10212c99 40%, #10212ce6), url("/images/village/landscape.webp") center / cover no-repeat; image-rendering: pixelated; }

@@ -1,31 +1,41 @@
+@font-face {
+  font-family: "Village Galmuri";
+  src: url("/fonts/galmuri/Galmuri11.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Village Galmuri";
+  src: url("/fonts/galmuri/Galmuri11-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* 배경: 깊은 우주 네이비 + 성운 글로우 */
-  --bg-base: #0a0e1a;
-  --nebula-violet: rgba(120, 100, 200, 0.05);
-  --nebula-blue: rgba(60, 110, 190, 0.045);
-
-  /* 텍스트 */
-  --text-primary: #ffffff;
-  --text-secondary: #b4b8cc;
-  --text-muted: #8b90ad;
-
-  /* 액센트: 블루=Steam, 바이올렛 (솔리드) */
-  --accent-steam: #4a9eff;
-  --accent-violet: #9b7cf0;
-
-  /* 글래스 표면 */
-  --glass-fill: rgba(255, 255, 255, 0.035);
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-blur: 10px;
-
-  /* 버튼 솔리드 (그라데이션 제거) */
-  --btn-steam: #2f7de0;
-  --btn-violet: #6e56d6;
-
-  /* 반경 */
-  --radius-card: 18px;
-  --radius-btn: 12px;
-  --radius-pill: 999px;
+  --bg-base: #10232b;
+  --text-primary: #f2e7cb;
+  --text-secondary: #d0c9b7;
+  --text-muted: #afb6aa;
+  --accent-steam: #e1c183;
+  --accent-violet: #a6c6b1;
+  --glass-fill: #1c3035;
+  --glass-border: #6c624d;
+  --glass-blur: 0px;
+  --btn-steam: #dfc899;
+  --btn-violet: #aac1ad;
+  --button-ink: #25302c;
+  --panel-deep: #182c32;
+  --field-fill: #102329;
+  --pixel-edge: #101c20;
+  --pixel-shadow: #09171d;
+  --wood-dark: #574939;
+  --wood-light: #a28a60;
+  --radius-card: 0px;
+  --radius-btn: 0px;
+  --radius-pill: 0px;
 }
 
 * {
@@ -43,7 +53,10 @@ body {
   min-height: 100vh;
   color: var(--text-primary);
   background: var(--bg-base);
-  font-family: var(--font-gmarket-sans), "Inter", system-ui, sans-serif;
+  font-family: "Village Galmuri", var(--font-gmarket-sans), sans-serif;
+  font-synthesis: none;
+  line-height: 1.7;
+  isolation: isolate;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -52,3 +65,10 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+button, input, textarea, select { font-family: inherit; }
+button, input, textarea, select, a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent-steam); outline-offset: 4px; }
+input[type="checkbox"] { accent-color: var(--accent-steam); }
+::selection { color: var(--bg-base); background: var(--accent-steam); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }

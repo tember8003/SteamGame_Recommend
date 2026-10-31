@@ -7,13 +7,13 @@
 /* need 를 다 못 채웠을 때의 흐린 안내 한 줄 */
 .shortfall {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 22px;
 }
 
@@ -30,20 +30,7 @@
 }
 
 .recommendAgainBtn {
-  padding: 11px 26px;
-  border-radius: var(--radius-btn);
-  border: none;
-  background: var(--btn-steam);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease;
-}
-
-.recommendAgainBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
+  composes: primary from "./ui/PixelPrimitives.module.css";
 }
 
 .recommendAgainBtn:focus-visible {

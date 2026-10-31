@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import GameCard from "@/components/GameCard";
 import { useT } from "@/lib/i18n/useT";
@@ -212,10 +213,7 @@ export default function ChoicePage() {
       <Header />
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("choice.title")}</h1>
-          <p className={styles.subtitle}>{t("choice.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="fortune" title={t("choice.title")} subtitle={t("choice.subtitle")} />
 
         <div className={styles.layout}>
           <aside className={styles.leftPanel}>

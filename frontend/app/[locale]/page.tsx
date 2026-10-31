@@ -1,11 +1,11 @@
 "use client";
 
 import Header from "@/components/Header";
-import Button from "@/components/ui/Button";
+import VillageNpc from "@/components/VillageNpc";
+import Link from "next/link";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localeHref } from "@/lib/i18n/routing";
 import { useT } from "@/lib/i18n/useT";
-import { siSteam } from "simple-icons";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -13,29 +13,79 @@ export default function Home() {
   const locale = useLocale();
   return (
     <div className={styles.page}>
-      <Header />
+      <a className={styles.skipLink} href="#village">{t("landing.skip")}</a>
+      <div className={styles.headerShell}><Header /></div>
+      <div className={styles.fireflies} aria-hidden="true">
+        {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
+      </div>
+      <main id="village" className={styles.main} tabIndex={-1}>
+        <h1 className={styles.srOnly}>{t("landing.places")}</h1>
 
-      <main className={styles.main}>
-        <section className={styles.modes}>
-          <article className={`${styles.card} ${styles.steamCard}`}>
-            <div className={styles.cardBody}>
-              <span className={`${styles.mark} ${styles.steamMark}`}>
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d={siSteam.path} />
-                </svg>
-              </span>
-              <h2 className={styles.cardTitle}>
-                STEAM <span className={styles.steamAccent}>{t("landing.steamPicks")}</span>
-              </h2>
-              <p className={styles.cardDesc}>{t("landing.steamDesc")}</p>
-            </div>
-            <Button variant="steam" href={localeHref(locale, "/steam")} className={styles.cardCta}>
-              {t("landing.steamCta")}
-            </Button>
+        <section className={styles.village} aria-label={t("landing.places")}>
+          <article className={styles.place}>
+            <Link className={styles.placeLink} href={localeHref(locale, "/steam/choice")}>
+              <div className={styles.sign}>
+                <span className={styles.placeNumber}>01 / {t("landing.fortuneName")}</span>
+                <h2>{t("landing.tasteTitle")}</h2>
+                <p>{t("landing.tasteDesc")}</p>
+              </div>
+              <div className={styles.art}>
+                <span className={styles.bubble}>{t("landing.tasteGreeting")}</span>
+                {/* 글자와 조작 영역을 이미지 밖에 두어 번역과 키보드 접근을 유지한다. */}
+                <VillageNpc npc="fortune" />
+              </div>
+              <span className={styles.cta}>{t("landing.tasteCta")} <span aria-hidden="true">›</span></span>
+            </Link>
+          </article>
+
+          <article className={`${styles.place} ${styles.explorer}`}>
+            <details className={styles.searchOptions}>
+              <summary className={styles.placeLink}>
+                <div className={styles.sign}>
+                  <span className={styles.placeNumber}>02 / {t("landing.explorerName")}</span>
+                  <h2>{t("landing.similarTitle")}</h2>
+                  <p>{t("landing.similarDesc")}</p>
+                </div>
+                <div className={styles.art}>
+                  <span className={styles.bubble}>{t("landing.similarGreeting")}</span>
+                  <VillageNpc npc="explorer" />
+                </div>
+                <span className={styles.cta}>{t("landing.similarCta")} <span className={styles.chevron} aria-hidden="true">›</span></span>
+              </summary>
+              <nav className={styles.searchMenu} aria-label={t("landing.searchMethods")}>
+                <p>{t("landing.searchPrompt")}</p>
+                <Link href={localeHref(locale, "/steam/similar")}>{t("landing.byGame")}<span aria-hidden="true">↗</span></Link>
+                <Link href={localeHref(locale, "/steam/input")}>{t("landing.byAi")}<span aria-hidden="true">↗</span></Link>
+                <Link href={localeHref(locale, "/steam/random")}>{t("landing.byTags")}<span aria-hidden="true">↗</span></Link>
+              </nav>
+            </details>
+          </article>
+
+          <article className={styles.place}>
+            <Link className={styles.placeLink} href={localeHref(locale, "/steam/profile")}>
+              <div className={styles.sign}>
+                <span className={styles.placeNumber}>03 / {t("landing.archiveName")}</span>
+                <h2>{t("landing.libraryTitle")}</h2>
+                <p>{t("landing.libraryDesc")}</p>
+              </div>
+              <div className={styles.art}>
+                <span className={styles.bubble}>{t("landing.libraryGreeting")}</span>
+                <VillageNpc npc="archive" />
+              </div>
+              <span className={styles.cta}>{t("landing.libraryCta")} <span aria-hidden="true">›</span></span>
+            </Link>
           </article>
         </section>
 
-        <footer className={styles.footer}>{t("landing.footer")}</footer>
+        <p className={styles.trailNote}><span aria-hidden="true">✦</span> {t("landing.trailNote")}</p>
+        <footer className={styles.footer}>
+          <nav aria-label={t("landing.more")}>
+            <Link href={localeHref(locale, "/steam")}>{t("landing.allFeatures")}</Link>
+            <Link href={localeHref(locale, "/steam/review-guess")}>{t("landing.reviewGuess")}</Link>
+            <Link href={localeHref(locale, "/steam/random")}>{t("landing.random")}</Link>
+          </nav>
+          <p>{t("landing.footer")}</p>
+        </footer>
       </main>
     </div>
   );

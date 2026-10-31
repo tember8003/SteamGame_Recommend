@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Header from "@/components/Header";
+import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
 import RecommendResults, { type ReviewDisplayOptions } from "@/components/RecommendResults";
 import { useT } from "@/lib/i18n/useT";
@@ -92,10 +93,7 @@ export default function ProfileRecommendPage() {
       <Header />
 
       <main className={styles.main}>
-        <section className={styles.intro}>
-          <h1 className={styles.title}>{t("profile.title")}</h1>
-          <p className={styles.subtitle}>{t("profile.subtitle")}</p>
-        </section>
+        <WorkshopIntro place="archive" title={t("profile.title")} subtitle={t("profile.subtitle")} />
 
         <div className={styles.layout}>
           <GlassPanel as="aside" className={styles.panel}>

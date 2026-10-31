@@ -1,0 +1,35 @@
+.scene { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; pointer-events: none; }
+.scene .image { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.fortune {
+  --head-start: 43% 42%;
+  --head-shape: 43% 42%, 47% 40%, 52% 40%, 57% 43%, 59% 47%, 61% 52%, 61% 58%, 59% 63%, 55% 65%, 49% 65%, 45% 64%, 43% 61%;
+  --nod-x: 0px;
+  --nod-y: 2px;
+}
+.explorer {
+  --head-start: 64% 54%;
+  --head-shape: 64% 54%, 67% 51%, 70% 52%, 74% 54%, 76% 57%, 77% 62%, 75% 65%, 70% 66%, 66% 64%, 64% 60%;
+  --nod-x: -1px;
+  --nod-y: -2px;
+}
+.archive {
+  --head-start: 43% 45%;
+  --head-shape: 43% 45%, 44% 41%, 48% 39%, 50% 40%, 54% 43%, 56% 47%, 57% 51%, 56% 57%, 53% 60%, 48% 60%, 44% 57%, 42% 52%;
+  --nod-x: 0px;
+  --nod-y: 2px;
+}
+.base { clip-path: polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, var(--head-shape), var(--head-start)); }
+.scene .head { position: absolute; inset: 0; clip-path: polygon(var(--head-shape)); }
+
+:global(a:focus-visible) .head, :global(summary:focus-visible) .head { animation: greet 1100ms steps(1, end) 1; }
+@media (hover: hover) and (pointer: fine) {
+  :global(a:hover) .head, :global(summary:hover) .head { animation: greet 1100ms steps(1, end) 1; }
+}
+@keyframes greet {
+  /* 얼굴 도트가 번지지 않도록 회전 없이 정수 픽셀 위치만 사용한다. */
+  0%, 42%, 82%, 100% { transform: translate(0, 0); }
+  20%, 62% { transform: translate(var(--nod-x), var(--nod-y)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene .head { animation: none !important; transform: none; }
+}
