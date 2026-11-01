@@ -4,13 +4,19 @@ import SteamGame.recommend.domain.library.steam.SteamLibraryParser.GamesParse;
 import SteamGame.recommend.domain.library.steam.SteamLibraryParser.GamesStatus;
 import SteamGame.recommend.domain.library.steam.SteamLibraryParser.SummaryParse;
 import SteamGame.recommend.domain.library.steam.SteamLibraryParser.SummaryStatus;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SteamLibraryParserTest {
 
@@ -89,5 +95,89 @@ class SteamLibraryParserTest {
         assertThat(missing.status()).isEqualTo(GamesStatus.UNAVAILABLE);
         GamesParse notArray = SteamLibraryParser.parseOwnedGames("{\"response\":{\"game_count\":5,\"games\":\"x\"}}");
         assertThat(notArray.status()).isEqualTo(GamesStatus.UNAVAILABLE);
+    }
+
+    @Test
+    void summaryWithoutResponseOrPlayersKeyIsUnavailable() {
+        for (String name : new String[] {"summary-no-response.json", "summary-no-players-key.json"}) {
+            SummaryParse r = SteamLibraryParser.parseSummary(fixture(name));
+            assertThat(r.status()).as(name).isEqualTo(SummaryStatus.UNAVAILABLE);
+            assertThat(r.reason()).as(name).isNotBlank();
+        }
+        assertThat(SteamLibraryParser.parseSummary("{\"response\":{\"players\":\"x\"}}").status())
+                .isEqualTo(SummaryStatus.UNAVAILABLE);
+    }
+
+    @Test
+    void playerWithoutVisibilityIsUnavailable() {
+        SummaryParse r = SteamLibraryParser.parseSummary(fixture("summary-no-visibility.json"));
+        assertThat(r.status()).isEqualTo(SummaryStatus.UNAVAILABLE);
+        assertThat(r.reason()).isNotBlank();
+    }
+
+    @Test
+    void vanitySuccessOtherThanOneOr42Throws() {
+        assertThatThrownBy(() -> SteamLibraryParser.parseVanity(fixture("vanity-unexpected.json")))
+                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> SteamLibraryParser.parseVanity(fixture("vanity-empty.json")))
+                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> SteamLibraryParser.parseVanity("{\"response\":{\"success\":1}}"))
+                .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void vanityOneAnd42StillWork() throws Exception {
+        assertThat(SteamLibraryParser.parseVanity(fixture("vanity-ok.json"))).isEqualTo("76561198000000001");
+        assertThat(SteamLibraryParser.parseVanity(fixture("vanity-nomatch.json"))).isNull();
+    }
+
+    @Test
+    void gamesWithoutPositiveAppidAreSkippedWithWarn() {
+        ListAppender<ILoggingEvent> logs = new ListAppender<>();
+        logs.start();
+        Logger logger = (Logger) LoggerFactory.getLogger(SteamLibraryParser.class);
+        logger.addAppender(logs);
+        try {
+            GamesParse r = SteamLibraryParser.parseOwnedGames(fixture("owned-some-invalid.json"));
+
+            assertThat(r.status()).isEqualTo(GamesStatus.FOUND);
+            assertThat(r.games()).extracting(OwnedGame::appid).containsExactly(570L, 730L, 440L);
+            assertThat(logs.list).anySatisfy(e -> {
+                assertThat(e.getLevel()).isEqualTo(Level.WARN);
+                assertThat(e.getFormattedMessage()).contains("1");
+                assertThat(e.getFormattedMessage()).doesNotContain("NoAppid");
+            });
+        } finally {
+            logger.detachAppender(logs);
+        }
+    }
+
+    @Test
+    void moreThanHalfSkippedIsUnavailable() {
+        GamesParse r = SteamLibraryParser.parseOwnedGames(fixture("owned-mostly-invalid.json"));
+        assertThat(r.status()).isEqualTo(GamesStatus.UNAVAILABLE);
+        assertThat(r.reason()).isNotBlank();
+    }
+
+    @Test
+    void exactlyHalfSkippedIsStillFound() {
+        GamesParse r = SteamLibraryParser.parseOwnedGames(
+                "{\"response\":{\"game_count\":2,\"games\":[{\"appid\":5},{\"name\":\"x\"}]}}");
+        assertThat(r.status()).isEqualTo(GamesStatus.FOUND);
+        assertThat(r.games()).hasSize(1);
+    }
+
+    @Test
+    void emptyResponseObjectStaysPrivate() {
+        assertThat(SteamLibraryParser.parseOwnedGames("{\"response\":{}}").status()).isEqualTo(GamesStatus.PRIVATE);
+    }
+
+    @Test
+    void positiveCountWithEmptyGamesOrNonNumericCountIsUnavailable() {
+        for (String name : new String[] {"owned-count-positive-empty.json", "owned-count-string.json"}) {
+            GamesParse r = SteamLibraryParser.parseOwnedGames(fixture(name));
+            assertThat(r.status()).as(name).isEqualTo(GamesStatus.UNAVAILABLE);
+            assertThat(r.reason()).as(name).isNotBlank();
+        }
     }
 }

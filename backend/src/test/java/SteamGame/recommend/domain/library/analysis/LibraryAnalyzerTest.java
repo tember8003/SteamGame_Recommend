@@ -449,6 +449,41 @@ class LibraryAnalyzerTest {
         assertThat(LibraryAnalyzer.analyze(l, tags, t -> 9.0, CONTENT, ID).diagnosis().hiddenTaste()).isNull();
     }
 
+    // 희소도를 알 수 없으면 임의 태그를 고르지 않는다
+    private static LibraryAnalysis sevenTagsNoRecent(java.util.function.Function<String, Double> rarity) {
+        List<OwnedGame> l = new ArrayList<>();
+        Map<Long, List<String>> tags = new HashMap<>();
+        for (int i = 1; i <= 7; i++) {
+            l.add(recent(i, 1000 * (8 - i), 0));
+            tags.put((long) i, List.of("T" + i));
+        }
+        return LibraryAnalyzer.analyze(l, tags, rarity, CONTENT, ID);
+    }
+
+    @Test
+    void hiddenTaste_nullRarityValuesSkipRarityPath() {
+        assertThat(sevenTagsNoRecent(t -> 9.0).diagnosis().hiddenTaste()).isNotNull();
+        assertThat(sevenTagsNoRecent(t -> null).diagnosis().hiddenTaste()).isNull();
+    }
+
+    @Test
+    void hiddenTaste_nullRarityFunctionSkipsRarityPath() {
+        assertThat(sevenTagsNoRecent(null).diagnosis().hiddenTaste()).isNull();
+    }
+
+    @Test
+    void hiddenTaste_recentPathStillWorksWithoutRarity() {
+        List<OwnedGame> l = new ArrayList<>();
+        Map<Long, List<String>> tags = new HashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            l.add(g(i, 1000 * (7 - i)));
+            tags.put((long) i, List.of("T" + i));
+        }
+        l.add(recent(6, 10, 500));
+        tags.put(6L, List.of("NEW"));
+        assertThat(LibraryAnalyzer.analyze(l, tags, null, CONTENT, ID).diagnosis().hiddenTaste()).isEqualTo("NEW");
+    }
+
     @Test
     void hiddenTaste_nullWithoutEvidence() {
         assertThat(run(lib(6, 0, 100), Map.of()).diagnosis().hiddenTaste()).isNull();

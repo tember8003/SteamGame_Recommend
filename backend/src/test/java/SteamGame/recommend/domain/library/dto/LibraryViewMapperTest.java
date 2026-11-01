@@ -6,7 +6,12 @@ import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Judged;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.Phrase;
 import SteamGame.recommend.domain.taste.content.Lang;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -99,5 +104,68 @@ class LibraryViewMapperTest {
         assertThat(r.gamerStats().get(0).code()).isEqualTo("COOP");
         assertThat(r.gamerStats().get(0).value()).isNull();
         assertThat(r.gamerStats().get(0).label()).isEqualTo(content.phrases().get("STAT_COOP").get(0).text().en());
+    }
+
+    private static LibraryContent loyalistCandidates(Phrase... phrases) {
+        return LibraryFixtures.withPhrases(LibraryFixtures.validContent(), "GENRE_LOYALIST", List.of(phrases));
+    }
+
+    @Test
+    void sharedPath_skipsCandidateWhoseParamsWereNotStored() {
+        // 저장 당시에는 topGroup만 있었는데 지금 0번 후보는 topGroupRatioPct도 쓴다
+        LibraryContent content = loyalistCandidates(
+                LibraryFixtures.phrase("A ko", "A en", "topGroup", "topGroupRatioPct"),
+                LibraryFixtures.phrase("B ko", "B en", "topGroup"));
+        Map<String, Object> stored = new HashMap<>();
+        stored.put("topGroup", "STRATEGY");
+
+        SharedAnalysisResponse r = LibraryViewMapper.toSharedResponse(analysisWithCrimeParams(stored, 0), content, Lang.EN);
+
+        assertThat(r.verdict().crime().text()).isEqualTo("B en");
+    }
+
+    @Test
+    void sharedPath_searchesFromFloorModIndexAndWraps() {
+        LibraryContent content = loyalistCandidates(
+                LibraryFixtures.phrase("A ko", "A en"),
+                LibraryFixtures.phrase("B ko", "B en", "needed"),
+                LibraryFixtures.phrase("C ko", "C en", "needed"));
+        // 7 mod 3 은 1번이고 1번과 2번이 모두 채울 수 없어 0번으로 돌아온다
+        SharedAnalysisResponse r = LibraryViewMapper.toSharedResponse(analysisWithCrimeParams(Map.of(), 7), content, Lang.EN);
+
+        assertThat(r.verdict().crime().text()).isEqualTo("A en");
+    }
+
+    @Test
+    void sharedPath_noFillableCandidateIsAContentDefect() {
+        LibraryContent content = loyalistCandidates(
+                LibraryFixtures.phrase("A ko", "A en", "needed"),
+                LibraryFixtures.phrase("B ko", "B en", "needed"));
+
+        assertThatThrownBy(() -> LibraryViewMapper.toSharedResponse(analysisWithCrimeParams(Map.of(), 0), content, Lang.EN))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sharedPath_unknownTopGroupKeyIsShownWithWarn() {
+        ListAppender<ILoggingEvent> logs = new ListAppender<>();
+        logs.start();
+        Logger logger = (Logger) LoggerFactory.getLogger(LibraryViewMapper.class);
+        logger.addAppender(logs);
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("topGroup", "RENAMED_GROUP");
+
+            SharedAnalysisResponse r = LibraryViewMapper.toSharedResponse(
+                    analysisWithCrimeParams(params, 0), LibraryFixtures.validContent(), Lang.KO);
+
+            assertThat(r.verdict().crime().params()).containsEntry("topGroup", "RENAMED_GROUP");
+            assertThat(logs.list).anySatisfy(e -> {
+                assertThat(e.getLevel()).isEqualTo(Level.WARN);
+                assertThat(e.getFormattedMessage()).contains("RENAMED_GROUP");
+            });
+        } finally {
+            logger.detachAppender(logs);
+        }
     }
 }

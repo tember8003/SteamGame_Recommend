@@ -10,6 +10,9 @@ import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.Phrase;
 import SteamGame.recommend.domain.library.steam.SteamProfile;
 import SteamGame.recommend.domain.taste.content.Lang;
+import SteamGame.recommend.domain.taste.content.LocalizedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.Map;
 // 언어 없는 분석 결과를 언어 하나를 골라 응답 모양으로 바꾼다
 public final class LibraryViewMapper {
 
+    private static final Logger log = LoggerFactory.getLogger(LibraryViewMapper.class);
     private static final String TOP_GROUP = "topGroup";
 
     private LibraryViewMapper() {
@@ -26,7 +30,7 @@ public final class LibraryViewMapper {
     public static AnalyzeResponse toAnalyzeResponse(String analysisId, SteamProfile profile, LibraryAnalysis a,
                                                     LibraryContent content, Lang lang) {
         return new AnalyzeResponse(analysisId, a.limitedData(),
-                new ProfileView(profile.personaName(), profile.avatarUrl()),
+                new ProfileView(profile.personaName(), profile.avatarUrl(), profile.steamId64()),
                 stats(a.stats()),
                 phrase(a.ledger(), content, lang, false),
                 verdict(a, content, lang, false),
@@ -34,7 +38,7 @@ public final class LibraryViewMapper {
                 diagnosis(a.diagnosis()));
     }
 
-    // 공유 스냅샷은 문구 파일이 바뀐 뒤에 읽힐 수 있어 후보 번호를 현재 후보 수에 맞춰 돌린다
+    // 공유 스냅샷은 문구 파일이 바뀐 뒤에 읽힐 수 있어 현재 문구 파일에서 채울 수 있는 후보를 고른다
     public static SharedAnalysisResponse toSharedResponse(LibraryAnalysis a, LibraryContent content, Lang lang) {
         return new SharedAnalysisResponse(a.limitedData(),
                 stats(a.stats()),
@@ -50,25 +54,48 @@ public final class LibraryViewMapper {
     }
 
     // lenient가 아니면 후보 번호가 범위를 벗어났을 때 틀린 문구를 내지 않고 예외를 던진다
+    // lenient면 번호를 현재 후보 수에 맞춘 자리부터 차례로 보며, 저장된 params로 자리표시자를 모두 채울 수 있는 첫 후보를 쓴다
+    // 그런 후보가 없으면 문구 파일의 결함이라 예외를 던진다
     private static PhraseView phrase(Judged j, LibraryContent content, Lang lang, boolean lenient) {
         List<Phrase> candidates = content.phrases().get(j.code());
         if (candidates == null || candidates.isEmpty()) {
             throw new IllegalStateException("library phrase not found: " + j.code());
         }
-        int index = j.phraseIndex();
+        Phrase chosen;
         if (lenient) {
-            index = Math.floorMod(index, candidates.size());
-        } else if (index < 0 || index >= candidates.size()) {
-            throw new IllegalStateException("library phrase not found: " + j.code() + "#" + index);
+            chosen = firstFillable(j, candidates);
+        } else {
+            int index = j.phraseIndex();
+            if (index < 0 || index >= candidates.size()) {
+                throw new IllegalStateException("library phrase not found: " + j.code() + "#" + index);
+            }
+            chosen = candidates.get(index);
         }
-        String text = candidates.get(index).text().get(lang);
+        String text = chosen.text().get(lang);
         Map<String, Object> params = new LinkedHashMap<>(j.params());
         // 분석기는 묶음 키를 넣어 두므로 여기서 언어별 이름으로 바꾼다
         Object group = params.get(TOP_GROUP);
-        if (group instanceof String key && content.groupLabels().containsKey(key)) {
-            params.put(TOP_GROUP, content.groupLabels().get(key).get(lang));
+        if (group instanceof String key && !key.isEmpty()) {
+            LocalizedText label = content.groupLabels().get(key);
+            if (label == null) {
+                // 묶음 키가 바뀐 옛 스냅샷, 키를 그대로 보여 주되 눈에 띄게 남긴다
+                log.warn("library group label missing, showing the key: code={}, group={}", j.code(), key);
+            } else {
+                params.put(TOP_GROUP, label.get(lang));
+            }
         }
         return new PhraseView(j.code(), text, params);
+    }
+
+    private static Phrase firstFillable(Judged j, List<Phrase> candidates) {
+        int start = Math.floorMod(j.phraseIndex(), candidates.size());
+        for (int i = 0; i < candidates.size(); i++) {
+            Phrase candidate = candidates.get((start + i) % candidates.size());
+            if (j.params().keySet().containsAll(candidate.params())) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("library phrase has no candidate fillable from stored params: " + j.code());
     }
 
     private static List<GamerStatView> gamerStats(List<GamerStat> stats, LibraryContent content, Lang lang) {

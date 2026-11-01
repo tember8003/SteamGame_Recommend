@@ -33,6 +33,7 @@ public final class LibraryAnalyzer {
     private LibraryAnalyzer() {
     }
 
+    // rarity는 null이거나 null을 돌려줄 수 있고, 그러면 희소도로 숨은 취향을 고르는 경로를 건너뛴다
     public static LibraryAnalysis analyze(
             List<OwnedGame> games,
             Map<Long, List<String>> tagsByAppid,
@@ -333,6 +334,10 @@ public final class LibraryAnalyzer {
             if (!overallTop5.contains(e.getKey())) {
                 return e.getKey();
             }
+        }
+        // 희소도를 알 수 없으면(함수가 없거나 값이 null) 임의 태그를 고르지 않고 비워 둔다
+        if (rarity == null) {
+            return null;
         }
         String best = null;
         double bestRarity = Double.NEGATIVE_INFINITY;

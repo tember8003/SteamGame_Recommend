@@ -1,5 +1,6 @@
 package SteamGame.recommend.controller;
 
+import SteamGame.recommend.config.JacksonConfig;
 import SteamGame.recommend.config.RateLimitProperties;
 import SteamGame.recommend.config.SecurityConfig;
 import SteamGame.recommend.domain.event.entity.FunnelEventType;
@@ -48,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LibraryController.class)
-@Import({SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class,
+@Import({JacksonConfig.class, SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class,
         LibraryContentLoader.class})
 class LibraryControllerTest {
 
@@ -109,7 +110,8 @@ class LibraryControllerTest {
         assertThat(keys(body)).containsExactlyInAnyOrder("analysisId", "limitedData", "profile", "stats", "ledger",
                 "verdict", "gamerStats", "diagnosis");
         assertThat(body.get("analysisId").asText()).isEqualTo("aid-1");
-        assertThat(keys(body.get("profile"))).containsExactlyInAnyOrder("personaName", "avatarUrl");
+        assertThat(keys(body.get("profile"))).containsExactlyInAnyOrder("personaName", "avatarUrl", "steamId64");
+        assertThat(body.get("profile").get("steamId64").asText()).isEqualTo("76561198012345678");
         assertThat(keys(body.get("stats"))).containsExactlyInAnyOrder("ownedCount", "totalHours", "zeroPlayCount",
                 "zeroPlayRatio", "mostPlayed", "recentGameCount", "recentHours", "matchedCount", "topTags");
         assertThat(keys(body.get("stats").get("mostPlayed")))
@@ -258,5 +260,76 @@ class LibraryControllerTest {
         mvc.perform(get("/api/library/share/none"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("SHARE_NOT_FOUND"));
+    }
+
+    // ---- 공유 읽기 언어
+
+    @Test
+    void getShare_passesLangToService() throws Exception {
+        when(service.renderShared(anyString(), any())).thenReturn(
+                LibraryViewMapper.toSharedResponse(analysis, loader.content(), Lang.KO));
+
+        mvc.perform(get("/api/library/share/S1").param("lang", "en")).andExpect(status().isOk());
+        verify(service).renderShared("S1", Lang.EN);
+
+        mvc.perform(get("/api/library/share/S2")).andExpect(status().isOk());
+        verify(service).renderShared("S2", Lang.KO);
+
+        mvc.perform(get("/api/library/share/S3").param("lang", "xx")).andExpect(status().isOk());
+        verify(service).renderShared("S3", Lang.from("xx"));
+    }
+
+    // ---- 값이 없는 항목도 키는 남는다
+
+    private LibraryAnalysis zeroPlaytimeAnalysis() {
+        List<OwnedGame> games = new ArrayList<>();
+        for (long i = 1; i <= 7; i++) {
+            games.add(new OwnedGame(i, "Idle" + i, 0, 0, null));
+        }
+        return LibraryAnalyzer.analyze(games, Map.of(), t -> 0.5, loader.content(), profile.steamId64());
+    }
+
+    private void assertNullKeysPresent(JsonNode body) {
+        JsonNode stats = body.get("stats");
+        assertThat(stats.has("mostPlayed")).isTrue();
+        assertThat(stats.get("mostPlayed").isNull()).isTrue();
+
+        Set<String> nullStats = new TreeSet<>();
+        for (JsonNode stat : body.get("gamerStats")) {
+            assertThat(keys(stat)).containsExactlyInAnyOrder("code", "value", "label");
+            if (stat.get("value").isNull()) {
+                nullStats.add(stat.get("code").asText());
+            }
+        }
+        assertThat(nullStats).containsExactlyInAnyOrder("EXPLORATION", "STRATEGY", "DIVERSITY", "COOP");
+
+        JsonNode diagnosis = body.get("diagnosis");
+        assertThat(diagnosis.has("favoriteTag")).isTrue();
+        assertThat(diagnosis.get("favoriteTag").isNull()).isTrue();
+        assertThat(diagnosis.has("hiddenTaste")).isTrue();
+        assertThat(diagnosis.get("hiddenTaste").isNull()).isTrue();
+        assertThat(diagnosis.get("concentratedGames").isArray()).isTrue();
+    }
+
+    @Test
+    void analyze_zeroPlaytime_keepsNullValuedKeys() throws Exception {
+        when(service.analyze(anyString()))
+                .thenReturn(new LibraryAnalysisService.Analyzed("aid-0", profile, zeroPlaytimeAnalysis()));
+
+        MvcResult res = analyze("", BODY);
+
+        assertThat(res.getResponse().getStatus()).isEqualTo(200);
+        assertNullKeysPresent(json(res));
+    }
+
+    @Test
+    void getShare_zeroPlaytime_keepsNullValuedKeys() throws Exception {
+        when(service.renderShared(anyString(), any())).thenReturn(
+                LibraryViewMapper.toSharedResponse(zeroPlaytimeAnalysis(), loader.content(), Lang.KO));
+
+        MvcResult res = mvc.perform(get("/api/library/share/Z1")).andReturn();
+
+        assertThat(res.getResponse().getStatus()).isEqualTo(200);
+        assertNullKeysPresent(json(res));
     }
 }

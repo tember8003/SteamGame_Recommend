@@ -492,8 +492,8 @@
    },
    {
     "text": {
-     "ko": "플레이 시간의 {topGroupRatioPct}%를 {topGroup}에 바친 죄",
-     "en": "The crime of giving {topGroupRatioPct}% of your playtime to {topGroup}"
+     "ko": "장르 기록의 {topGroupRatioPct}%를 {topGroup}에 바친 죄",
+     "en": "The crime of giving {topGroupRatioPct}% of your genre-tagged playtime to {topGroup}"
     },
     "params": [
      "topGroupRatioPct",

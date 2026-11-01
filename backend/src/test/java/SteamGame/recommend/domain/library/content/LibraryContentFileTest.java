@@ -1,5 +1,8 @@
 package SteamGame.recommend.domain.library.content;
 
+import SteamGame.recommend.domain.library.analysis.CrimeCode;
+import SteamGame.recommend.domain.library.analysis.LedgerCode;
+import SteamGame.recommend.domain.library.analysis.StatCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -42,6 +45,27 @@ class LibraryContentFileTest {
         for (String code : LibraryContentValidator.requiredPhraseCodes()) {
             assertThat(c.phrases().get(code)).as(code).hasSizeBetween(2, 3);
         }
+    }
+
+    // 상수 이름은 저장 형식이라 문구 키와 어긋나면 옛 공유 링크가 깨진다
+    @Test
+    void everyStoredCodeEnumConstantHasPhrasesInContentFile() {
+        LibraryContent c = load();
+        List<String> expected = new ArrayList<>();
+        for (LedgerCode code : LedgerCode.values()) {
+            expected.add(code.name());
+        }
+        for (CrimeCode code : CrimeCode.values()) {
+            expected.add(code.name());
+            expected.add("SENTENCE_" + code.name());
+        }
+        for (StatCode code : StatCode.values()) {
+            expected.add("STAT_" + code.name());
+        }
+        for (String key : expected) {
+            assertThat(c.phrases().get(key)).as(key).isNotEmpty();
+        }
+        assertThat(expected).containsExactlyInAnyOrderElementsOf(LibraryContentValidator.requiredPhraseCodes());
     }
 
     @Test

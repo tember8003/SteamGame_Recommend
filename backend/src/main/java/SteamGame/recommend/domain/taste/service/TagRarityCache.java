@@ -62,6 +62,15 @@ public class TagRarityCache {
         return current.getOrDefault(tag, 0.0);
     }
 
+    // 실제 DB 값을 한 번이라도 읽어 왔는지, 아니면 대체 값 1.0만 나오는 상태인지 알려 준다
+    // 못 읽은 상태면 분당 한 번만 다시 시도한다
+    public boolean isLoaded() {
+        if (rarities.isEmpty()) {
+            retryIfDue();
+        }
+        return !rarities.isEmpty();
+    }
+
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
         refresh();

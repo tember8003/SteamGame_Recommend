@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.library.steam;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -18,7 +19,15 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static SteamGame.recommend.domain.library.steam.SteamLibraryParserTest.fixture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +45,7 @@ class SteamLibraryClientTest {
     private String gamesBody = fixture("owned-normal.json");
     private String vanityBody = fixture("vanity-ok.json");
     private HttpStatus status = HttpStatus.OK;
+    private final AtomicLong nanos = new AtomicLong();
 
     @BeforeEach
     void attachAppender() {
@@ -48,8 +58,8 @@ class SteamLibraryClientTest {
         clientLogger.detachAppender(logs);
     }
 
-    private SteamLibraryClient client() {
-        ExchangeFunction exchange = request -> {
+    private ExchangeFunction exchange() {
+        return request -> {
             calls.add(request.url());
             String path = request.url().getPath();
             String body = path.contains("GetPlayerSummaries") ? summaryBody
@@ -58,7 +68,16 @@ class SteamLibraryClientTest {
                     .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                     .body(body).build());
         };
-        return new SteamLibraryClient(WebClient.builder().exchangeFunction(exchange), "test-key", 5, 10);
+    }
+
+    private SteamLibraryClient client() {
+        return new SteamLibraryClient(WebClient.builder().exchangeFunction(exchange()), "test-key", 5, 10);
+    }
+
+    // 가짜 시계, 동시 호출 허용 수, 캐시 용량(게임 수 합계)을 직접 정하는 클라이언트
+    private SteamLibraryClient client(Semaphore permits, long cacheMaxGames) {
+        return new SteamLibraryClient(WebClient.builder().exchangeFunction(exchange()), "test-key", 1, 10,
+                permits, cacheMaxGames, nanos::get);
     }
 
     @Test
@@ -128,14 +147,183 @@ class SteamLibraryClientTest {
     }
 
     @Test
-    void privateIsNotCached() {
-        SteamLibraryClient client = client();
+    void privateIsCachedBrieflyThenRefetched() {
+        SteamLibraryClient client = client(new Semaphore(8), 200_000);
         summaryBody = fixture("summary-private.json");
-        client.fetch(ID);
+        assertThat(client.fetch(ID)).isInstanceOf(SteamLibraryResult.Private.class);
         summaryBody = fixture("summary-public.json");
 
+        nanos.set(Duration.ofSeconds(110).toNanos());
+        assertThat(client.fetch(ID)).isInstanceOf(SteamLibraryResult.Private.class);
+        assertThat(calls).hasSize(1);
+
+        nanos.set(Duration.ofSeconds(125).toNanos());
         assertThat(client.fetch(ID)).isInstanceOf(SteamLibraryResult.Found.class);
         assertThat(calls).hasSize(3);
+    }
+
+    @Test
+    void notFoundAndEmptyAreCachedBriefly() {
+        SteamLibraryClient client = client(new Semaphore(8), 200_000);
+        summaryBody = fixture("summary-no-player.json");
+        client.fetch(ID);
+        client.fetch(ID);
+        assertThat(calls).hasSize(1);
+
+        gamesBody = fixture("owned-zero.json");
+        summaryBody = fixture("summary-public.json");
+        String other = "76561198000000555";
+        assertThat(client.fetch(other)).isInstanceOf(SteamLibraryResult.Empty.class);
+        int after = calls.size();
+        assertThat(client.fetch(other)).isInstanceOf(SteamLibraryResult.Empty.class);
+        assertThat(calls).hasSize(after);
+    }
+
+    @Test
+    void gameDetailsPrivateLogsInfoThatSummaryWasPublic() {
+        gamesBody = fixture("owned-details-private.json");
+
+        client().fetch(ID);
+
+        assertThat(logs.list).anySatisfy(e -> {
+            assertThat(e.getLevel()).isEqualTo(Level.INFO);
+            assertThat(e.getFormattedMessage()).contains("public").contains("0000");
+        });
+    }
+
+    @Test
+    void foundExpiresAfterCacheMinutes() {
+        SteamLibraryClient client = client(new Semaphore(8), 200_000);
+        client.fetch(ID);
+        assertThat(calls).hasSize(2);
+
+        nanos.set(Duration.ofMinutes(9).toNanos());
+        client.fetch(ID);
+        assertThat(calls).hasSize(2);
+
+        nanos.set(Duration.ofMinutes(11).toNanos());
+        client.fetch(ID);
+        assertThat(calls).hasSize(4);
+    }
+
+    @Test
+    void foundCacheIsBoundedByTotalGameCount() {
+        // 게임 3개짜리 두 명이면 합계 6이라 용량 5를 넘어 한 명은 밀려난다
+        SteamLibraryClient small = client(new Semaphore(8), 5);
+        small.fetch(ID);
+        small.fetch("76561198000000777");
+        int before = calls.size();
+        small.fetch(ID);
+        small.fetch("76561198000000777");
+        assertThat(calls.size()).isGreaterThan(before).isLessThan(before + 4);
+
+        calls.clear();
+        SteamLibraryClient roomy = client(new Semaphore(8), 6);
+        roomy.fetch(ID);
+        roomy.fetch("76561198000000777");
+        int roomyBefore = calls.size();
+        roomy.fetch(ID);
+        roomy.fetch("76561198000000777");
+        assertThat(calls).hasSize(roomyBefore);
+    }
+
+    @Test
+    void exhaustedPermitsAreUnavailableBusyWithoutCallingSteam() {
+        SteamLibraryClient busy = client(new Semaphore(0), 200_000);
+
+        SteamLibraryResult r = busy.fetch(ID);
+
+        assertThat(r).isEqualTo(new SteamLibraryResult.Unavailable("BUSY"));
+        assertThat(calls).isEmpty();
+        assertThat(logs.list).anySatisfy(e -> assertThat(e.getFormattedMessage()).contains("BUSY"));
+    }
+
+    @Test
+    void permitsLimitConcurrentSteamCalls() throws Exception {
+        AtomicInteger inFlight = new AtomicInteger();
+        AtomicInteger peak = new AtomicInteger();
+        ExchangeFunction slow = request -> Mono.defer(() -> {
+            peak.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
+            String body = request.url().getPath().contains("GetPlayerSummaries") ? summaryBody : gamesBody;
+            return Mono.just(ClientResponse.create(HttpStatus.OK)
+                            .header("Content-Type", MediaType.APPLICATION_JSON_VALUE).body(body).build())
+                    .delayElement(Duration.ofMillis(100))
+                    .doFinally(sig -> inFlight.decrementAndGet());
+        });
+        SteamLibraryClient limited = new SteamLibraryClient(WebClient.builder().exchangeFunction(slow), "test-key",
+                5, 10, new Semaphore(2), 200_000, nanos::get);
+
+        ExecutorService pool = Executors.newFixedThreadPool(8);
+        try {
+            List<Future<SteamLibraryResult>> futures = new ArrayList<>();
+            for (int i = 0; i < 8; i++) {
+                String id = "7656119800000" + (1000 + i);
+                futures.add(pool.submit(() -> limited.fetch(id)));
+            }
+            for (Future<SteamLibraryResult> f : futures) {
+                assertThat(f.get(10, TimeUnit.SECONDS)).isInstanceOf(SteamLibraryResult.Found.class);
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(peak.get()).isEqualTo(2);
+    }
+
+    @Test
+    void failureReasonsAreStatusOrTimeoutAndNeverContainTheKey() {
+        status = HttpStatus.BAD_GATEWAY;
+        assertThat(client().fetch(ID)).isEqualTo(new SteamLibraryResult.Unavailable("HTTP_502"));
+        assertThat(logs.list.get(logs.list.size() - 1).getLevel()).isEqualTo(Level.WARN);
+
+        SteamLibraryClient slow = new SteamLibraryClient(
+                WebClient.builder().exchangeFunction(request -> Mono.never()), "test-key", 1, 10);
+        assertThat(slow.fetch(ID)).isEqualTo(new SteamLibraryResult.Unavailable("TIMEOUT"));
+
+        for (ILoggingEvent e : logs.list) {
+            assertThat(e.getFormattedMessage()).doesNotContain("test-key", "key=");
+            assertThat(e.getThrowableProxy()).isNull();
+        }
+    }
+
+    @Test
+    void keyRejectedStatusesLogError() {
+        for (HttpStatus rejected : new HttpStatus[] {HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN}) {
+            logs.list.clear();
+            status = rejected;
+
+            assertThat(client().fetch(ID)).isEqualTo(new SteamLibraryResult.Unavailable("HTTP_" + rejected.value()));
+
+            assertThat(logs.list).anySatisfy(e -> assertThat(e.getLevel()).isEqualTo(Level.ERROR));
+        }
+    }
+
+    @Test
+    void emptyOrUnexpectedVanityIs503() {
+        vanityBody = fixture("vanity-unexpected.json");
+        assertThatThrownBy(() -> client().resolveVanity("Gabe")).isInstanceOfSatisfying(ResponseStatusException.class,
+                e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+        vanityBody = fixture("vanity-empty.json");
+        assertThatThrownBy(() -> client().resolveVanity("Gabe")).isInstanceOfSatisfying(ResponseStatusException.class,
+                e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    @Test
+    void inconsistentOwnedGamesAreUnavailableAndNotCached() {
+        SteamLibraryClient client = client(new Semaphore(8), 200_000);
+        for (String name : new String[] {"owned-count-positive-empty.json", "owned-count-string.json"}) {
+            calls.clear();
+            gamesBody = fixture(name);
+            assertThat(client.fetch(ID)).as(name).isInstanceOf(SteamLibraryResult.Unavailable.class);
+            assertThat(client.fetch(ID)).as(name).isInstanceOf(SteamLibraryResult.Unavailable.class);
+            assertThat(calls).as(name).hasSize(4);
+        }
+    }
+
+    @Test
+    void summaryWithoutPlayersKeyIsUnavailableNotNotFound() {
+        summaryBody = fixture("summary-no-players-key.json");
+        assertThat(client().fetch(ID)).isInstanceOf(SteamLibraryResult.Unavailable.class);
     }
 
     @Test
