@@ -1,0 +1,5 @@
+{"response":{"game_count":3,"games":[
+{"appid":570,"name":"SecretGameA","playtime_forever":600,"playtime_2weeks":120,"rtime_last_played":1700000000},
+{"appid":730,"name":"SecretGameB","playtime_forever":0,"rtime_last_played":0},
+{"appid":440,"name":"SecretGameC","playtime_forever":90,"playtime_2weeks":0,"rtime_last_played":1600000000}
+]}}
