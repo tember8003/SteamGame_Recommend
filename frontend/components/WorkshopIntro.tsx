@@ -12,14 +12,15 @@ const PLACE_NAMES = {
   village: "workshop.village",
 };
 
-export default function WorkshopIntro({ title, subtitle, place }: {
+export default function WorkshopIntro({ title, subtitle, place, compact = false }: {
   title: string;
   subtitle: string;
   place: WorkshopPlace;
+  compact?: boolean;
 }) {
   const t = useT();
   return (
-    <section className={styles.intro}>
+    <section className={`${styles.intro} ${compact ? styles.compact : ""}`}>
       <div className={styles.copy}>
         <p className={styles.location}><span aria-hidden="true">◆</span> {t(PLACE_NAMES[place])}</p>
         <h1>{title}</h1>

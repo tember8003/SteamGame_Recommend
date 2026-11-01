@@ -17,7 +17,7 @@ describe("Header", () => {
     vi.mocked(usePathname).mockReturnValue(`/${locale}/steam/profile`);
     render(<LocaleProvider locale={locale}><Header /></LocaleProvider>);
     expect(screen.getByRole("link", { name: locale === "ko" ? "마을로 돌아가기" : "Back to the village" })).toHaveAttribute("href", `/${locale}`);
-    expect(screen.getByRole("link", { name: locale === "ko" ? "플레이 기록관" : "The archivist" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: locale === "ko" ? "플레이 기록관" : "The archivist" })).toHaveAttribute("aria-current", "location");
   });
   it("로고 링크가 현재 언어의 홈으로 간다", () => {
     render(

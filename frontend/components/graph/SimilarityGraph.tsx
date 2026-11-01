@@ -33,7 +33,6 @@ const GROW_MS = 550;
 // 첫 겹이 거의 다 퍼진 뒤에 바깥 가지가 이어서 퍼지게 늦춘다
 const BRANCH_DELAY_MS = 350;
 const FIT_PADDING = 40;
-const FIT_MS = 400;
 
 // cytoscape 스타일, 바깥 겹으로 갈수록 노드는 작게, 선은 얇고 흐리게 그린다
 // node[image] 셀렉터로만 배경 이미지를 건다, 빈 문자열 image 는 데이터에 아예 넣지 않으므로
@@ -45,14 +44,15 @@ const CY_STYLE: cytoscape.StylesheetJson = [
       label: "data(name)",
       color: "#f2e7cb",
       "font-family": "Village Galmuri, sans-serif",
-      "font-size": "12px",
+      "font-size": "15px",
+      "font-weight": "bold",
       shape: "rectangle",
       "text-valign": "bottom",
       "text-margin-y": 5,
       "text-wrap": "ellipsis",
-      "text-max-width": "90px",
-      width: 42,
-      height: 42,
+      "text-max-width": "140px",
+      width: 48,
+      height: 48,
       "background-color": "#21383b",
       "background-fit": "cover",
       "border-width": 3,
@@ -66,7 +66,7 @@ const CY_STYLE: cytoscape.StylesheetJson = [
   },
   {
     selector: "node.outer",
-    style: { width: 32, height: 32, "font-size": "12px", "text-max-width": "80px", color: "#d0c9b7" },
+    style: { width: 40, height: 40, "font-size": "14px", "text-max-width": "120px", color: "#d0c9b7" },
   },
   {
     selector: "edge",
@@ -81,7 +81,7 @@ const CY_STYLE: cytoscape.StylesheetJson = [
     selector: "node.hovered",
     style: {
       "text-max-width": "400px",
-      "font-size": "11px",
+      "font-size": "16px",
       color: "#f2e7cb",
       "text-background-color": "#102329",
       "text-background-opacity": 0.85,
@@ -118,6 +118,13 @@ export default function SimilarityGraph() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GraphNode[]>([]);
   const [hintVisible, setHintVisible] = useState(true);
+
+  const [expanded, setExpanded] = useState(false);
+  const [nodes, setNodes] = useState<{ id: string; name: string }[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [notice, setNotice] = useState<"error" | "noResults" | null>(null);
+  const interactionRef = useRef(0);
+  const viewRef = useRef<HTMLDivElement>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -196,13 +203,13 @@ export default function SimilarityGraph() {
   // 퍼지는 움직임이 끝난 뒤 화면을 그래프 전체에 맞춘다, 그사이 새 그래프가 시작됐으면 하지 않는다
   function fitAfter(cy: cytoscape.Core, generation: number, wait: number) {
     const reduced = prefersReducedMotion();
+    const interaction = interactionRef.current;
     setTimeout(() => {
-      if (cyRef.current !== cy || generationRef.current !== generation) return;
-      if (reduced) {
-        cy.fit(cy.elements(), FIT_PADDING);
-      } else {
-        cy.animate({ fit: { eles: cy.elements(), padding: FIT_PADDING } }, { duration: FIT_MS });
-      }
+      if (cyRef.current !== cy || generationRef.current !== generation || interactionRef.current !== interaction) return;
+      cy.fit(cy.elements(), FIT_PADDING);
+      // Start at a readable scale; the explicit Fit all control provides an overview.
+      cy.zoom(Math.max(0.85, Math.min(1.2, cy.zoom())));
+      cy.center(cy.elements());
     }, reduced ? 0 : wait);
   }
 
@@ -282,12 +289,13 @@ export default function SimilarityGraph() {
       const present = new Set(cy.nodes().map((node) => node.id()));
       const grown = branch(cy, id, data.neighbors ?? [], present);
       grow(cy, grown.nodes, 0, grown.crossEdges);
-      fitAfter(cy, generation, GROW_MS);
+      // Keep the user’s zoom and position when adding a branch.
     } catch {
       // 이웃 조회 실패는 조용히 무시한다, 다시 누르면 재시도할 수 있게 펼침 표시를 지운다
       // 그사이 새 그래프가 시작됐으면 그 그래프의 펼침 표시를 건드리지 않는다
       if (generationRef.current !== generation) return;
       loadedRef.current.delete(id);
+      setNotice("error");
     }
   }
 
@@ -305,6 +313,8 @@ export default function SimilarityGraph() {
     homeRef.current.clear();
     fromRef.current.clear();
     setHintVisible(false);
+    setNotice(null);
+    setSelectedId(String(appid));
 
     const centerId = String(appid);
     const center = { x: 0, y: 0 };
@@ -360,6 +370,7 @@ export default function SimilarityGraph() {
       // 그사이 새 그래프가 시작됐으면 그 그래프의 펼침 표시를 건드리지 않는다
       if (generationRef.current !== generation) return;
       pending.forEach((id) => loadedRef.current.delete(id));
+      setNotice("error");
     }
   }
 
@@ -378,9 +389,11 @@ export default function SimilarityGraph() {
       container: containerRef.current,
       style: CY_STYLE,
       layout: { name: "preset" },
-      wheelSensitivity: 0.2,
+      minZoom: 0.2,
+      maxZoom: 3,
     });
     cy.on("tap", "node", (evt: cytoscape.EventObjectNode) => {
+      setSelectedId(evt.target.id());
       void expandRef.current(evt.target.id());
     });
     // 마우스를 올리면 잘린 이름 전체를 보이고, 눌러서 펼칠 수 있다는 걸 커서로 알린다
@@ -393,9 +406,25 @@ export default function SimilarityGraph() {
       evt.target.removeClass("hovered");
       container.style.cursor = "";
     });
+    cy.on("add remove", "node", () => {
+      setNodes(cy.nodes().map((node) => ({ id: node.id(), name: node.data("name") })));
+    });
+    cy.on("dragpan scrollzoom pinchzoom", () => { interactionRef.current += 1; });
     cyRef.current = cy;
+    let size = { width: cy.width(), height: cy.height() };
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => {
+      const zoom = cy.zoom();
+      const pan = cy.pan();
+      const center = { x: (size.width / 2 - pan.x) / zoom, y: (size.height / 2 - pan.y) / zoom };
+      cy.resize();
+      size = { width: cy.width(), height: cy.height() };
+      cy.pan({ x: size.width / 2 - center.x * zoom, y: size.height / 2 - center.y * zoom });
+    });
+    observer?.observe(container);
+
 
     return () => {
+      observer?.disconnect();
       cy.destroy();
       cyRef.current = null;
     };
@@ -423,11 +452,13 @@ export default function SimilarityGraph() {
         .then((items) => {
           if (searchRequestIdRef.current === requestId) {
             setSuggestions(items);
+            setNotice(items.length ? null : "noResults");
           }
         })
         .catch(() => {
           if (searchRequestIdRef.current === requestId) {
             setSuggestions([]);
+            setNotice("error");
           }
         });
     }, SEARCH_DEBOUNCE_MS);
@@ -456,10 +487,9 @@ export default function SimilarityGraph() {
   // 글자 수가 기준(2자) 밑으로 내려가면 자동완성 목록을 바로 비움, 기준 이상이면 effect 가 디바운스 조회를 맡음
   function handleQueryChange(value: string) {
     setQuery(value);
-    if (value.trim().length < SEARCH_MIN_LENGTH) {
-      invalidatePendingSearch();
-      setSuggestions([]);
-    }
+    setNotice(null);
+    invalidatePendingSearch();
+    setSuggestions([]);
   }
 
   function selectSuggestion(item: GraphNode) {
@@ -470,14 +500,69 @@ export default function SimilarityGraph() {
     void startGraph(item.appid, item.name, item.image);
   }
 
+  function zoomBy(factor: number) {
+    const cy = cyRef.current;
+    if (!cy || !cy.nodes().length) return;
+    interactionRef.current += 1;
+    cy.stop(true, false);
+    cy.zoom({ level: Math.min(3, Math.max(0.2, cy.zoom() * factor)), renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
+  }
+
+  function fitAll() {
+    const cy = cyRef.current;
+    if (!cy || !cy.nodes().length) return;
+    interactionRef.current += 1;
+    cy.stop(true, false);
+    cy.fit(cy.elements(), FIT_PADDING);
+  }
+
+  useEffect(() => {
+    if (!expanded) return;
+    const previous = document.body.style.overflow;
+    const focus = document.activeElement;
+    document.body.style.overflow = "hidden";
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setExpanded(false);
+      if (event.key === "Tab") {
+        const controls = viewRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]');
+        const first = controls?.[0];
+        const last = controls?.[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    }
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onEscape);
+      if (focus instanceof HTMLElement) focus.focus();
+    };
+  }, [expanded]);
+
   return (
-    <div className={styles.body}>
+    <div ref={viewRef} className={`${styles.body} ${expanded ? styles.expanded : ""}`} role="region" aria-label={t("graph.title")} onKeyDown={(event) => {
+      if (event.key === "Escape") setExpanded(false);
+    }}>
       <GlassPanel as="div" className={styles.toolbar}>
+        <div className={styles.viewControls} role="group" aria-label={t("graph.controls")}>
+          <button type="button" aria-label={t("graph.zoomOut")} title={t("graph.zoomOut")} disabled={!nodes.length} onClick={() => zoomBy(1 / 1.25)}>−</button>
+          <button type="button" aria-label={t("graph.zoomIn")} title={t("graph.zoomIn")} disabled={!nodes.length} onClick={() => zoomBy(1.25)}>+</button>
+          <button type="button" disabled={!nodes.length} onClick={fitAll}>{t("graph.fit")}</button>
+          <button type="button" aria-pressed={expanded} onClick={() => setExpanded(!expanded)}>{t(expanded ? "graph.collapse" : "graph.enlarge")}</button>
+        </div>
         <div ref={wrapperRef} className={styles.searchWrapper}>
           <input
             type="text"
             className={styles.searchInput}
             placeholder={t("graph.searchPlaceholder")}
+            aria-label={t("graph.searchPlaceholder")}
+            name="gameSearch"
+            spellCheck={false}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") { invalidatePendingSearch(); setSuggestions([]); }
+              if (event.key === "Enter" && suggestions[0]) { event.preventDefault(); selectSuggestion(suggestions[0]); }
+              if (event.key === "ArrowDown" && suggestions.length) { event.preventDefault(); wrapperRef.current?.querySelector("button")?.focus(); }
+            }}
             autoComplete="off"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
@@ -503,12 +588,33 @@ export default function SimilarityGraph() {
         </div>
       </GlassPanel>
 
+      <p className={styles.instructions} id="graph-instructions">{t("graph.instructions")}</p>
+      {notice ? <p className={styles.notice} role="status">{t(`graph.${notice}`)}</p> : null}
       <div className={styles.graphArea}>
-        <div ref={containerRef} className={styles.cyContainer} />
+        <div ref={containerRef} className={styles.cyContainer} tabIndex={0} role="group" aria-label={t("graph.keyboard")} aria-describedby="graph-instructions" onKeyDown={(event) => {
+          const cy = cyRef.current;
+          if (!cy) return;
+          const directions: Record<string, Point> = { ArrowLeft: { x: 60, y: 0 }, ArrowRight: { x: -60, y: 0 }, ArrowUp: { x: 0, y: 60 }, ArrowDown: { x: 0, y: -60 } };
+          if (directions[event.key]) { event.preventDefault(); interactionRef.current += 1; cy.stop(true, false); cy.panBy(directions[event.key]); }
+          else if (["+", "=", "-", "0"].includes(event.key)) { event.preventDefault(); if (event.key === "0") fitAll(); else zoomBy(event.key === "-" ? 1 / 1.25 : 1.25); }
+        }} />
         {hintVisible ? (
           <div className={styles.hint}>{t("graph.hint")}</div>
         ) : null}
       </div>
+      {nodes.length ? <div className={styles.nodePicker}>
+        <label htmlFor="graph-game">{t("graph.selectGame")}</label>
+        <select id="graph-game" value={selectedId} onChange={(event) => {
+          const id = event.target.value;
+          setSelectedId(id);
+          interactionRef.current += 1;
+          const cy = cyRef.current;
+          if (cy) { cy.stop(true, false); cy.zoom(Math.max(cy.zoom(), 1)); cy.center(cy.getElementById(id)); }
+        }}>
+          {nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}
+        </select>
+        <button type="button" onClick={() => { setNotice(null); void expand(selectedId); }}>{t("graph.expandGame")}</button>
+      </div> : null}
     </div>
   );
 }

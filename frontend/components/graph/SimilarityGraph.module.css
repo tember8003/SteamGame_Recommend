@@ -4,14 +4,15 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  border: 3px solid var(--wood-dark);
 }
 
 .toolbar {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 12px clamp(16px, 4vw, 32px);
   border-radius: 0;
   border-left: none;
@@ -22,7 +23,7 @@
 .searchWrapper {
   position: relative;
   margin-left: auto;
-  width: 320px;
+  width: 360px;
   max-width: 100%;
 }
 
@@ -86,7 +87,7 @@
 .graphArea {
   position: relative;
   flex: 1;
-  min-height: 0;
+  min-height: clamp(440px, 60svh, 900px);
   background: linear-gradient(#a28a6014 1px, transparent 1px), linear-gradient(90deg, #a28a6014 1px, transparent 1px), var(--panel-deep);
   background-size: 24px 24px;
 }
@@ -110,3 +111,17 @@
 }
 
 @media (max-width: 700px) { .toolbar { flex-wrap: wrap; padding: 12px; gap: 12px; } .searchWrapper { width: 100%; } .hint { width: calc(100% - 24px); text-align: center; } }
+
+.viewControls { display: flex; flex-wrap: wrap; gap: 8px; }
+.body button { touch-action: manipulation; }
+.viewControls button, .nodePicker button { min-width: 44px; min-height: 44px; padding: 8px 12px; border: 3px solid var(--wood-light); background: var(--panel-deep); color: var(--text-primary); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 2px 2px var(--pixel-shadow); }
+.viewControls button:hover:not(:disabled), .nodePicker button:hover { background: var(--wood-dark); }
+.viewControls button:disabled { opacity: 0.45; cursor: default; }
+.body :is(button, select, input):focus-visible, .cyContainer:focus-visible { outline: 3px solid var(--accent-steam); outline-offset: -3px; }
+.instructions, .notice { padding: 10px 16px; margin: 0; font-size: 13px; line-height: 1.7; background: var(--panel-deep); color: var(--text-secondary); }
+.notice { color: var(--accent-steam); border-top: 2px solid var(--wood-dark); }
+.nodePicker { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px; background: var(--panel-deep); border-top: 2px solid var(--wood-dark); font-size: 13px; }
+.nodePicker select { flex: 1; min-width: 0; width: 200px; min-height: 44px; padding: 8px; border: 2px solid var(--wood-light); background: var(--panel-deep); color: var(--text-primary); font: inherit; }
+.expanded { position: fixed; inset: 12px; z-index: 1100; background: var(--panel-deep); box-shadow: 0 0 0 20px #07161cf2; }
+.expanded .graphArea { min-height: 0; }
+@media (max-width: 700px) { .searchWrapper { margin-left: 0; } .graphArea { min-height: 460px; } .expanded { inset: 4px; } .nodePicker label { width: 100%; } .nodePicker select { flex-basis: 100%; } .nodePicker button { width: 100%; } .viewControls button { padding: 6px 10px; font-size: 12px; } }

@@ -8,6 +8,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localeHref } from "@/lib/i18n/routing";
 import { useT } from "@/lib/i18n/useT";
 import styles from "./page.module.css";
+import { recordTasteEvent } from "@/lib/taste/api";
 
 type Feature = { key: string; href: string; cta: "start" | "play" };
 const PLACES: { place: Exclude<WorkshopPlace, "village">; name: string; description: string; cards: Feature[] }[] = [
@@ -23,6 +24,7 @@ const PLACES: { place: Exclude<WorkshopPlace, "village">; name: string; descript
     { key: "graph", href: "/steam/graph", cta: "start" },
   ] },
   { place: "archive", name: "landing.archiveName", description: "workshop.archiveDesc", cards: [
+    { key: "library", href: "/library", cta: "start" },
     { key: "profile", href: "/steam/profile", cta: "start" },
     { key: "recent", href: "/steam/recent", cta: "start" },
   ] },
@@ -50,7 +52,7 @@ export default function SteamHubPage() {
             <div className={styles.grid}>
               {group.cards.map((card, index) => (
                 <GlassPanel as="article" className={styles.card} key={card.href}>
-                  <Link href={localeHref(locale, card.href)} className={styles.cardLink}>
+                  <Link href={localeHref(locale, card.href)} className={styles.cardLink} onClick={card.href === "/library" ? () => recordTasteEvent('FEATURE_SELECT', 'LIBRARY') : undefined}>
                     <span className={styles.cardNumber} aria-hidden="true">0{index + 1}</span>
                     <h3 className={styles.cardTitle}>{t(`hub.cards.${card.key}.title`)}</h3>
                     <p className={styles.cardDesc}>{t(`hub.cards.${card.key}.desc`)}</p>

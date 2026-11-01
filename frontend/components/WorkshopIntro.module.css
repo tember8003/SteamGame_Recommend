@@ -7,3 +7,10 @@
 .shop { width: 180px; height: 135px; flex: 0 0 auto; object-fit: contain; image-rendering: pixelated; }
 .seal { width: 84px; height: 84px; flex: 0 0 auto; display: grid; place-items: center; border: 4px double var(--wood-light); color: var(--accent-steam); font-size: 36px; }
 @media (max-width: 700px) { .intro { padding: 20px; margin-bottom: 24px; gap: 12px; align-items: start; } .intro h1 { font-size: 24px; } .shop { width: 92px; height: 84px; position: absolute; right: 14px; top: -12px; opacity: 0.85; } .location { padding-right: 76px; min-height: 24px; } .copy { position: relative; z-index: 1; width: 100%; } .intro h1 { padding-top: 12px; } .seal { display: none; } }
+
+.compact { min-height: 0; padding: 12px 24px; margin: 8px 0 16px; }
+.compact .location { margin-bottom: 4px; }
+.compact h1 { font-size: 24px; }
+.compact .subtitle { margin-top: 4px; }
+.compact .shop { width: 112px; height: 84px; }
+@media (max-width: 700px) { .compact { padding: 12px 16px; } .compact .shop { display: none; } .compact .location { padding-right: 0; min-height: 0; } .compact h1 { padding-top: 0; font-size: 22px; } }

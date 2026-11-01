@@ -1,0 +1,8 @@
+.guide { border: 2px solid var(--wood-dark); padding: 12px; color: var(--text-secondary); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.guide summary { color: var(--accent-steam); font-weight: 700; cursor: pointer; min-height: 24px; }
+.guide ol { padding-left: 20px; margin: 12px 0; }
+.guide li + li { margin-top: 8px; }
+.guide p { margin: 12px 0 6px; }
+.guide a { color: var(--accent-steam); text-decoration: underline; text-underline-offset: 3px; }
+.guide a:hover { color: var(--text-primary); }
+.guide :is(summary, a):focus-visible { outline: 3px solid var(--accent-steam); outline-offset: 3px; }
