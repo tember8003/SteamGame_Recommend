@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -242,13 +243,21 @@ class SteamLibraryClientTest {
     void permitsLimitConcurrentSteamCalls() throws Exception {
         AtomicInteger inFlight = new AtomicInteger();
         AtomicInteger peak = new AtomicInteger();
-        ExchangeFunction slow = request -> Mono.defer(() -> {
+        // 처음 두 호출은 서로를 기다려 반드시 겹치게 한다, 허용 수가 1이면 여기서 시간 초과로 실패함
+        CountDownLatch overlap = new CountDownLatch(2);
+        // 카운터는 응답을 내보내기 전에 줄여서 허가 반납보다 늦게 줄어드는 일이 없게 한다
+        ExchangeFunction slow = request -> Mono.fromCallable(() -> {
             peak.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
+            try {
+                overlap.countDown();
+                assertThat(overlap.await(5, TimeUnit.SECONDS)).isTrue();
+                Thread.sleep(50);
+            } finally {
+                inFlight.decrementAndGet();
+            }
             String body = request.url().getPath().contains("GetPlayerSummaries") ? summaryBody : gamesBody;
-            return Mono.just(ClientResponse.create(HttpStatus.OK)
-                            .header("Content-Type", MediaType.APPLICATION_JSON_VALUE).body(body).build())
-                    .delayElement(Duration.ofMillis(100))
-                    .doFinally(sig -> inFlight.decrementAndGet());
+            return ClientResponse.create(HttpStatus.OK)
+                    .header("Content-Type", MediaType.APPLICATION_JSON_VALUE).body(body).build();
         });
         SteamLibraryClient limited = new SteamLibraryClient(WebClient.builder().exchangeFunction(slow), "test-key",
                 5, 10, new Semaphore(2), 200_000, nanos::get);
