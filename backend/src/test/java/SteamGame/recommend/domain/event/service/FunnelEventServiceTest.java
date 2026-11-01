@@ -89,4 +89,32 @@ class FunnelEventServiceTest {
         assertThat(captor.getValue().getClientId()).isEqualTo("c1");
         assertThat(captor.getValue().getChannel()).isEqualTo(ShareChannel.LINK);
     }
+
+    @Test
+    void libraryRefAllowedForShareEvents() {
+        assertThatCode(() -> service.validate(FunnelEventType.SHARE_CLICK, "LIBRARY", ShareChannel.LINK)).doesNotThrowAnyException();
+        assertThatCode(() -> service.validate(FunnelEventType.SHARE_CLICK, "library", ShareChannel.IMAGE)).doesNotThrowAnyException();
+        assertThatCode(() -> service.validate(FunnelEventType.SHARE_INFLOW, "LIBRARY", null)).doesNotThrowAnyException();
+        assertInvalid(FunnelEventType.SHARE_CLICK, "LIBRARY", null);
+        assertInvalid(FunnelEventType.SHARE_INFLOW, "LIBRARY", ShareChannel.LINK);
+    }
+
+    @Test
+    void featureSelectLibraryStillAllowed() {
+        assertThatCode(() -> service.validate(FunnelEventType.FEATURE_SELECT, "LIBRARY", null)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void libraryCompleteIsNotAcceptedFromClient() {
+        assertInvalid(FunnelEventType.LIBRARY_COMPLETE, "LIBRARY", null);
+        assertInvalid(FunnelEventType.LIBRARY_COMPLETE, null, null);
+    }
+
+    @Test
+    void record_storesLibraryRefUppercase() {
+        service.record("c1", FunnelEventType.SHARE_INFLOW, "library", null);
+        ArgumentCaptor<FunnelEvent> captor = ArgumentCaptor.forClass(FunnelEvent.class);
+        verify(repository).save(captor.capture());
+        assertThat(captor.getValue().getRef()).isEqualTo("LIBRARY");
+    }
 }

@@ -96,4 +96,18 @@ class TagRarityCacheTest extends PostgresTestBase {
 
         assertThat(target.rarity("TR_A")).isEqualTo(before);
     }
+
+    @Test
+    void isLoadedIsFalseUntilRealValuesAreRead() {
+        JdbcTemplate spy = spy(jdbc);
+        doThrow(new IllegalStateException("db down")).when(spy).queryForObject(anyString(), eq(Long.class));
+        TagRarityCache target = new TagRarityCache(spy, loader);
+
+        target.refresh();
+        assertThat(target.isLoaded()).isFalse();
+
+        TagRarityCache healthy = new TagRarityCache(jdbc, loader);
+        healthy.refresh();
+        assertThat(healthy.isLoaded()).isTrue();
+    }
 }

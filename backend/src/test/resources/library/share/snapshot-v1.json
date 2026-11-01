@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "analysis": {
+    "limitedData": false,
+    "stats": {
+      "ownedCount": 42,
+      "totalHours": 310.5,
+      "zeroPlayCount": 6,
+      "zeroPlayRatio": 0.143,
+      "mostPlayed": {"appid": 570, "name": "Golden Game", "hours": 120.0, "ratio": 0.387},
+      "recentGameCount": 3,
+      "recentHours": 8.5,
+      "matchedCount": 30,
+      "topTags": [
+        {"tag": "Strategy", "hours": 200.0, "ratio": 0.645},
+        {"tag": "Turn-Based", "hours": 50.5, "ratio": 0.163}
+      ]
+    },
+    "ledger": {"code": "PRACTICAL", "phraseIndex": 1, "params": {"ownedCount": 42}},
+    "verdict": {
+      "crime": {"code": "GENRE_LOYALIST", "phraseIndex": 1, "params": {"topGroupRatioPct": 72, "topGroup": "STRATEGY"}},
+      "sentence": {"code": "SENTENCE_GENRE_LOYALIST", "phraseIndex": 2, "params": {}}
+    },
+    "gamerStats": [
+      {"code": "EXPLORATION", "value": 20},
+      {"code": "STRATEGY", "value": 100},
+      {"code": "COLLECTION", "value": 38},
+      {"code": "DIVERSITY", "value": null},
+      {"code": "COOP", "value": 4}
+    ],
+    "diagnosis": {
+      "favoriteTag": "Strategy",
+      "concentratedGames": [{"appid": 570, "name": "Golden Game", "hours": 120.0, "ratio": 0.387}],
+      "hiddenTaste": null
+    }
+  }
+}

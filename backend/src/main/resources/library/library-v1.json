@@ -1,0 +1,718 @@
+{
+ "version": "v1",
+ "tagGroups": {
+  "EXPLORATION": [
+   "Exploration",
+   "Open World",
+   "Metroidvania",
+   "Walking Simulator",
+   "Survival",
+   "Atmospheric",
+   "Immersive Sim",
+   "Open World Survival Craft",
+   "Collectathon"
+  ],
+  "STRATEGY": [
+   "Strategy",
+   "Tactical",
+   "Turn-Based Strategy",
+   "Grand Strategy",
+   "4X",
+   "RTS",
+   "Real Time Tactics",
+   "Deckbuilding",
+   "Resource Management",
+   "City Builder",
+   "Strategy RPG",
+   "Tactical RPG",
+   "Turn-Based Tactics",
+   "Tower Defense",
+   "Card Game",
+   "Card Battler",
+   "Wargame",
+   "Auto Battler",
+   "God Game",
+   "Trading Card Game",
+   "Turn-Based",
+   "Turn-Based Combat",
+   "Action RTS",
+   "Diplomacy"
+  ],
+  "COOP": [
+   "Co-op",
+   "Online Co-Op",
+   "Local Co-Op",
+   "Party Game",
+   "Team-Based",
+   "Massively Multiplayer",
+   "MMORPG",
+   "Co-op Campaign",
+   "Party",
+   "Local Multiplayer",
+   "Split Screen",
+   "4 Player Local",
+   "Asynchronous Multiplayer",
+   "Social Deduction"
+  ],
+  "STORY": [
+   "Story Rich",
+   "Choices Matter",
+   "Multiple Endings",
+   "Visual Novel",
+   "Lore-Rich",
+   "Narrative",
+   "Mystery",
+   "Detective",
+   "Cinematic",
+   "Drama",
+   "Interactive Fiction",
+   "Choose Your Own Adventure",
+   "Emotional",
+   "Text-Based",
+   "Dating Sim",
+   "Otome"
+  ],
+  "ACTION": [
+   "FPS",
+   "Shooter",
+   "Hack and Slash",
+   "Bullet Hell",
+   "Roguelike",
+   "Souls-like",
+   "Platformer",
+   "Fighting",
+   "Character Action Game",
+   "Precision Platformer",
+   "Beat 'em up",
+   "Action Roguelike",
+   "Rogue-like",
+   "Rogue-lite",
+   "Roguelite",
+   "Roguevania",
+   "Roguelike Deckbuilder",
+   "Shoot 'Em Up",
+   "Top-Down Shooter",
+   "Third-Person Shooter",
+   "Boomer Shooter",
+   "Arena Shooter",
+   "Twin Stick Shooter",
+   "Bullet Heaven",
+   "Hero Shooter",
+   "Looter Shooter",
+   "Extraction Shooter",
+   "On-Rails Shooter",
+   "2D Platformer",
+   "3D Platformer",
+   "2D Fighter",
+   "3D Fighter",
+   "Spectacle fighter",
+   "Arcade",
+   "Traditional Roguelike",
+   "Stealth",
+   "Sniper",
+   "Musou",
+   "Vehicular Combat",
+   "Swordplay",
+   "Boss Rush",
+   "Action-Adventure",
+   "Martial Arts",
+   "Bullet Time",
+   "Runner"
+  ],
+  "RELAX": [
+   "Relaxing",
+   "Cozy",
+   "Cute",
+   "Farming Sim",
+   "Life Sim",
+   "Wholesome",
+   "Farming",
+   "Cooking",
+   "Decorating",
+   "Cleaning",
+   "Fishing",
+   "Hobby Sim",
+   "Organizing"
+  ],
+  "SIMULATION": [
+   "Management",
+   "Colony Sim",
+   "Automation",
+   "Sandbox",
+   "Base Building",
+   "Crafting",
+   "Building",
+   "Space Sim",
+   "Base-Building",
+   "Time Management",
+   "Automobile Sim",
+   "Political Sim",
+   "Job Simulator",
+   "Medical Sim",
+   "Mining",
+   "Inventory Management",
+   "Shop Keeper",
+   "Trains",
+   "Flight",
+   "Outbreak Sim"
+  ],
+  "PUZZLE": [
+   "Puzzle",
+   "Logic",
+   "Match 3",
+   "Physics",
+   "Puzzle-Platformer",
+   "Hidden Object",
+   "Escape Room",
+   "Puzzle Platformer",
+   "Sokoban",
+   "Falling Blocks",
+   "Lemmings",
+   "Word Game",
+   "Trivia",
+   "Chess",
+   "Solitaire",
+   "Mahjong",
+   "Board Game"
+  ],
+  "RPG": [
+   "RPG",
+   "JRPG",
+   "Action RPG",
+   "CRPG",
+   "Party-Based RPG",
+   "Dungeon Crawler",
+   "Character Customization",
+   "Class-Based",
+   "Dungeons & Dragons",
+   "Loot"
+  ],
+  "HORROR": [
+   "Horror",
+   "Survival Horror",
+   "Psychological Horror",
+   "Gore",
+   "Jump Scare",
+   "Zombies",
+   "Lovecraftian"
+  ],
+  "SPORTS": [
+   "Sports",
+   "Racing",
+   "Driving",
+   "Combat Racing",
+   "Motocross",
+   "Motorbike",
+   "Offroad",
+   "BMX",
+   "Golf",
+   "Mini Golf",
+   "Baseball",
+   "Basketball",
+   "Football (Soccer)",
+   "Football (American)",
+   "Rugby",
+   "Tennis",
+   "Cricket",
+   "Hockey",
+   "Volleyball",
+   "Boxing",
+   "Wrestling",
+   "Skateboarding",
+   "Skating",
+   "Skiing",
+   "Snowboarding",
+   "Cycling",
+   "Bowling",
+   "Billiards",
+   "Pool",
+   "Snooker"
+  ],
+  "COMPETITIVE": [
+   "PvP",
+   "Competitive",
+   "MOBA",
+   "Battle Royale",
+   "eSports",
+   "e-sports"
+  ]
+ },
+ "groupLabels": {
+  "EXPLORATION": {
+   "ko": "탐험",
+   "en": "Exploration"
+  },
+  "STRATEGY": {
+   "ko": "전략",
+   "en": "Strategy"
+  },
+  "COOP": {
+   "ko": "협동",
+   "en": "Co-op"
+  },
+  "STORY": {
+   "ko": "이야기",
+   "en": "Story"
+  },
+  "ACTION": {
+   "ko": "액션",
+   "en": "Action"
+  },
+  "RELAX": {
+   "ko": "힐링",
+   "en": "Relaxing"
+  },
+  "SIMULATION": {
+   "ko": "시뮬레이션",
+   "en": "Simulation"
+  },
+  "PUZZLE": {
+   "ko": "퍼즐",
+   "en": "Puzzle"
+  },
+  "RPG": {
+   "ko": "롤플레잉",
+   "en": "RPG"
+  },
+  "HORROR": {
+   "ko": "공포",
+   "en": "Horror"
+  },
+  "SPORTS": {
+   "ko": "스포츠와 레이싱",
+   "en": "Sports & Racing"
+  },
+  "COMPETITIVE": {
+   "ko": "경쟁 대전",
+   "en": "Competitive"
+  }
+ },
+ "excludedTags": [
+  "Action",
+  "Adventure",
+  "Casual",
+  "Indie",
+  "Singleplayer",
+  "Simulation",
+  "Multiplayer"
+ ],
+ "excludedNote": "거의 모든 게임에 붙는 태그라 어느 묶음에도 넣지 않는다. 넣으면 대부분의 사용자가 한 묶음 편향으로 판정된다",
+ "phrases": {
+  "STARTER": [
+   {
+    "text": {
+     "ko": "보유 게임이 {ownedCount}개뿐이라 장부가 아직 새 노트처럼 깨끗합니다.",
+     "en": "With only {ownedCount} games, your ledger is still a clean new notebook."
+    },
+    "params": [
+     "ownedCount"
+    ]
+   },
+   {
+    "text": {
+     "ko": "라이브러리 시작 단계입니다. {ownedCount}개로도 충분히 즐거운 출발이죠.",
+     "en": "Your library is just getting started. {ownedCount} games is a fine way to begin."
+    },
+    "params": [
+     "ownedCount"
+    ]
+   }
+  ],
+  "LEGENDARY_COLLECTOR": [
+   {
+    "text": {
+     "ko": "보유 {ownedCount}개에 안 켜 본 게임이 {zeroRatioPct}%입니다. 게임을 수집하는 능력만큼은 전설급입니다.",
+     "en": "{ownedCount} games owned and {zeroRatioPct}% never launched. Your collecting talent is legendary."
+    },
+    "params": [
+     "ownedCount",
+     "zeroRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "{ownedCount}개를 모았고 그중 {zeroRatioPct}%는 아직 포장도 안 뜯었습니다. 전설의 수집가시네요.",
+     "en": "{ownedCount} games collected, and {zeroRatioPct}% are still unwrapped. A legendary collector indeed."
+    },
+    "params": [
+     "ownedCount",
+     "zeroRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "안 해 본 게임만 {zeroCount}개입니다. 라이브러리가 거의 박물관 수준입니다.",
+     "en": "{zeroCount} games you have never played. Your library is practically a museum."
+    },
+    "params": [
+     "zeroCount"
+    ]
+   }
+  ],
+  "COLLECTOR": [
+   {
+    "text": {
+     "ko": "안 해 본 게임이 {zeroCount}개로 전체의 {zeroRatioPct}%입니다. 수집가의 기질이 보입니다.",
+     "en": "{zeroCount} games never played, which is {zeroRatioPct}% of the library. A collector's spirit shows."
+    },
+    "params": [
+     "zeroCount",
+     "zeroRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "{zeroCount}개는 아직 한 번도 실행하지 않았습니다. 라이브러리가 작은 전시관이 되어 가고 있네요.",
+     "en": "{zeroCount} games have never been launched. Your library is turning into a little gallery."
+    },
+    "params": [
+     "zeroCount"
+    ]
+   }
+  ],
+  "EXPLORER": [
+   {
+    "text": {
+     "ko": "플레이한 게임의 {shortPlayedRatioPct}%를 몇 시간만 즐기고 다음 세계로 떠났습니다. 맛보기의 달인이시네요.",
+     "en": "You left {shortPlayedRatioPct}% of the games you played after just a few hours. A true sampler of worlds."
+    },
+    "params": [
+     "shortPlayedRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "게임의 {shortPlayedRatioPct}%는 짧게 둘러보고 다음으로 넘어갔습니다. 타고난 탐험가입니다.",
+     "en": "You glanced around {shortPlayedRatioPct}% of your games and moved on. A born explorer."
+    },
+    "params": [
+     "shortPlayedRatioPct"
+    ]
+   }
+  ],
+  "PRACTICAL": [
+   {
+    "text": {
+     "ko": "안 해 본 게임이 {zeroRatioPct}%뿐입니다. 산 게임은 꼭 켜 보는 실속파시네요.",
+     "en": "Only {zeroRatioPct}% of your games are untouched. A practical player who launches what they buy."
+    },
+    "params": [
+     "zeroRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "보유 {ownedCount}개 중 대부분을 실제로 실행했습니다. 장부가 알뜰합니다.",
+     "en": "You have launched most of your {ownedCount} games. A thrifty ledger."
+    },
+    "params": [
+     "ownedCount"
+    ]
+   }
+  ],
+  "BALANCED": [
+   {
+    "text": {
+     "ko": "{ownedCount}개를 모았고 총 {totalHours}시간을 보냈습니다. 모으기와 즐기기의 균형이 좋습니다.",
+     "en": "{ownedCount} games collected and {totalHours} hours spent. A good balance of collecting and playing."
+    },
+    "params": [
+     "ownedCount",
+     "totalHours"
+    ]
+   },
+   {
+    "text": {
+     "ko": "수집과 플레이가 알맞게 섞인 라이브러리입니다. 총 플레이 시간은 {totalHours}시간입니다.",
+     "en": "A library where collecting and playing mix just right. Total playtime is {totalHours} hours."
+    },
+    "params": [
+     "totalHours"
+    ]
+   }
+  ],
+  "PILE_OF_SHAME": [
+   {
+    "text": {
+     "ko": "게임은 모으는데 플레이는 안 하는 죄",
+     "en": "The crime of collecting games and never playing them"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "안 해 본 게임 {zeroCount}개를 쌓아 둔 죄",
+     "en": "The crime of stockpiling {zeroCount} unplayed games"
+    },
+    "params": [
+     "zeroCount"
+    ]
+   }
+  ],
+  "ONE_GAME_DEVOTION": [
+   {
+    "text": {
+     "ko": "{topGame}에 인생을 바친 죄",
+     "en": "The crime of devoting a whole life to {topGame}"
+    },
+    "params": [
+     "topGame"
+    ]
+   },
+   {
+    "text": {
+     "ko": "{topGame}에 총 시간의 {topRatioPct}%를 쏟아부은 죄",
+     "en": "The crime of pouring {topRatioPct}% of your time into {topGame}"
+    },
+    "params": [
+     "topGame",
+     "topRatioPct"
+    ]
+   },
+   {
+    "text": {
+     "ko": "{topGameHours}시간 동안 {topGame}만 바라본 죄",
+     "en": "The crime of staring at nothing but {topGame} for {topGameHours} hours"
+    },
+    "params": [
+     "topGameHours",
+     "topGame"
+    ]
+   }
+  ],
+  "GENRE_LOYALIST": [
+   {
+    "text": {
+     "ko": "{topGroup} 장르만 파는 죄",
+     "en": "The crime of playing only {topGroup} games"
+    },
+    "params": [
+     "topGroup"
+    ]
+   },
+   {
+    "text": {
+     "ko": "장르 기록의 {topGroupRatioPct}%를 {topGroup}에 바친 죄",
+     "en": "The crime of giving {topGroupRatioPct}% of your genre-tagged playtime to {topGroup}"
+    },
+    "params": [
+     "topGroupRatioPct",
+     "topGroup"
+    ]
+   }
+  ],
+  "GENRE_NOMAD": [
+   {
+    "text": {
+     "ko": "장르를 떠도는 죄",
+     "en": "The crime of wandering from genre to genre"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "한 장르에 정착하지 못하고 이리저리 옮겨 다닌 죄",
+     "en": "The crime of never settling down in a single genre"
+    },
+    "params": []
+   }
+  ],
+  "INNOCENT": [
+   {
+    "text": {
+     "ko": "무죄. 장부에 흠잡을 곳이 없습니다",
+     "en": "Not guilty. Nothing to complain about in this ledger"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "죄 없음. 평범하고 건강한 라이브러리입니다",
+     "en": "No crime found. A healthy, ordinary library"
+    },
+    "params": []
+   }
+  ],
+  "SENTENCE_PILE_OF_SHAME": [
+   {
+    "text": {
+     "ko": "다음 할인 때 한 개만 구매할 것",
+     "en": "Buy just one game on the next sale"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "안 해 본 게임 하나를 이번 주말에 실행해 볼 것",
+     "en": "Launch one unplayed game this weekend"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "새 게임은 장바구니에 하루 묵혔다가 결정할 것",
+     "en": "Let new games sit in your cart for a day before deciding"
+    },
+    "params": []
+   }
+  ],
+  "SENTENCE_ONE_GAME_DEVOTION": [
+   {
+    "text": {
+     "ko": "다른 게임 하나를 잠깐 맛볼 것",
+     "en": "Sample one other game for a little while"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "이번 주에는 새 게임에 몇 시간만 내줄 것",
+     "en": "Give a new game a few hours this week"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "가끔은 다른 세계로 휴가를 다녀올 것",
+     "en": "Take a vacation to another world once in a while"
+    },
+    "params": []
+   }
+  ],
+  "SENTENCE_GENRE_LOYALIST": [
+   {
+    "text": {
+     "ko": "이번에는 평소와 다른 장르를 골라 볼 것",
+     "en": "Pick a genre you usually skip, just this once"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "다른 장르의 입문작을 위시리스트에 올릴 것",
+     "en": "Wishlist a beginner-friendly game from another genre"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "옆 동네 장르로 짧은 여행을 다녀올 것",
+     "en": "Take a short trip to a neighboring genre"
+    },
+    "params": []
+   }
+  ],
+  "SENTENCE_GENRE_NOMAD": [
+   {
+    "text": {
+     "ko": "마음에 든 장르가 있다면 한 번쯤 깊게 파 볼 것",
+     "en": "If a genre clicks, dig deep into it at least once"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "기념품 대신 엔딩을 하나쯤 챙겨 올 것",
+     "en": "Bring home an ending instead of a souvenir"
+    },
+    "params": []
+   }
+  ],
+  "SENTENCE_INNOCENT": [
+   {
+    "text": {
+     "ko": "지금처럼 즐겁게 계속 플레이할 것",
+     "en": "Keep playing happily, just like now"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "다음 게임도 마음 가는 대로 고를 것",
+     "en": "Pick your next game by gut feeling"
+    },
+    "params": []
+   }
+  ],
+  "STAT_EXPLORATION": [
+   {
+    "text": {
+     "ko": "탐험 성향",
+     "en": "Exploration"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "탐험 기질",
+     "en": "Explorer vibe"
+    },
+    "params": []
+   }
+  ],
+  "STAT_STRATEGY": [
+   {
+    "text": {
+     "ko": "전략 성향",
+     "en": "Strategy"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "전략 기질",
+     "en": "Strategist vibe"
+    },
+    "params": []
+   }
+  ],
+  "STAT_COOP": [
+   {
+    "text": {
+     "ko": "협동 성향",
+     "en": "Co-op"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "협동 기질",
+     "en": "Team player vibe"
+    },
+    "params": []
+   }
+  ],
+  "STAT_COLLECTION": [
+   {
+    "text": {
+     "ko": "수집 성향",
+     "en": "Collecting"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "수집 기질",
+     "en": "Collector vibe"
+    },
+    "params": []
+   }
+  ],
+  "STAT_DIVERSITY": [
+   {
+    "text": {
+     "ko": "취향 다양성",
+     "en": "Taste variety"
+    },
+    "params": []
+   },
+   {
+    "text": {
+     "ko": "장르 다양성",
+     "en": "Genre variety"
+    },
+    "params": []
+   }
+  ]
+ }
+}
