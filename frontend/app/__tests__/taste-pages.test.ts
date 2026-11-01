@@ -6,6 +6,7 @@ import TypePage, { generateMetadata, generateStaticParams } from '../[locale]/ta
 import { generateMetadata as atlasMetadata } from '../[locale]/taste/page';
 
 vi.mock('next/navigation', () => ({ notFound: () => { throw new Error('NEXT_NOT_FOUND'); } }));
+vi.mock('@/lib/taste/metadata', () => ({ publicTasteMetadata: async () => null }));
 
 describe('taste pages', () => {
   it('prebuilds every type and has a real PNG for each character', () => {
@@ -18,9 +19,9 @@ describe('taste pages', () => {
   });
   it('returns localized, canonical metadata for sharing', async () => {
     const meta = await generateMetadata({ params: Promise.resolve({ locale: 'en', code: 'encp' }) });
-    expect(meta.title).toBe('Zoya / ENCP | Playalike');
+    expect(meta.title).toBe(`${getTasteType('ENCP')!.share.title.en} | Playalike`);
     expect(meta.alternates?.canonical).toBe('https://steam-game-recommend.vercel.app/en/taste/ENCP');
-    expect(meta.description).toBe(getTasteType('ENCP')!.oneLiner.en);
+    expect(meta.description).toBe(getTasteType('ENCP')!.share.text.en);
   });
   it('gives the atlas its own social preview rather than inheriting home metadata', async () => {
     const meta = await atlasMetadata({ params: Promise.resolve({ locale: 'en' }) });

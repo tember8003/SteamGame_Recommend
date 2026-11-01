@@ -6,8 +6,10 @@ import type { Locale } from '@/lib/i18n/locales';
 import { tasteAxes, tasteTypes, type TasteType } from '@/lib/taste/catalog';
 import TastePortrait from './TastePortrait';
 import styles from './taste.module.css';
+import { recordTasteEvent, type TasteResult, type TypeView } from '@/lib/taste/api';
+import TasteGames from './TasteGames';
 
-export default function TasteDetail({ type, locale }: { type: TasteType; locale: Locale }) {
+export default function TasteDetail({ type, locale, apiType, result }: { type: TasteType; locale: Locale; apiType?: TypeView; result?: TasteResult }) {
   const ko = locale === 'ko';
   const [share, setShare] = useState<'idle' | 'copied' | 'manual'>('idle');
   const [shareUrl, setShareUrl] = useState('');
@@ -15,8 +17,9 @@ export default function TasteDetail({ type, locale }: { type: TasteType; locale:
   const previous = tasteTypes[(index + 15) % 16];
   const next = tasteTypes[(index + 1) % 16];
   async function copyLink() {
-    const url = `${window.location.origin}/${locale}/taste/${type.code}`;
+    const url = `${window.location.origin}/${locale}/taste/${type.code}?s=1`;
     setShareUrl(url);
+    recordTasteEvent('SHARE_CLICK', type.code, 'LINK');
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(url);
@@ -36,7 +39,7 @@ export default function TasteDetail({ type, locale }: { type: TasteType; locale:
         <p>{type.work[locale]}</p>
       </div>
       <div className={styles.detailCopy}>
-        <p className={styles.detailLabel}>{ko ? '이런 플레이어라면' : 'For the player who…'}</p>
+        <p className={styles.detailLabel}>{result ? (ko ? '당신의 게이머 유형' : 'Your player type') : (ko ? '이런 플레이어라면' : 'For the player who…')}</p>
         <h1>{type.name[locale]}</h1>
         <p className={styles.oneLiner}>{type.oneLiner[locale]}</p>
         <ul className={styles.axisBadges} aria-label={ko ? '네 가지 플레이 성향' : 'Four play preferences'}>
@@ -62,10 +65,21 @@ export default function TasteDetail({ type, locale }: { type: TasteType; locale:
         </div>
       </div>
     </article>
+    {result ? <section className={styles.scores} aria-label={ko ? '내 답변으로 본 성향' : 'Your answers by preference'}>
+      <h2>{ko ? '내 답변으로 본 성향' : 'Your answers by preference'}</h2>
+      {tasteAxes.map(axis => {
+        const values = result.axisScores[axis.map(side => side.code).join('')];
+        return <div key={axis[0].code} className={styles.scoreRow}>{axis.map(side => <label key={side.code}>
+          <span>{side[locale]} <strong>{values?.[side.code] ?? 0} / 3</strong></span>
+          <meter min={0} max={3} value={values?.[side.code] ?? 0} aria-label={side[locale]} />
+        </label>)}</div>;
+      })}
+    </section> : null}
+    {apiType ? <TasteGames key={`${locale}-${type.code}`} view={apiType} result={result} locale={locale} /> : null}
     <section className={styles.nextStep}>
       <div><h2>{ko ? '캐릭터는 닮은꼴, 추천은 내 취향대로.' : 'A familiar face. Your own taste.'}</h2>
-        <p>{ko ? '이 페이지는 유형 소개예요. 게임을 골라보며 실제 취향도 찾아보세요.' : 'This is a type profile. Discover your own taste by choosing games.'}</p></div>
-      <Link href={`/${locale}/steam/choice`} className={styles.secondaryButton}>{ko ? '게임 선택 테스트' : 'Try the game-pick test'}</Link>
+        <p>{ko ? '12가지 질문으로 내 플레이 취향을 알아보세요.' : 'Discover your play style with twelve questions.'}</p></div>
+      <Link href={`/${locale}/taste/test`} className={styles.secondaryButton}>{result ? (ko ? '다시 테스트하기' : 'Take the test again') : (ko ? '내 유형 찾기' : 'Find my type')}</Link>
     </section>
     <nav className={styles.pager} aria-label={ko ? '다른 캐릭터' : 'Other characters'}>
       <Link href={`/${locale}/taste/${previous.code}`}><span>{ko ? '이전 캐릭터' : 'Previous'}</span><strong>{previous.name[locale]}</strong></Link>
@@ -73,7 +87,7 @@ export default function TasteDetail({ type, locale }: { type: TasteType; locale:
       <Link href={`/${locale}/taste/${next.code}`}><span>{ko ? '다음 캐릭터' : 'Next'}</span><strong>{next.name[locale]}</strong></Link>
     </nav>
     <footer className={styles.footer}>
-      <p>{ko ? '게임 캐릭터에 빗댄 비공식 플레이 취향입니다. 원작의 공식 설정이나 실제 테스트 결과가 아닙니다.' : 'An unofficial play-style analogy, not canonical character lore or a personal test result.'}</p>
+      <p>{result ? (ko ? '게임 캐릭터에 빗댄 비공식 플레이 취향입니다. 결과는 방금 제출한 답변을 바탕으로 합니다.' : 'An unofficial character analogy based on the answers you just submitted.') : (ko ? '게임 캐릭터에 빗댄 비공식 플레이 취향입니다. 원작의 공식 설정이나 실제 테스트 결과가 아닙니다.' : 'An unofficial play-style analogy, not canonical character lore or a personal test result.')}</p>
       <p>{ko ? '캐릭터와 작품의 권리는 각 권리자에게 있습니다. Playalike는 독립 비영리 프로젝트입니다.' : 'Characters and games belong to their respective owners. Playalike is an independent, non-commercial project.'}</p>
     </footer>
   </main>;

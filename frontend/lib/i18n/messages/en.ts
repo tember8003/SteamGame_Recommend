@@ -39,6 +39,7 @@ export const en = {
   },
   explain: {
     reason: {
+      tasteTagMatch: "Matches your taste for {tags}",
       becauseYouLiked: "Because you liked {game}",
       isFree: "Free to play",
       withinBudget: "Within your ${budget} budget",
@@ -151,7 +152,7 @@ export const en = {
     explorerName: "The explorer",
     archiveName: "The archivist",
     tasteTitle: "Game taste test",
-    tasteDesc: "Discover your taste in 7 rounds of game picks",
+    tasteDesc: "Find your player type in 12 questions",
     tasteGreeting: "Which game speaks to you?",
     tasteCta: "Find my taste",
     similarTitle: "Find similar games",

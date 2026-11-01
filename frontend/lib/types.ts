@@ -197,7 +197,7 @@ export interface ReviewGuessStatus {
 // ── feedback ──
 
 // 피드백이 발생한 추천 플로우를 나타냄
-export type FeedbackContext = 'INPUT' | 'PROFILE' | 'RECENT' | 'SIMILAR' | 'RANDOM' | 'MATCH'
+export type FeedbackContext = 'INPUT' | 'PROFILE' | 'RECENT' | 'SIMILAR' | 'RANDOM' | 'MATCH' | 'TASTE'
 
 // 추천 반응 신호, CLICK 은 스토어 이동(약한 양성 후보)으로 UP 과 구분함
 export type FeedbackSignal = 'UP' | 'DOWN' | 'CLICK'

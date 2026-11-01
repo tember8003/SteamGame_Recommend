@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { Locale } from '@/lib/i18n/locales';
-import { filterTasteTypes, tasteAxes } from '@/lib/taste/catalog';
+import { filterTasteTypes, tasteAxes, tasteTypes, type TasteType } from '@/lib/taste/catalog';
 import TastePortrait from './TastePortrait';
 import styles from './taste.module.css';
 
-export default function TasteAtlas({ locale }: { locale: Locale }) {
+export default function TasteAtlas({ locale, types: source = tasteTypes }: { locale: Locale; types?: readonly TasteType[] }) {
   const ko = locale === 'ko';
   const [query, setQuery] = useState('');
   const [side, setSide] = useState('');
-  const types = filterTasteTypes(query, side, locale);
+  const types = filterTasteTypes(query, side, locale, source);
   function reset() { setQuery(''); setSide(''); }
 
   return <main id="taste-main" className={styles.main}>
@@ -22,7 +22,7 @@ export default function TasteAtlas({ locale }: { locale: Locale }) {
     <header className={styles.intro}>
       <div><h1>{ko ? '당신은 어떤 게임 속 인물인가요?' : 'Meet your player character'}</h1>
         <p>{ko ? '익숙한 캐릭터로 만나는 16가지 플레이 취향.' : 'Sixteen ways to play. A familiar face for each.'}</p></div>
-      <span className={styles.bookSeal} aria-label={ko ? '16개 유형' : '16 player types'}>16</span>
+      <Link href={`/${locale}/taste/test`} className={styles.primaryButton}>{ko ? '내 유형 찾기' : 'Find my type'}</Link>
     </header>
 
     <section className={styles.controls} aria-label={ko ? '유형 찾아보기' : 'Find a type'}>

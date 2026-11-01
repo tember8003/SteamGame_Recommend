@@ -26,6 +26,33 @@ export function apiUrl(path: string): string {
   return `${base}${path}`
 }
 
+export class ApiError extends Error {
+  constructor(public status: number, public code: string, public retryAfterSeconds?: number) {
+    super(`${status} ${code}`)
+  }
+}
+
+export async function tasteRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(apiUrl(path), init)
+  if (!response.ok) {
+    let body: Record<string, unknown> = {}
+    try { const value: unknown = await response.json(); if (value && typeof value === 'object') body = value as Record<string, unknown> } catch {}
+    if (response.status === 429) {
+      const delay = typeof body.retryAfterSeconds === 'number' && Number.isFinite(body.retryAfterSeconds) ? Math.max(0, body.retryAfterSeconds) : undefined
+      throw new ApiError(429, 'RATE_LIMITED', delay)
+    }
+    const code = typeof body.message === 'string' ? body.message : typeof body.errorCode === 'string' ? body.errorCode : 'UNKNOWN'
+    throw new ApiError(response.status, code)
+  }
+  return response.json() as Promise<T>
+}
+
+export function fireAndForget(path: string, body: unknown): void {
+  try {
+    void fetch(apiUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify(body) }).catch(() => {})
+  } catch {}
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(apiUrl(path))
   if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`)
