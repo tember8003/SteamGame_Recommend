@@ -20,6 +20,7 @@ import SteamGame.recommend.infra.web.RateLimitFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -387,5 +388,78 @@ class TasteControllerTest {
         mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON)
                         .content(recommendBody(",\"review\":-1")))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void recommend_suppressionRetryWithoutExcludeAppids_usesEmptySetNotNull() throws Exception {
+        Set<Long> widened = Set.of(6L, 7L);
+        when(suppressionService.resolveExcludes(any(), any())).thenReturn(widened);
+        when(recommendService.recommend(eq("GMHS"), anyInt(), any(), any(), eq(widened)))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "none"));
+        when(recommendService.recommend(eq("GMHS"), anyInt(), any(), any(), eq(Set.<Long>of()))).thenReturn(twoGames());
+
+        mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON).content(recommendBody("")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.games.length()").value(2));
+
+        ArgumentCaptor<Set<Long>> retryArg = ArgumentCaptor.forClass(Set.class);
+        verify(recommendService, times(2)).recommend(any(), anyInt(), any(), any(), retryArg.capture());
+        assertThat(retryArg.getAllValues().get(1)).isNotNull().isEmpty();
+    }
+
+    @Test
+    void recommend_nullElementInExclude_ignored() throws Exception {
+        when(suppressionService.resolveExcludes(any(), any())).thenReturn(Set.of());
+        when(recommendService.recommend(any(), anyInt(), any(), any(), any())).thenReturn(twoGames());
+
+        mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON)
+                        .content(recommendBody(",\"excludeAppids\":[5,null]")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void recommend_clientIdWithNewline_400() throws Exception {
+        mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"GMHS\",\"clientId\":\"bad\nid\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(recommendService, never()).recommend(any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void result_clientIdWithNewline_400() throws Exception {
+        mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":\"v1\",\"answers\":" + answersJson("A", 12)
+                                + ",\"clientId\":\"bad\nid\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, never()).record(any(), any(), any(), any());
+    }
+
+    @Test
+    void clientIdAllowedCharsAndNull_ok() throws Exception {
+        when(suppressionService.resolveExcludes(any(), any())).thenReturn(Set.of());
+        when(recommendService.recommend(any(), anyInt(), any(), any(), any())).thenReturn(twoGames());
+
+        mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"GMHS\",\"clientId\":\"Ab_9-z\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/taste/recommend").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"GMHS\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void type_tagsKeepTagAndWeightFieldNames() throws Exception {
+        when(recommendService.featuredGames(any(TasteType.class))).thenReturn(List.of());
+
+        MvcResult res = mvc.perform(get("/api/taste/types/GMHS")).andExpect(status().isOk()).andReturn();
+
+        JsonNode tag = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
+                .get("tags").get(0);
+        Set<String> keys = new TreeSet<>();
+        tag.fieldNames().forEachRemaining(keys::add);
+        assertThat(keys).containsExactly("tag", "weight");
+        assertThat(tag.get("weight").isNumber()).isTrue();
     }
 }

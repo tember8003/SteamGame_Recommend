@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.taste.dto;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -9,5 +9,5 @@ import java.util.List;
 public record TasteResultRequest(
         @NotNull String version,
         List<String> answers,
-        @Size(max = 64) String clientId) {
+        @Pattern(regexp = "^[A-Za-z0-9_-]{1,64}$") String clientId) {
 }

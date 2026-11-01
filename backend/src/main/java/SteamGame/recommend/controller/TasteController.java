@@ -24,6 +24,7 @@ import SteamGame.recommend.domain.taste.service.TasteScorer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+@Slf4j
 @Tag(name = "taste", description = "Game taste test API")
 @RestController
 @RequestMapping("/api/taste")
@@ -148,13 +150,15 @@ public class TasteController {
     private TasteRecommendResult withSuppressionFallback(String clientId, Set<Long> clientExcludes,
                                                          Function<Set<Long>, TasteRecommendResult> call) {
         Set<Long> effective = suppressionService.resolveExcludes(clientId, clientExcludes);
-        int originalSize = (clientExcludes == null) ? 0 : clientExcludes.size();
-        boolean suppressed = effective.size() > originalSize;
+        Set<Long> original = clientExcludes == null ? Set.of() : clientExcludes;
+        boolean suppressed = effective.size() > original.size();
         try {
             return call.apply(effective);
         } catch (ResponseStatusException e) {
             if (suppressed && e.getStatusCode().value() == 404) {
-                return call.apply(clientExcludes);
+                log.info("taste recommend retried without suppression: suppressedExtra={}",
+                        effective.size() - original.size());
+                return call.apply(original);
             }
             throw e;
         }

@@ -48,7 +48,7 @@ public class TagRarityCache {
     }
 
     // 모르는 태그는 0.0
-    // 한 번도 적재하지 못했으면 분당 한 번만 다시 시도하고, 그래도 비면 모든 태그를 1.0으로 본다
+    // 한 번도 DB에서 읽어 오지 못했으면 분당 한 번만 다시 시도하고, 그래도 비면 모든 태그를 1.0으로 본다
     public double rarity(String tag) {
         Map<String, Double> current = rarities;
         if (current.isEmpty()) {
@@ -70,10 +70,13 @@ public class TagRarityCache {
     @Scheduled(cron = "0 0 4 * * *")
     public void refresh() {
         lastAttempt.set(clock.millis());
+        Map<String, Double> next;
+        Long total;
         try {
-            Long total = jdbc.queryForObject("SELECT count(*) FROM games", Long.class);
-            Map<String, Double> next = new HashMap<>();
+            total = jdbc.queryForObject("SELECT count(*) FROM games", Long.class);
+            next = new HashMap<>();
             if (total != null && total > 0) {
+                long gameCount = total;
                 jdbc.query("""
                         SELECT t.name, count(*) AS cnt
                         FROM game_tags gt JOIN tags t ON t.id = gt.tag_id
@@ -81,16 +84,35 @@ public class TagRarityCache {
                         """, rs -> {
                     long cnt = rs.getLong("cnt");
                     if (cnt > 0) {
-                        next.put(rs.getString("name"), Math.log(1.0 + (double) total / cnt));
+                        next.put(rs.getString("name"), Math.log(1.0 + (double) gameCount / cnt));
                     }
                 });
             }
-            rarities = Map.copyOf(next);
-            log.info("tag rarity refreshed: games={}, tags={}", total, next.size());
+        } catch (RuntimeException e) {
+            // 실패해도 이전 값을 그대로 쓴다, 읽어 온 값이 아직 없으면(기동 직후나 재시도 중) 대체 값으로 순위를 매기게 되므로 ERROR로 올린다
+            if (rarities.isEmpty()) {
+                log.error("tag rarity refresh failed, no previous values", e);
+            } else {
+                log.warn("tag rarity refresh failed, keeping previous values", e);
+            }
+            return;
+        }
+        if (next.isEmpty()) {
+            // 빈 결과로 덮어쓰면 모든 희소도가 0이 되어 순위가 무너진다
+            if (rarities.isEmpty()) {
+                // 이어서 rarity()가 사용 불가 ERROR를 남기므로 여기서는 WARN으로 둔다
+                log.warn("tag rarity refresh yielded no data: games={}", total);
+            } else {
+                log.error("tag rarity refresh yielded no data, keeping previous values: games={}", total);
+            }
+            return;
+        }
+        rarities = Map.copyOf(next);
+        log.info("tag rarity refreshed: games={}, tags={}", total, next.size());
+        try {
             warnMissingContentTags(next);
         } catch (RuntimeException e) {
-            // 실패해도 이전 값을 그대로 쓴다
-            log.warn("tag rarity refresh failed, keeping previous values: {}", e.toString());
+            log.warn("checking content tags against DB failed", e);
         }
     }
 

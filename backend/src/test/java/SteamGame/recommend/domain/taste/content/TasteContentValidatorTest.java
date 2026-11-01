@@ -9,6 +9,7 @@ import java.util.function.UnaryOperator;
 import static SteamGame.recommend.domain.taste.TasteFixtures.question;
 import static SteamGame.recommend.domain.taste.TasteFixtures.validContent;
 import static SteamGame.recommend.domain.taste.TasteFixtures.weights;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -227,5 +228,50 @@ class TasteContentValidatorTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("questions")
                 .hasMessageContaining("featuredAppids");
+    }
+
+    @Test
+    void featuredAppidNonPositiveIsViolation() {
+        TasteContent c = validContent();
+        for (List<Long> ids : List.of(List.of(1L, 2L, 0L), List.of(1L, 2L, -5L))) {
+            TasteContent broken = mapType(c, 0, t -> withAppids(t, ids));
+            assertThatThrownBy(() -> TasteContentValidator.validate(broken))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("featuredAppids has an invalid appid");
+        }
+    }
+
+    // List.copyOf가 null 원소를 막으므로 null appid는 유형을 만드는 단계에서 걸린다
+    @Test
+    void featuredAppidNullIsRejectedAtConstruction() {
+        TasteContent c = validContent();
+        assertThatThrownBy(() -> mapType(c, 0, t -> withAppids(t, java.util.Arrays.asList(1L, 2L, null))))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void contentListsAreDefensivelyCopied() {
+        List<Long> ids = new ArrayList<>(List.of(1L, 2L, 3L));
+        TasteContent c = mapType(validContent(), 0, t -> withAppids(t, ids));
+        ids.add(4L);
+
+        assertThat(c.types().get(0).featuredAppids()).containsExactly(1L, 2L, 3L);
+        assertThatThrownBy(() -> c.types().get(0).featuredAppids().add(9L)).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> c.types().add(c.types().get(0))).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> c.questions().remove(0)).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> c.questions().get(0).options().clear()).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> c.types().get(0).tagWeights().clear()).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void nullListsBecomeEmptyAndValidatorReportsCounts() {
+        TasteContent c = validContent();
+        TasteContent broken = new TasteContent(c.version(), c.axes(), null, null);
+
+        assertThat(broken.questions()).isEmpty();
+        assertThatThrownBy(() -> TasteContentValidator.validate(broken))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("questions must be 12, was 0")
+                .hasMessageContaining("types must be 16, was 0");
     }
 }

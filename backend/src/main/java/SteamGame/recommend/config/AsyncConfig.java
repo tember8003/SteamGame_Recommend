@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.time.Clock;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Configuration
 @EnableAsync
@@ -45,20 +47,39 @@ public class AsyncConfig {
         return executor;
     }
 
-    // 대기열이 가득 차서 받지 못한 작업은 버리고 WARN 로그 한 줄을 남긴다, 버린 작업의 내용(이벤트 종류, clientId)은 여기서 알 수 없어 싣지 않는다
+    // 대기열이 가득 차서 받지 못한 작업은 버리고 WARN 로그를 남긴다
+    // 이벤트 엔드포인트는 인증이 없어 한꺼번에 몰릴 수 있으므로 로그는 분당 한 번만 내고 그 사이 버린 개수를 함께 적는다
+    // 버린 작업의 내용(이벤트 종류, clientId)은 여기서 알 수 없어 싣지 않는다
     public static class WarnAndDiscardPolicy implements RejectedExecutionHandler {
 
         private static final Logger log = LoggerFactory.getLogger(WarnAndDiscardPolicy.class);
+        static final long LOG_INTERVAL_MILLIS = 60_000L;
 
         private final String name;
+        private final Clock clock;
+        private final AtomicLong dropped = new AtomicLong();
+        // 처음 한 번은 바로 남기도록 멀리 과거로 둔다
+        private final AtomicLong lastLog = new AtomicLong(Long.MIN_VALUE / 2);
 
         public WarnAndDiscardPolicy(String name) {
+            this(name, Clock.systemUTC());
+        }
+
+        WarnAndDiscardPolicy(String name, Clock clock) {
             this.name = name;
+            this.clock = clock;
         }
 
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            log.warn("{} 대기열이 가득 차서 저장 작업 하나를 버림, 대기 중 {}개, 처리 중 {}개", name, executor.getQueue().size(), executor.getActiveCount());
+            dropped.incrementAndGet();
+            long now = clock.millis();
+            long prev = lastLog.get();
+            if (now - prev >= LOG_INTERVAL_MILLIS && lastLog.compareAndSet(prev, now)) {
+                long count = dropped.getAndSet(0);
+                log.warn("{} 대기열이 가득 차서 저장 작업을 버림, 지난 로그 이후 {}개, 대기 중 {}개, 처리 중 {}개",
+                        name, count, executor.getQueue().size(), executor.getActiveCount());
+            }
         }
     }
 }

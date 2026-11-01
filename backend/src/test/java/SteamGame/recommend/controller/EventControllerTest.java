@@ -67,4 +67,23 @@ class EventControllerTest {
 
         verify(eventService, never()).record(any(), any(), any(), any());
     }
+
+    @Test
+    void clientIdWithNewline_400() throws Exception {
+        postEvent("{\"type\":\"LANDING_VISIT\",\"clientId\":\"bad\nid\"}", 400);
+
+        verify(eventService, never()).record(any(), any(), any(), any());
+    }
+
+    @Test
+    void clientIdWithSpaceOrSymbol_400() throws Exception {
+        postEvent("{\"type\":\"LANDING_VISIT\",\"clientId\":\"a b\"}", 400);
+        postEvent("{\"type\":\"LANDING_VISIT\",\"clientId\":\"a;b\"}", 400);
+    }
+
+    @Test
+    void clientIdAbsentOrAllowedChars_202() throws Exception {
+        postEvent("{\"type\":\"LANDING_VISIT\"}", 202);
+        postEvent("{\"type\":\"LANDING_VISIT\",\"clientId\":\"Ab_9-z\"}", 202);
+    }
 }

@@ -33,7 +33,7 @@ public final class TasteViewMapper {
                 t.description().get(lang),
                 t.traits().get(lang),
                 axes,
-                t.tagWeights(),
+                t.tagWeights().stream().map(w -> new TagView(w.tag(), w.weight())).toList(),
                 featured,
                 new ShareView(t.share().title().get(lang), t.share().text().get(lang)));
     }

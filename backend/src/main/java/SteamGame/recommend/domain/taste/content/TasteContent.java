@@ -10,6 +10,13 @@ public record TasteContent(
         List<TasteQuestion> questions,
         List<TasteType> types) {
 
+    // 요청마다 같은 목록을 나눠 쓰므로 바꿀 수 없게 복사한다, null은 빈 목록으로 두어 검증기가 개수로 잡는다
+    public TasteContent {
+        axes = axes == null ? List.of() : List.copyOf(axes);
+        questions = questions == null ? List.of() : List.copyOf(questions);
+        types = types == null ? List.of() : List.copyOf(types);
+    }
+
     // 코드는 대소문자를 구분하지 않는다
     public Optional<TasteType> type(String code) {
         if (code == null) {

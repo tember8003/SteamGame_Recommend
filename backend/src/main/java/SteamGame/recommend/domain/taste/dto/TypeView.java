@@ -1,7 +1,6 @@
 package SteamGame.recommend.domain.taste.dto;
 
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
-import SteamGame.recommend.domain.taste.content.TagWeight;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ public record TypeView(
         String description,
         String traits,
         List<AxisView> axes,
-        List<TagWeight> tags,
+        List<TagView> tags,
         List<SteamAppDTO> featuredGames,
         ShareView share) {
 }

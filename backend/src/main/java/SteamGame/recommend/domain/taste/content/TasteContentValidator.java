@@ -182,6 +182,13 @@ public final class TasteContentValidator {
             } else if (new HashSet<>(ids).size() != ids.size()) {
                 errors.add(label + " featuredAppids has duplicates");
             }
+            if (ids != null) {
+                for (Long id : ids) {
+                    if (id == null || id <= 0) {
+                        errors.add(label + " featuredAppids has an invalid appid: " + id);
+                    }
+                }
+            }
         }
     }
 

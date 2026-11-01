@@ -11,17 +11,21 @@ import SteamGame.recommend.domain.taste.content.TasteType;
 import SteamGame.recommend.domain.taste.repository.TasteCandidate;
 import SteamGame.recommend.domain.taste.repository.TasteCandidateRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Slf4j
 @Service
@@ -55,12 +59,20 @@ public class TasteRecommendService {
             tags.add(tw.tag());
             weights.add(tw.weight() * rarityCache.rarity(tw.tag()));
         }
+        if (weights.stream().allMatch(w -> w <= 0.0)) {
+            // 이 유형의 태그가 DB에 하나도 없으면 점수가 전부 0이라 추천이 비게 된다
+            log.error("taste type has no usable tag weights, all tags missing in DB: type={}", type.code());
+        }
         // 대표 게임은 이미 첫 화면에 나가므로 동적 추천에서 뺀다
-        Set<Long> exclude = new HashSet<>(excludeAppids);
+        Set<Long> exclude = new HashSet<>(excludeAppids == null ? Set.<Long>of() : excludeAppids);
         exclude.addAll(type.featuredAppids());
 
         List<TasteCandidate> ranked = candidateRepository.findCandidates(
                 tags, weights, review, korean, free, exclude, CANDIDATE_COUNT);
+        if (ranked.isEmpty()) {
+            log.warn("taste candidates empty: type={}, review={}, korean={}, free={}, excludeCount={}",
+                    type.code(), review, korean, free, exclude.size());
+        }
         List<TasteCandidate> picked = DiversityPicker.pick(ranked, RESULT_SIZE, MAX_PER_LEAD_TAG, new Random());
 
         List<Long> pickedAppids = picked.stream().map(TasteCandidate::appid).toList();
@@ -85,9 +97,43 @@ public class TasteRecommendService {
                     List.of(new ExplanationItem("TASTE_TAG_MATCH", Map.of("tags", List.copyOf(top))))));
         }
         if (games.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No games found for this taste type.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "TASTE_NO_MORE_GAMES");
         }
         return new TasteRecommendResult(games, explanations);
+    }
+
+    // 기동 직후 모든 유형의 대표 게임이 DB에 있는지 한 번 확인한다, 없으면 첫 화면에서 조용히 빠지므로 ERROR로 알린다
+    @EventListener(ApplicationReadyEvent.class)
+    public void checkFeaturedGames() {
+        try {
+            List<TasteType> types = contentLoader.content().types();
+            Set<Long> all = new HashSet<>();
+            for (TasteType type : types) {
+                all.addAll(type.featuredAppids());
+            }
+            Set<Long> found = new HashSet<>();
+            for (Game g : gameRepository.findByAppidIn(new ArrayList<>(all))) {
+                found.add(g.getAppid());
+            }
+            for (TasteType type : types) {
+                Set<Long> missing = missingOf(type.featuredAppids(), found);
+                if (!missing.isEmpty()) {
+                    log.error("featured games missing in games: type={}, appids={}", type.code(), missing);
+                }
+            }
+        } catch (RuntimeException e) {
+            log.error("featured games check failed", e);
+        }
+    }
+
+    private static Set<Long> missingOf(Collection<Long> appids, Set<Long> found) {
+        Set<Long> missing = new TreeSet<>();
+        for (Long appid : appids) {
+            if (!found.contains(appid)) {
+                missing.add(appid);
+            }
+        }
+        return missing;
     }
 
     // 대표 게임, 문구 데이터의 appid 순서를 지키고 DB에 없는 것은 뺀다
@@ -98,13 +144,17 @@ public class TasteRecommendService {
             byAppid.put(g.getAppid(), g);
         }
         List<SteamAppDTO> result = new ArrayList<>();
+        Set<Long> missing = new TreeSet<>();
         for (Long appid : appids) {
             Game g = byAppid.get(appid);
             if (g == null) {
-                log.warn("featured game missing in games: type={}, appid={}", type.code(), appid);
+                missing.add(appid);
                 continue;
             }
             result.add(GameMapper.convertToSteamDTO(g));
+        }
+        if (!missing.isEmpty()) {
+            log.warn("featured games missing in games: type={}, appids={}", type.code(), missing);
         }
         return result;
     }
