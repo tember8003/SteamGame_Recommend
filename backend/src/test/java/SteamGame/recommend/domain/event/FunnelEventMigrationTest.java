@@ -70,4 +70,20 @@ class FunnelEventMigrationTest extends PostgresTestBase {
                 "SELECT created_at FROM funnel_event WHERE event_type='LANDING_VISIT'", java.sql.Timestamp.class))
                 .isNotNull();
     }
+
+    @Test
+    void funnelEventAcceptsLibraryComplete() {
+        jdbc.update("INSERT INTO funnel_event(event_type, ref) VALUES ('LIBRARY_COMPLETE', 'LIBRARY')");
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM funnel_event WHERE event_type='LIBRARY_COMPLETE'", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void libraryShareAcceptsRowAndHasExpiryIndex() {
+        jdbc.update("INSERT INTO library_share(share_id, payload, expires_at) VALUES ('mig-test', CAST('{}' AS jsonb), now() + interval '1 day')");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM library_share WHERE share_id='mig-test'", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE tablename='library_share' AND indexdef LIKE '%expires_at%'",
+                Integer.class)).isGreaterThanOrEqualTo(1);
+    }
 }
