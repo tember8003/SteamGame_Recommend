@@ -5,7 +5,7 @@ import { metadata as internalMetadata } from "../(internal)/layout";
 
 vi.mock("../fonts", () => ({ gmarketSans: { variable: "" } }));
 
-const SITE = "https://steam-game-recommend.vercel.app";
+const SITE = "https://playalike.online";
 
 describe("robots", () => {
   it("모든 수집 프로그램에 전체를 열고 sitemap 주소를 알린다", () => {

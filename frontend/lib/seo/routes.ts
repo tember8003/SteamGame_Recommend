@@ -1,4 +1,4 @@
-export const SITE_URL = "https://steam-game-recommend.vercel.app";
+export const SITE_URL = "https://playalike.online";
 export const SITE_NAME = "Playalike";
 
 // 색인 대상 화면, 메타데이터와 sitemap 이 함께 쓴다, 홈은 빈 경로로 둔다

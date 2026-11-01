@@ -20,12 +20,12 @@ describe('taste pages', () => {
   it('returns localized, canonical metadata for sharing', async () => {
     const meta = await generateMetadata({ params: Promise.resolve({ locale: 'en', code: 'encp' }) });
     expect(meta.title).toBe(`${getTasteType('ENCP')!.share.title.en} | Playalike`);
-    expect(meta.alternates?.canonical).toBe('https://steam-game-recommend.vercel.app/en/taste/ENCP');
+    expect(meta.alternates?.canonical).toBe('https://playalike.online/en/taste/ENCP');
     expect(meta.description).toBe(getTasteType('ENCP')!.share.text.en);
   });
   it('gives the atlas its own social preview rather than inheriting home metadata', async () => {
     const meta = await atlasMetadata({ params: Promise.resolve({ locale: 'en' }) });
-    expect(meta.openGraph).toMatchObject({ url: 'https://steam-game-recommend.vercel.app/en/taste', title: '16 player characters | Playalike' });
+    expect(meta.openGraph).toMatchObject({ url: 'https://playalike.online/en/taste', title: '16 player characters | Playalike' });
     expect(meta.twitter).toMatchObject({ title: '16 player characters | Playalike' });
   });
   it('rejects invalid codes and locales rather than displaying the wrong character', async () => {
