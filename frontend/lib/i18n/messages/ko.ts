@@ -116,7 +116,7 @@ export const ko: Messages = {
     },
     library: {
       title: "Steam 라이브러리 분석",
-      description: "내 Steam 라이브러리로 수집가의 장부, 판결문, 게이머 능력치, 취향 진단서를 받아보세요. 카드 이미지를 저장하거나 프로필 없는 결과 링크를 공유할 수 있어요.",
+      description: "내 Steam 플레이 기록으로 장르별 2D 거점을 만나보세요. 창고, 전시장, 상태창과 모험 지도를 둘러보고 프로필 없는 결과를 공유할 수 있어요.",
     },
     profile: {
       title: "스팀 프로필 기반 추천",
@@ -166,7 +166,7 @@ export const ko: Messages = {
     similarGreeting: "다음 모험의 실마리를 찾아드리죠.",
     similarCta: "게임 찾기",
     libraryTitle: "Steam 라이브러리 분석",
-    libraryDesc: "내 게임 기록을 네 장의 재미있는 카드로",
+    libraryDesc: "주력 장르로 완성하는 나만의 2D 거점",
     libraryGreeting: "게임 기록에 취향이 담겨 있어요.",
     libraryCta: "분석하기",
     searchMethods: "게임 추천 방식 선택",
@@ -194,7 +194,7 @@ export const ko: Messages = {
       random: { title: "태그 기반 랜덤", desc: "선호 장르와 스타일을 골라 무작위로 게임을 발견해요" },
       input: { title: "직접 입력", desc: "게임 취향을 입력해 정확한 맞춤 추천을 받아요" },
       match: { title: "요구사항 매칭", desc: "원하는 것을 설명하고 조건을 정해 이유와 함께 매칭 추천을 받아요" },
-      library: { title: "라이브러리 분석", desc: "게임 기록으로 장부, 판결문, 능력치, 진단서 네 장의 문서를 받아요" },
+      library: { title: "라이브러리 분석", desc: "장르별 거점에서 수집 기록과 성향, 오래 즐긴 게임을 둘러봐요" },
       profile: { title: "프로필 기반", desc: "게임 프로필을 분석해 플레이 스타일에 맞춰요" },
       recent: { title: "최근 플레이 기반", desc: "최근 2주 플레이 패턴을 분석해 딱 맞는 추천을 해요" },
       similar: { title: "비슷한 게임", desc: "좋아하는 게임과 태그가 비슷한 게임을 찾아요" },

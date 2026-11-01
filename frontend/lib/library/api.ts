@@ -4,7 +4,13 @@ import type { Locale } from '../i18n/locales';
 
 export interface LibraryText { code: string; text: string; params: Record<string, string | number> }
 export interface PlayedGame { appid: number; name: string; hours: number; ratio: number }
+export interface GenreProfile {
+  primaryGenre: string | null; secondaryGenre: string | null;
+  state: 'READY' | 'MIXED' | 'INSUFFICIENT'; coverageRatio: number;
+  distribution: { code: string; ratio: number }[];
+}
 export interface LibrarySnapshot {
+  genreProfile?: GenreProfile | null;
   limitedData: boolean;
   stats: {
     ownedCount: number; totalHours: number; zeroPlayCount: number; zeroPlayRatio: number;

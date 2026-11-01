@@ -86,3 +86,7 @@
 .page button { touch-action: manipulation; }
 @media (max-width: 800px) { .cards { grid-template-columns: 1fr; gap: 24px; } .inputRow { flex-direction: column; } .inputPanel { padding: 20px; } .inputRow .button { width: 100%; } .card { padding: 24px; } .actions > button { flex: 1 1 100%; } }
 @media (max-width: 380px) { .ledgerNumbers, .tastePair { grid-template-columns: 1fr; } }
+
+.editInput { margin: 16px 0; }
+.editInput > summary { color: var(--accent-steam); cursor: pointer; min-height: 44px; padding: 10px 0; font-size: 13px; }
+.editInput .inputPanel { margin-top: 16px; }

@@ -20,7 +20,7 @@ const result = fixture.ko as LibraryAnalysis;
 const enter = async () => {
   fireEvent.change(screen.getByLabelText('Steam ID 또는 프로필 주소'), { target: { value: 'custom-name' } });
   fireEvent.click(screen.getByRole('button', { name: '내 라이브러리 분석하기' }));
-  await screen.findByRole('heading', { name: '게임 수집가의 장부' });
+  await screen.findByRole('heading', { name: '수집품 창고' });
 };
 beforeEach(() => {
   vi.mocked(libraryAnalyze).mockResolvedValue(result);
@@ -31,10 +31,18 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.useRealTimers(); window.history.replaceState(null, '', '/'); });
 
 describe('library views', () => {
+  it('opens the collapsed input and focuses it when starting another analysis', async () => {
+    render(<LibraryWorkbench locale="ko" />); await enter();
+    const input = screen.getByLabelText('Steam ID 또는 프로필 주소');
+    expect(input.closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(screen.getByRole('button', { name: '다른 기록 불러오기' }));
+    expect(input.closest('details')).toHaveAttribute('open');
+    expect(input).toHaveFocus();
+  });
   it('saving an image does not create a public share', async () => {
     const save = vi.spyOn(imageExport, 'saveLibraryImage').mockResolvedValue('data:image/png;base64,fixture');
     render(<LibraryWorkbench locale="ko" />); await enter();
-    fireEvent.click(screen.getByRole('button', { name: '네 카드 이미지 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '내 거점 이미지 저장' }));
     await screen.findByText('이미지가 준비됐어요.');
     expect(save).toHaveBeenCalledWith(result, 'ko', undefined);
     expect(libraryShare).not.toHaveBeenCalled();
@@ -46,7 +54,7 @@ describe('library views', () => {
     render(<LibraryWorkbench locale="ko" />);
     await enter();
     expect(libraryAnalyze).toHaveBeenCalledWith('custom-name', 'ko');
-    for (const title of ['게임 수집가의 장부', 'Steam 판결문', '게이머 능력치', '취향 진단서']) expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
+    for (const name of ['수집품 창고', '추억의 전시장', '캐릭터 상태창', '다음 모험 지도']) expect(screen.getByRole('tab', { name: new RegExp(name) })).toBeInTheDocument();
     expect(screen.getByText('안 해 본 게임이 10개로 전체의 40%입니다. 수집가의 기질이 보입니다.')).toBeInTheDocument();
     expect(screen.queryByText(result.profile.steamId64)).not.toBeInTheDocument();
     expect(recommendProfile).not.toHaveBeenCalled();
@@ -56,13 +64,13 @@ describe('library views', () => {
   });
   it('creates no share before confirmation, and reuses its share ID on subsequent copies', async () => {
     render(<LibraryWorkbench locale="ko" />); await enter();
-    fireEvent.click(screen.getByRole('button', { name: '장부 링크 공유' }));
+    fireEvent.click(screen.getByRole('button', { name: '거점 링크 공유' }));
     expect(libraryShare).not.toHaveBeenCalled();
     expect(screen.getByText(/누구나 90일 동안/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '확인했어요. 공유 링크 만들기' }));
     await screen.findByText('공유 링크를 복사했어요.');
     expect((screen.getByLabelText('공유 링크') as HTMLInputElement).value).toContain('/ko/library/share/abcdefghijklmnopqrstuv?s=1');
-    fireEvent.click(screen.getByRole('button', { name: '장부 링크 공유' }));
+    fireEvent.click(screen.getByRole('button', { name: '거점 링크 공유' }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(2));
     expect(libraryShare).toHaveBeenCalledTimes(1);
     expect(recordTasteEvent).toHaveBeenCalledWith('SHARE_CLICK', 'LIBRARY', 'LINK');
@@ -72,7 +80,7 @@ describe('library views', () => {
     vi.mocked(libraryAnalyze).mockResolvedValueOnce(result).mockResolvedValue({ ...result, analysisId: 'new-analysis' });
     render(<LibraryWorkbench locale="ko" />); await enter();
     fireEvent.change(screen.getByLabelText('Steam ID 또는 프로필 주소'), { target: { value: 'someone-else' } });
-    fireEvent.click(screen.getByRole('button', { name: '장부 링크 공유' }));
+    fireEvent.click(screen.getByRole('button', { name: '거점 링크 공유' }));
     fireEvent.click(screen.getByRole('button', { name: '확인했어요. 공유 링크 만들기' }));
     await screen.findByText('공유 링크를 복사했어요.');
     expect(libraryAnalyze).toHaveBeenLastCalledWith('custom-name', 'ko');
@@ -94,7 +102,7 @@ describe('library views', () => {
   it('shared results have no identity or recommendation action and only remove the inflow parameter once', async () => {
     window.history.replaceState(null, '', '/ko/library/share/abcdefghijklmnopqrstuv?s=1&keep=yes#cards');
     render(<StrictMode><LibraryShared locale="ko" shareId="abcdefghijklmnopqrstuv" /></StrictMode>);
-    await screen.findByRole('heading', { name: '게임 수집가의 장부' });
+    await screen.findByRole('heading', { name: '수집품 창고' });
     expect(screen.queryByText('Test Player')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '좋아할 만한 새 게임 찾기' })).not.toBeInTheDocument();
     expect(window.location.search).toBe('?keep=yes'); expect(window.location.hash).toBe('#cards');
@@ -103,6 +111,7 @@ describe('library views', () => {
   it('shows insufficient evidence for null attributes, and image sections never include a profile', () => {
     const data = { ...result, gamerStats: result.gamerStats.map(stat => ({ ...stat, value: null })) };
     render(<LibraryCards data={data} locale="ko" />);
+    fireEvent.click(screen.getByRole('tab', { name: /캐릭터 상태창/ }));
     expect(screen.getAllByText('기록 부족')).toHaveLength(5);
     expect(screen.queryByRole('meter')).not.toBeInTheDocument();
     const output = JSON.stringify(libraryImageSections(result, 'ko'));
