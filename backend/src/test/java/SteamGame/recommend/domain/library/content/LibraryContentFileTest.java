@@ -82,6 +82,34 @@ class LibraryContentFileTest {
     }
 
     @Test
+    void allGenreTagsExistInProdCatalog() throws IOException {
+        Set<String> prod = prodTagNames();
+        List<String> missing = new ArrayList<>();
+        LibraryContent c = load();
+        c.genres().forEach((genre, tags) -> tags.forEach(tag -> {
+            if (!prod.contains(tag)) {
+                missing.add(genre + ":" + tag);
+            }
+        }));
+        c.genreExcludedTags().forEach(tag -> {
+            if (!prod.contains(tag)) {
+                missing.add("excluded:" + tag);
+            }
+        });
+        assertThat(missing).as("운영 태그에 없는 이름").isEmpty();
+    }
+
+    // 여러 장르의 게임에 두루 붙는 태그와 레이싱이 아닌 게임에도 높게 붙는 Automobile Sim은 장르 판단에서 뺀다
+    @Test
+    void broadTagsAreExcludedFromGenres() {
+        LibraryContent c = load();
+        assertThat(c.genres().keySet()).containsExactlyElementsOf(LibraryContentValidator.GENRE_KEYS);
+        assertThat(c.genreExcludedTags()).containsExactlyInAnyOrder(
+                "Open World", "Adventure", "Exploration", "Story Rich", "Choices Matter", "Automobile Sim");
+        assertThat(c.genreRules()).isEqualTo(new GenreRules(10, 0.3, 0.1, 0.15));
+    }
+
+    @Test
     void nearUniversalTagsAreInNoGroup() {
         Set<String> universal = Set.of("Action", "Adventure", "Casual", "Indie", "Singleplayer", "Simulation", "Multiplayer");
         LibraryContent c = load();

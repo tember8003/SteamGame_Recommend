@@ -22,8 +22,9 @@ public interface TagRepository extends JpaRepository<Tag,Long> {
 
     Page<Tag> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
 
+    // 라이브러리 분석용, votes는 장르 판단에서 게임의 대표 태그를 고를 때 쓴다
     @Query("""
-    SELECT new map(g.appid as appId, t.name as tagName)
+    SELECT new map(g.appid as appId, t.name as tagName, gt.votes as votes)
     FROM Game g
     JOIN GameTag gt ON g.id = gt.game.id
     JOIN Tag t ON gt.tag.id = t.id

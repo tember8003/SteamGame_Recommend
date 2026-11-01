@@ -3,6 +3,7 @@ package SteamGame.recommend.domain.library.dto;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Diagnosis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GamerStat;
+import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GenreProfile;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Judged;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Stats;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.TopGame;
@@ -35,7 +36,8 @@ public final class LibraryViewMapper {
                 phrase(a.ledger(), content, lang, false),
                 verdict(a, content, lang, false),
                 gamerStats(a.gamerStats(), content, lang),
-                diagnosis(a.diagnosis()));
+                diagnosis(a.diagnosis()),
+                genreProfile(a.genreProfile()));
     }
 
     // 공유 스냅샷은 문구 파일이 바뀐 뒤에 읽힐 수 있어 현재 문구 파일에서 채울 수 있는 후보를 고른다
@@ -45,7 +47,17 @@ public final class LibraryViewMapper {
                 phrase(a.ledger(), content, lang, true),
                 verdict(a, content, lang, true),
                 gamerStats(a.gamerStats(), content, lang),
-                diagnosis(a.diagnosis()));
+                diagnosis(a.diagnosis()),
+                genreProfile(a.genreProfile()));
+    }
+
+    // 장르 기능 전에 저장된 공유는 null이고, 프론트가 기본 거점으로 보여 준다
+    private static GenreProfileView genreProfile(GenreProfile g) {
+        if (g == null) {
+            return null;
+        }
+        return new GenreProfileView(g.primaryGenre(), g.secondaryGenre(), g.state(), g.coverageRatio(),
+                g.distribution().stream().map(s -> new GenreProfileView.GenreShareView(s.code(), s.ratio())).toList());
     }
 
     private static VerdictView verdict(LibraryAnalysis a, LibraryContent content, Lang lang, boolean lenient) {

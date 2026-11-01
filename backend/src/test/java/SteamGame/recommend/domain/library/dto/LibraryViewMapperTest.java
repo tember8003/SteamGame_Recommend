@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.library.dto;
 
 import SteamGame.recommend.domain.library.LibraryFixtures;
+import SteamGame.recommend.domain.library.analysis.GenreState;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Judged;
 import SteamGame.recommend.domain.library.content.LibraryContent;
@@ -26,7 +27,7 @@ class LibraryViewMapperTest {
         LibraryAnalysis base = emptyBase();
         return new LibraryAnalysis(false, base.stats(), base.ledger(),
                 new LibraryAnalysis.Verdict(new Judged("GENRE_LOYALIST", index, params), base.verdict().sentence()),
-                base.gamerStats(), base.diagnosis());
+                base.gamerStats(), base.diagnosis(), null);
     }
 
     private LibraryAnalysis emptyBase() {
@@ -36,7 +37,8 @@ class LibraryViewMapperTest {
                 new LibraryAnalysis.Verdict(new Judged("INNOCENT", 0, Map.of()),
                         new Judged("SENTENCE_INNOCENT", 0, Map.of())),
                 List.of(new LibraryAnalysis.GamerStat(SteamGame.recommend.domain.library.analysis.StatCode.COOP, null)),
-                new LibraryAnalysis.Diagnosis(null, List.of(), null));
+                new LibraryAnalysis.Diagnosis(null, List.of(), null),
+                null);
     }
 
     @Test
@@ -167,5 +169,28 @@ class LibraryViewMapperTest {
         } finally {
             logger.detachAppender(logs);
         }
+    }
+    // 장르 결과의 필드를 하나씩 옮기는지, 분포 순서를 지키는지 확인한다
+    @Test
+    void genreProfileIsCopiedFieldByField() {
+        LibraryAnalysis.GenreProfile g = new LibraryAnalysis.GenreProfile("SURVIVAL_CRAFTING", "RPG_ADVENTURE",
+                GenreState.MIXED, 0.812, List.of(
+                new LibraryAnalysis.GenreShare("SURVIVAL_CRAFTING", 0.52),
+                new LibraryAnalysis.GenreShare("RPG_ADVENTURE", 0.45),
+                new LibraryAnalysis.GenreShare("PUZZLE", 0.03)));
+        LibraryAnalysis a = emptyBase().withGenreProfile(g);
+
+        GenreProfileView v = LibraryViewMapper.toSharedResponse(a, LibraryFixtures.validContent(), Lang.KO).genreProfile();
+
+        assertThat(v.primaryGenre()).isEqualTo("SURVIVAL_CRAFTING");
+        assertThat(v.secondaryGenre()).isEqualTo("RPG_ADVENTURE");
+        assertThat(v.state()).isEqualTo(GenreState.MIXED);
+        assertThat(v.coverageRatio()).isEqualTo(0.812);
+        assertThat(v.distribution()).containsExactly(
+                new GenreProfileView.GenreShareView("SURVIVAL_CRAFTING", 0.52),
+                new GenreProfileView.GenreShareView("RPG_ADVENTURE", 0.45),
+                new GenreProfileView.GenreShareView("PUZZLE", 0.03));
+        assertThat(LibraryViewMapper.toSharedResponse(emptyBase(), LibraryFixtures.validContent(), Lang.KO)
+                .genreProfile()).isNull();
     }
 }

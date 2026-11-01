@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.library;
 
+import SteamGame.recommend.domain.library.analysis.GenreState;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Diagnosis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GamerStat;
@@ -45,7 +46,8 @@ class DefensiveCopyTest {
                 judged(params),
                 new Verdict(judged(Map.of()), judged(Map.of())),
                 stats,
-                new Diagnosis(null, concentrated, null));
+                new Diagnosis(null, concentrated, null),
+                null);
         tags.clear();
         concentrated.clear();
         stats.clear();
@@ -65,7 +67,7 @@ class DefensiveCopyTest {
     @Test
     void analysisRejectsMissingRequiredParts() {
         assertThatThrownBy(() -> new LibraryAnalysis(false, null, judged(Map.of()),
-                new Verdict(judged(Map.of()), judged(Map.of())), List.of(), new Diagnosis(null, List.of(), null)))
+                new Verdict(judged(Map.of()), judged(Map.of())), List.of(), new Diagnosis(null, List.of(), null), null))
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new GamerStat(null, 1)).isInstanceOf(NullPointerException.class);
     }
@@ -94,5 +96,14 @@ class DefensiveCopyTest {
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> content.tagGroups().put("x", List.of()))
                 .isInstanceOf(UnsupportedOperationException.class);
+    }
+    @Test
+    void genreProfileRejectsInconsistentGenres() {
+        assertThatThrownBy(() -> new LibraryAnalysis.GenreProfile(null, null, GenreState.READY, 1.0, List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new LibraryAnalysis.GenreProfile("PUZZLE", null, GenreState.INSUFFICIENT, 0.1, List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new LibraryAnalysis.GenreProfile(null, "PUZZLE", GenreState.INSUFFICIENT, 0.1, List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

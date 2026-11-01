@@ -7,6 +7,7 @@ import SteamGame.recommend.domain.event.entity.FunnelEventType;
 import SteamGame.recommend.domain.event.service.FunnelEventService;
 import SteamGame.recommend.domain.library.LibraryAnalysisService;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
+import SteamGame.recommend.domain.library.analysis.GenreProfiler;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalyzer;
 import SteamGame.recommend.domain.library.content.LibraryContentLoader;
 import SteamGame.recommend.domain.library.dto.LibraryViewMapper;
@@ -70,12 +71,15 @@ class LibraryControllerTest {
         String tag = loader.content().tagGroups().get("STRATEGY").get(0);
         List<OwnedGame> games = new ArrayList<>();
         Map<Long, List<String>> tags = new java.util.HashMap<>();
+        Map<Long, Map<String, Integer>> votes = new java.util.HashMap<>();
         for (long i = 1; i <= 6; i++) {
             games.add(new OwnedGame(i, "Game" + i, (int) (i * 100), i == 1 ? 30 : 0, null));
             tags.put(i, List.of(tag));
+            votes.put(i, Map.of(tag, 100));
         }
         games.add(new OwnedGame(7, "Unplayed", 0, 0, null));
-        analysis = LibraryAnalyzer.analyze(games, tags, t -> 0.5, loader.content(), profile.steamId64());
+        analysis = LibraryAnalyzer.analyze(games, tags, t -> 0.5, loader.content(), profile.steamId64())
+                .withGenreProfile(GenreProfiler.profile(games, votes, loader.content()));
     }
 
     private static final String BODY = "{\"steamId\":\"76561198012345678\",\"clientId\":\"cid-1\"}";
@@ -108,7 +112,12 @@ class LibraryControllerTest {
         assertThat(res.getResponse().getStatus()).isEqualTo(200);
         JsonNode body = json(res);
         assertThat(keys(body)).containsExactlyInAnyOrder("analysisId", "limitedData", "profile", "stats", "ledger",
-                "verdict", "gamerStats", "diagnosis");
+                "verdict", "gamerStats", "diagnosis", "genreProfile");
+        assertThat(keys(body.get("genreProfile"))).containsExactlyInAnyOrder("primaryGenre", "secondaryGenre", "state",
+                "coverageRatio", "distribution");
+        assertThat(keys(body.get("genreProfile").get("distribution").get(0))).containsExactlyInAnyOrder("code", "ratio");
+        assertThat(body.get("genreProfile").get("primaryGenre").asText()).isEqualTo("STRATEGY_MANAGEMENT");
+        assertThat(body.get("genreProfile").get("state").asText()).isEqualTo("READY");
         assertThat(body.get("analysisId").asText()).isEqualTo("aid-1");
         assertThat(keys(body.get("profile"))).containsExactlyInAnyOrder("personaName", "avatarUrl", "steamId64");
         assertThat(body.get("profile").get("steamId64").asText()).isEqualTo("76561198012345678");
@@ -162,7 +171,7 @@ class LibraryControllerTest {
     void analyze_renderFailureLeavesNoEvent() throws Exception {
         LibraryAnalysis broken = new LibraryAnalysis(false, analysis.stats(),
                 new LibraryAnalysis.Judged("NO_SUCH_CODE", 0, Map.of()), analysis.verdict(),
-                analysis.gamerStats(), analysis.diagnosis());
+                analysis.gamerStats(), analysis.diagnosis(), analysis.genreProfile());
         when(service.analyze(anyString()))
                 .thenReturn(new LibraryAnalysisService.Analyzed("aid-1", profile, broken));
 
@@ -237,6 +246,19 @@ class LibraryControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // 장르 기능 전 공유는 genreProfile이 빠지지 않고 null 값으로 나가야 프론트가 기본 거점을 고른다
+    @Test
+    void getShare_oldShareSendsGenreProfileAsNullKey() throws Exception {
+        LibraryAnalysis old = analysis.withGenreProfile(null);
+        when(service.renderShared(eq("OLD"), any())).thenReturn(
+                LibraryViewMapper.toSharedResponse(old, loader.content(), Lang.KO));
+
+        JsonNode body = json(mvc.perform(get("/api/library/share/OLD")).andReturn());
+
+        assertThat(body.has("genreProfile")).isTrue();
+        assertThat(body.get("genreProfile").isNull()).isTrue();
+    }
+
     @Test
     void getShare_ok_noAnalysisIdNoProfile() throws Exception {
         when(service.renderShared(eq("S1"), any())).thenReturn(
@@ -247,7 +269,7 @@ class LibraryControllerTest {
         assertThat(res.getResponse().getStatus()).isEqualTo(200);
         JsonNode body = json(res);
         assertThat(keys(body)).containsExactlyInAnyOrder("limitedData", "stats", "ledger", "verdict", "gamerStats",
-                "diagnosis");
+                "diagnosis", "genreProfile");
         String code = analysis.ledger().code();
         assertThat(body.get("ledger").get("text").asText())
                 .isEqualTo(loader.content().phrases().get(code).get(analysis.ledger().phraseIndex()).text().en());
@@ -286,10 +308,19 @@ class LibraryControllerTest {
         for (long i = 1; i <= 7; i++) {
             games.add(new OwnedGame(i, "Idle" + i, 0, 0, null));
         }
-        return LibraryAnalyzer.analyze(games, Map.of(), t -> 0.5, loader.content(), profile.steamId64());
+        return LibraryAnalyzer.analyze(games, Map.of(), t -> 0.5, loader.content(), profile.steamId64())
+                .withGenreProfile(GenreProfiler.profile(games, Map.of(), loader.content()));
     }
 
     private void assertNullKeysPresent(JsonNode body) {
+        // 기록이 없으면 장르 결과는 INSUFFICIENT이고, 주력과 보조 장르 키는 null 값으로 남아야 한다
+        JsonNode genre = body.get("genreProfile");
+        assertThat(genre.get("state").asText()).isEqualTo("INSUFFICIENT");
+        assertThat(genre.has("primaryGenre")).isTrue();
+        assertThat(genre.get("primaryGenre").isNull()).isTrue();
+        assertThat(genre.has("secondaryGenre")).isTrue();
+        assertThat(genre.get("secondaryGenre").isNull()).isTrue();
+
         JsonNode stats = body.get("stats");
         assertThat(stats.has("mostPlayed")).isTrue();
         assertThat(stats.get("mostPlayed").isNull()).isTrue();

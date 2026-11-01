@@ -173,7 +173,8 @@ public final class LibraryAnalyzer {
         Stats stats = new Stats(owned, hours(totalMinutes), zeroCount, ratio(zeroRatio), mostPlayed,
                 recentGames, hours(recentMinutes), matched, topTags);
         boolean limited = totalMinutes == 0 || matched < LIMITED_MATCHED_MIN;
-        return new LibraryAnalysis(limited, stats, ledger, verdict, gamerStats, diagnosis);
+        // 장르 결과는 태그 득표수가 필요해서 호출 쪽이 GenreProfiler로 따로 붙인다
+        return new LibraryAnalysis(limited, stats, ledger, verdict, gamerStats, diagnosis, null);
     }
 
     // 비율은 정수로 비교해 부동소수 오차를 피한다
