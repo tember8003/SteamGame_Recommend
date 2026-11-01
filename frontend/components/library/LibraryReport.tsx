@@ -6,17 +6,20 @@ import type { Locale } from '@/lib/i18n/locales';
 import { libraryAnalyze, libraryShare, type LibraryAnalysis, type LibrarySnapshot } from '@/lib/library/api';
 import { libraryCopy } from '@/lib/library/copy';
 import { libraryError } from '@/lib/library/presentation';
+import { baseCopy } from '@/lib/library/base';
 import { recordTasteEvent } from '@/lib/taste/api';
 import LibraryCards from './LibraryCards';
 import LibraryRecommendations from './LibraryRecommendations';
 import { useCooldown } from './useCooldown';
 import styles from './library.module.css';
 
-export default function LibraryReport({ data, locale, owner, submittedInput, onRefresh, existingShareId }: {
+export default function LibraryReport({ data, locale, owner, submittedInput, onRefresh, existingShareId, onNewAnalysis }: {
   data: LibrarySnapshot; locale: Locale; owner?: LibraryAnalysis; submittedInput?: string;
   onRefresh?: (value: LibraryAnalysis) => void; existingShareId?: string;
+  onNewAnalysis?: () => void;
 }) {
   const c = libraryCopy[locale];
+  const b = baseCopy[locale];
   const [confirmation, setConfirmation] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -72,9 +75,9 @@ export default function LibraryReport({ data, locale, owner, submittedInput, onR
     <p className={styles.hint}>{c.coverage} ({data.stats.matchedCount} / {data.stats.ownedCount})</p>
     <LibraryCards data={data} locale={locale} onSave={index => void save(index)} saving={saving} />
     <div className={styles.actions}>
-      <button type="button" className={styles.button} disabled={sharing || cooldown.remaining > 0} onClick={() => { if (shareId.current) void share(); else setConfirmation(true); }}>{sharing ? c.sharing : c.share}</button>
-      <button type="button" className={styles.secondary} disabled={saving} onClick={() => void save()}>{c.saveAll}</button>
-      {existingShareId ? <Link href={`/${locale}/library`}>{c.self}</Link> : <a href="#library-steam-id">{c.other}</a>}
+      <button type="button" className={styles.button} disabled={sharing || cooldown.remaining > 0} onClick={() => { if (shareId.current) void share(); else setConfirmation(true); }}>{sharing ? c.sharing : b.share}</button>
+      <button type="button" className={styles.secondary} disabled={saving} onClick={() => void save()}>{b.saveAll}</button>
+      {existingShareId ? <Link href={`/${locale}/library`}>{c.self}</Link> : <button type="button" className={styles.secondary} onClick={onNewAnalysis}>{c.other}</button>}
     </div>
     {confirmation ? <section className={styles.sharePanel} aria-label={c.share}>
       <p>{c.privacy}</p><div>
@@ -87,8 +90,8 @@ export default function LibraryReport({ data, locale, owner, submittedInput, onR
     {image ? <details className={styles.imagePreview} open>
       <summary>{c.imagePreview}</summary>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.url} alt={c.imagePreview} width={image.index === undefined ? 1600 : 1080} height={image.index === undefined ? 2000 : 1350} />
-      <a className={styles.secondary} href={image.url} download={`playalike-library-${image.index === undefined ? 'four-cards' : image.index + 1}.png`}>{c.download}</a>
+      <img src={image.url} alt={c.imagePreview} width={image.index === undefined ? 1600 : 1080} height={image.index === undefined ? 2200 : 1400} />
+      <a className={styles.secondary} href={image.url} download={`playalike-base-${image.index === undefined ? 'overview' : image.index + 1}.png`}>{c.download}</a>
     </details> : null}
     {error ? <p role="alert" className={styles.error}>{error}</p> : null}
     {owner?.profile.steamId64 ? <LibraryRecommendations key={owner.profile.steamId64} steamId={owner.profile.steamId64} locale={locale} /> : null}

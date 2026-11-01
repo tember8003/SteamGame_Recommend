@@ -114,7 +114,7 @@ export const en = {
     },
     library: {
       title: "Steam library analysis",
-      description: "Turn your Steam library into a collector’s ledger, a playful verdict, gamer attributes and a taste diagnosis. Save your cards or share a profile-free report.",
+      description: "Explore a genre-inspired 2D base shaped by your Steam play history. Visit storage, a memory exhibition, character attributes and an adventure map, then share a profile-free result.",
     },
     profile: {
       title: "Steam recommendations from your profile",
@@ -164,7 +164,7 @@ export const en = {
     similarGreeting: "Let us find your next adventure.",
     similarCta: "Find a game",
     libraryTitle: "Steam library analysis",
-    libraryDesc: "Your game history, read in four playful cards",
+    libraryDesc: "A personal 2D base shaped by the genres you play",
     libraryGreeting: "Your game history tells a story.",
     libraryCta: "Explore my library",
     searchMethods: "Choose how to find a game",
@@ -192,7 +192,7 @@ export const en = {
       random: { title: "Tag-Based Random", desc: "Select preferred genres and styles to discover games randomly" },
       input: { title: "Custom Input", desc: "Enter gaming preferences for accurate tailored recommendations" },
       match: { title: "Requirement Match", desc: "Describe what you want and set constraints to get matched picks with reasons" },
-      library: { title: "Library Analysis", desc: "Read your game history in four documents: ledger, verdict, attributes and diagnosis" },
+      library: { title: "Library Analysis", desc: "Explore your collection, favorite games and preferences in a genre-inspired base" },
       profile: { title: "Profile-Based", desc: "Analyze your gaming profile to match your playing style" },
       recent: { title: "Recent Play Based", desc: "Analyze last 2 weeks gaming patterns for perfect recommendations" },
       similar: { title: "Similar Games", desc: "Discover games with similar tags to your favorites" },

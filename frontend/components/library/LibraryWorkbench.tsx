@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Header from '@/components/Header';
 import SteamIdGuide from '@/components/SteamIdGuide';
 import WorkshopIntro from '@/components/WorkshopIntro';
@@ -22,7 +22,10 @@ export default function LibraryWorkbench({ locale }: { locale: Locale }) {
   const [invalid, setInvalid] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [reportKey, setReportKey] = useState(0);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (reportKey) resultHeading.current?.focus(); }, [reportKey]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLDetailsElement>(null);
   const lock = useRef(false);
   const cooldown = useCooldown();
   async function analyze() {
@@ -36,8 +39,7 @@ export default function LibraryWorkbench({ locale }: { locale: Locale }) {
     } catch (cause) { setError(libraryError(cause, locale)); setInvalid(cause instanceof ApiError && (cause.status === 400 || cause.code === 'STEAM_PROFILE_NOT_FOUND')); cooldown.fromError(cause); }
     finally { lock.current = false; setLoading(false); }
   }
-  return <><Header /><main className={styles.page}>
-    <WorkshopIntro compact place="archive" title={c.title} subtitle={c.subtitle} />
+  const inputPanel = (
     <section className={styles.inputPanel} aria-labelledby="library-input-title">
       <h2 id="library-input-title">{c.inputTitle}</h2>
       <form noValidate onSubmit={event => { event.preventDefault(); void analyze(); }}>
@@ -52,6 +54,10 @@ export default function LibraryWorkbench({ locale }: { locale: Locale }) {
       {loading ? <div role="status" className={styles.status}><p>{c.loading}</p><p>{c.loadingHint}</p></div> : null}
       {error ? <p id="library-input-error" role="alert" className={styles.error}>{error}{cooldown.remaining ? ` ${cooldown.remaining} ${c.wait}` : ''}</p> : null}
     </section>
+  );
+  return <><Header /><main className={styles.page}>
+    <WorkshopIntro compact place="archive" title={c.title} subtitle={c.subtitle} />
+    {result ? <details ref={editInputRef} className={styles.editInput}><summary>{c.other}</summary>{inputPanel}</details> : inputPanel}
     {result ? <>
       <header className={styles.resultHeader}>
         {result.profile.avatarUrl && !avatarFailed ? (
@@ -59,9 +65,9 @@ export default function LibraryWorkbench({ locale }: { locale: Locale }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={result.profile.avatarUrl} width={64} height={64} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(true)} />
         ) : <span className={styles.avatar} aria-hidden="true">▤</span>}
-        <div><h2>{c.result}</h2><p>{result.profile.personaName || c.anonymous}</p></div>
+        <div><h2 ref={resultHeading} tabIndex={-1}>{c.result}</h2><p>{result.profile.personaName || c.anonymous}</p></div>
       </header>
-      <LibraryReport key={reportKey} data={result} owner={result} locale={locale} submittedInput={submittedInput} onRefresh={setResult} />
+      <LibraryReport key={reportKey} data={result} owner={result} locale={locale} submittedInput={submittedInput} onRefresh={setResult} onNewAnalysis={() => { if (editInputRef.current) editInputRef.current.open = true; inputRef.current?.focus(); }} />
     </> : !loading ? <div className={styles.ready}><p>{c.preview}</p><p>{c.ready}</p></div> : null}
   </main></>;
 }
