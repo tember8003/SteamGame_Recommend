@@ -388,16 +388,21 @@
     {
       "code": "GMHS",
       "name": {
-        "ko": "제국의 설계자",
-        "en": "The Empire Architect"
+        "ko": "에이전트 47",
+        "en": "Agent 47"
       },
+      "work": {
+        "ko": "히트맨",
+        "en": "HITMAN World of Assassination"
+      },
+      "workAppid": 1659040,
       "oneLiner": {
-        "ko": "혼자 판을 짜서 끝내 제국을 세우는 사람",
-        "en": "Plans the whole map alone and builds an empire anyway"
+        "ko": "혼자 치밀하게 계획을 세워 완벽해질 때까지 다시 해 보는 사람",
+        "en": "Plans meticulously alone and retries until it goes perfectly"
       },
       "description": {
-        "ko": "숫자와 표를 보면 마음이 편해지는 타입이에요. 까다로운 조건일수록 계획을 더 촘촘히 짜고, 혼자 천천히 키워 낸 결과물에서 가장 큰 보람을 느껴요. 한 판이 몇 시간씩 이어져도 지루하지 않아요.",
-        "en": "Spreadsheets feel like home to you. The tougher the rules, the tighter your plan, and nothing beats watching something you grew slowly on your own. A single run can last hours and never get boring."
+        "ko": "시스템과 동선을 하나하나 파악하고 혼자 조용히 계획을 세우는 걸 좋아해요. 계획이 틀어지면 처음부터 다시 해 보며 빈틈을 메우고, 한 치의 어긋남 없이 풀어낼 때 가장 큰 보람을 느껴요. 한 판에 오래 매달려도 지루하지 않아요.",
+        "en": "You like studying systems and routes piece by piece and planning quietly on your own. When a plan falls apart, you start over and close the gaps, and nothing beats pulling it off without a single slip. Spending a long time on one run never gets boring."
       },
       "traits": {
         "ko": "성장, 시스템, 도전, 솔로",
@@ -436,24 +441,29 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 제국의 설계자!",
-          "en": "I'm an Empire Architect!"
+          "ko": "나는 에이전트 47형 게이머",
+          "en": "I'm an Agent 47-type gamer"
         },
         "text": {
-          "ko": "혼자 판을 짜서 제국을 세우는 타입이래요. 너는 어떤 게임 유형이야?",
-          "en": "Apparently I plan alone and build empires. What's your game type?"
+          "ko": "혼자 치밀하게 계획을 세우고 완벽할 때까지 다시 하는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "Apparently I plan alone, down to the last detail, and retry until it's perfect. What's your game type?"
         }
       }
     },
     {
       "code": "GMHP",
       "name": {
-        "ko": "공략대 지휘관",
-        "en": "The Raid Commander"
+        "ko": "레스터",
+        "en": "Lester"
       },
+      "work": {
+        "ko": "GTA V",
+        "en": "Grand Theft Auto V"
+      },
+      "workAppid": 271590,
       "oneLiner": {
-        "ko": "작전은 제가 짤 테니 다들 따라와요",
-        "en": "I'll draw up the plan, everybody follow me"
+        "ko": "판을 읽고 역할을 나눠 줄 때 가장 빛나는 사람",
+        "en": "Shines most when reading the board and handing out roles"
       },
       "description": {
         "ko": "팀이 어려운 상대 앞에 서면 어느새 작전을 정리하고 있는 사람이에요. 역할을 나누고 순서를 맞추는 일이 즐겁고, 다 같이 어려운 판을 깨는 순간이 최고예요. 실패해도 바로 다음 작전을 꺼내요.",
@@ -497,21 +507,26 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 공략대 지휘관!",
-          "en": "I'm a Raid Commander!"
+          "ko": "나는 레스터형 게이머",
+          "en": "I'm a Lester-type gamer"
         },
         "text": {
-          "ko": "작전은 내가 짤 테니 다들 따라오래요. 너는 어떤 게임 유형이야?",
-          "en": "I'll draw up the plan, and everyone follows. What's your game type?"
+          "ko": "판을 읽고 역할을 나누는 게 내 몫이래요. 너는 어떤 게임 유형이야?",
+          "en": "Reading the board and handing out roles is my thing. What's your game type?"
         }
       }
     },
     {
       "code": "GMCS",
       "name": {
-        "ko": "차분한 운영자",
-        "en": "The Calm Operator"
+        "ko": "토르비욘",
+        "en": "Torbjörn"
       },
+      "work": {
+        "ko": "오버워치",
+        "en": "Overwatch 2"
+      },
+      "workAppid": 2357570,
       "oneLiner": {
         "ko": "조용히 돌아가는 공장을 보며 흐뭇해하는 사람",
         "en": "Smiles at a quietly humming factory"
@@ -558,8 +573,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 차분한 운영자!",
-          "en": "I'm a Calm Operator!"
+          "ko": "나는 토르비욘형 게이머",
+          "en": "I'm a Torbjörn-type gamer"
         },
         "text": {
           "ko": "조용히 돌아가는 공장을 보면 마음이 편해지는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -570,9 +585,14 @@
     {
       "code": "GMCP",
       "name": {
-        "ko": "협동 관리자",
-        "en": "The Co-op Manager"
+        "ko": "로빈",
+        "en": "Robin"
       },
+      "work": {
+        "ko": "스타듀 밸리",
+        "en": "Stardew Valley"
+      },
+      "workAppid": 413150,
       "oneLiner": {
         "ko": "함께 굴리는 살림이 제일 즐거운 사람",
         "en": "Loves running things together with friends"
@@ -614,12 +634,13 @@
       "featuredAppids": [
         728880,
         526870,
-        648800
+        648800,
+        413150
       ],
       "share": {
         "title": {
-          "ko": "나는 협동 관리자!",
-          "en": "I'm a Co-op Manager!"
+          "ko": "나는 로빈형 게이머",
+          "en": "I'm a Robin-type gamer"
         },
         "text": {
           "ko": "친구들과 같이 살림을 굴릴 때 가장 신나는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -630,9 +651,14 @@
     {
       "code": "ENHS",
       "name": {
-        "ko": "이야기 속 모험가",
-        "en": "The Storybound Adventurer"
+        "ko": "기사",
+        "en": "The Knight"
       },
+      "work": {
+        "ko": "할로우 나이트",
+        "en": "Hollow Knight"
+      },
+      "workAppid": 367520,
       "oneLiner": {
         "ko": "어려운 길도 이야기가 있으면 걸어가는 사람",
         "en": "Walks the hard road if there's a story at the end"
@@ -682,8 +708,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 이야기 속 모험가!",
-          "en": "I'm a Storybound Adventurer!"
+          "ko": "나는 기사형 게이머",
+          "en": "I'm a Knight-type gamer"
         },
         "text": {
           "ko": "어려운 길도 이야기가 있으면 걸어가는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -694,12 +720,17 @@
     {
       "code": "ENHP",
       "name": {
-        "ko": "떠돌이 원정대장",
-        "en": "The Wandering Expedition Leader"
+        "ko": "카를라크",
+        "en": "Karlach"
       },
+      "work": {
+        "ko": "발더스 게이트 3",
+        "en": "Baldur's Gate 3"
+      },
+      "workAppid": 1086940,
       "oneLiner": {
-        "ko": "지도 끝까지 같이 가 볼 사람 모여라",
-        "en": "Who's coming with me to the edge of the map?"
+        "ko": "위험한 길도 동료와 함께라면 신나게 가는 사람",
+        "en": "Happily takes dangerous roads when friends come along"
       },
       "description": {
         "ko": "친구들을 모아 넓은 세계로 떠나는 걸 좋아해요. 위험한 곳일수록 같이 가면 더 재미있고, 돌아와서 나누는 무용담이 최고의 보상이에요. 길잡이 역할이 은근히 잘 어울려요.",
@@ -746,21 +777,26 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 떠돌이 원정대장!",
-          "en": "I'm a Wandering Expedition Leader!"
+          "ko": "나는 카를라크형 게이머",
+          "en": "I'm a Karlach-type gamer"
         },
         "text": {
-          "ko": "친구들과 지도 끝까지 가 보는 타입이래요. 너는 어떤 게임 유형이야?",
-          "en": "I'm the one who leads friends to the edge of the map. What's your game type?"
+          "ko": "위험한 길도 동료와 함께라면 신나게 가는 타입이래요. 너는 어떤 게임 유형이야?",
+          "en": "I happily take dangerous roads with friends. What's your game type?"
         }
       }
     },
     {
       "code": "ENCS",
       "name": {
-        "ko": "느긋한 방랑자",
-        "en": "The Easygoing Wanderer"
+        "ko": "가브로",
+        "en": "Gabbro"
       },
+      "work": {
+        "ko": "Outer Wilds",
+        "en": "Outer Wilds"
+      },
+      "workAppid": 753640,
       "oneLiner": {
         "ko": "목적지 없이 걷는 길이 제일 좋은 사람",
         "en": "Likes the road best when it has no destination"
@@ -807,8 +843,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 느긋한 방랑자!",
-          "en": "I'm an Easygoing Wanderer!"
+          "ko": "나는 가브로형 게이머",
+          "en": "I'm a Gabbro-type gamer"
         },
         "text": {
           "ko": "목적지 없이 걷는 길이 제일 좋은 타입이래요. 너는 어떤 게임 유형이야?",
@@ -819,9 +855,14 @@
     {
       "code": "ENCP",
       "name": {
-        "ko": "수다쟁이 탐험가",
-        "en": "The Chatty Explorer"
+        "ko": "조야",
+        "en": "Zoya"
       },
+      "work": {
+        "ko": "트라인 4: 악몽의 왕자",
+        "en": "Trine 4: The Nightmare Prince"
+      },
+      "workAppid": 690640,
       "oneLiner": {
         "ko": "같이 걸으며 수다 떠는 게 모험의 절반",
         "en": "Half the adventure is chatting along the way"
@@ -863,12 +904,13 @@
       "featuredAppids": [
         1426210,
         1222700,
-        477160
+        477160,
+        690640
       ],
       "share": {
         "title": {
-          "ko": "나는 수다쟁이 탐험가!",
-          "en": "I'm a Chatty Explorer!"
+          "ko": "나는 조야형 게이머",
+          "en": "I'm a Zoya-type gamer"
         },
         "text": {
           "ko": "같이 걸으며 수다 떠는 게 모험의 절반이래요. 너는 어떤 게임 유형이야?",
@@ -879,9 +921,14 @@
     {
       "code": "EMHS",
       "name": {
-        "ko": "극한 개척자",
-        "en": "The Extreme Pioneer"
+        "ko": "윌슨",
+        "en": "Wilson"
       },
+      "work": {
+        "ko": "돈 스타브",
+        "en": "Don't Starve"
+      },
+      "workAppid": 219740,
       "oneLiner": {
         "ko": "아무것도 없는 곳에서 살아남는 맛을 아는 사람",
         "en": "Knows the thrill of surviving with nothing"
@@ -928,8 +975,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 극한 개척자!",
-          "en": "I'm an Extreme Pioneer!"
+          "ko": "나는 윌슨형 게이머",
+          "en": "I'm a Wilson-type gamer"
         },
         "text": {
           "ko": "아무것도 없는 곳에서 살아남는 맛을 아는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -940,9 +987,14 @@
     {
       "code": "EMHP",
       "name": {
-        "ko": "전장 선봉대",
-        "en": "The Frontline Vanguard"
+        "ko": "트레이서",
+        "en": "Tracer"
       },
+      "work": {
+        "ko": "오버워치",
+        "en": "Overwatch 2"
+      },
+      "workAppid": 2357570,
       "oneLiner": {
         "ko": "제일 먼저 뛰어들고 제일 크게 웃는 사람",
         "en": "First to charge in, loudest to laugh"
@@ -984,12 +1036,13 @@
       "featuredAppids": [
         252490,
         251570,
-        108600
+        108600,
+        2357570
       ],
       "share": {
         "title": {
-          "ko": "나는 전장 선봉대!",
-          "en": "I'm a Frontline Vanguard!"
+          "ko": "나는 트레이서형 게이머",
+          "en": "I'm a Tracer-type gamer"
         },
         "text": {
           "ko": "제일 먼저 뛰어들고 제일 크게 웃는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1000,9 +1053,14 @@
     {
       "code": "EMCS",
       "name": {
-        "ko": "샌드박스 유랑자",
-        "en": "The Sandbox Drifter"
+        "ko": "테라리아의 모험가",
+        "en": "The Terrarian"
       },
+      "work": {
+        "ko": "테라리아",
+        "en": "Terraria"
+      },
+      "workAppid": 105600,
       "oneLiner": {
         "ko": "정해진 목표 없이 내 맘대로 만지작거리는 사람",
         "en": "Tinkers around with no fixed goal"
@@ -1048,8 +1106,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 샌드박스 유랑자!",
-          "en": "I'm a Sandbox Drifter!"
+          "ko": "나는 테라리아의 모험가형 게이머",
+          "en": "I'm a Terrarian-type gamer"
         },
         "text": {
           "ko": "정해진 목표 없이 내 맘대로 만지작거리는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1060,9 +1118,14 @@
     {
       "code": "EMCP",
       "name": {
-        "ko": "모험 설계자",
-        "en": "The Adventure Designer"
+        "ko": "아틀라스와 P-바디",
+        "en": "Atlas and P-body"
       },
+      "work": {
+        "ko": "Portal 2",
+        "en": "Portal 2"
+      },
+      "workAppid": 620,
       "oneLiner": {
         "ko": "친구들과 놀 판을 직접 만드는 사람",
         "en": "Builds the playground for friends to play in"
@@ -1104,12 +1167,13 @@
       "featuredAppids": [
         4000,
         1621690,
-        322330
+        322330,
+        620
       ],
       "share": {
         "title": {
-          "ko": "나는 모험 설계자!",
-          "en": "I'm an Adventure Designer!"
+          "ko": "나는 아틀라스와 P-바디형 게이머",
+          "en": "I'm an Atlas and P-body-type gamer"
         },
         "text": {
           "ko": "친구들과 놀 판을 직접 만드는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1120,9 +1184,14 @@
     {
       "code": "GNHS",
       "name": {
-        "ko": "서사의 수호자",
-        "en": "The Guardian of Stories"
+        "ko": "아서 모건",
+        "en": "Arthur Morgan"
       },
+      "work": {
+        "ko": "레드 데드 리뎀션 2",
+        "en": "Red Dead Redemption 2"
+      },
+      "workAppid": 1174180,
       "oneLiner": {
         "ko": "선택 하나하나를 끝까지 책임지는 사람",
         "en": "Owns every choice all the way to the end"
@@ -1164,12 +1233,13 @@
       "featuredAppids": [
         1086940,
         435150,
-        292030
+        292030,
+        1174180
       ],
       "share": {
         "title": {
-          "ko": "나는 서사의 수호자!",
-          "en": "I'm a Guardian of Stories!"
+          "ko": "나는 아서 모건형 게이머",
+          "en": "I'm an Arthur Morgan-type gamer"
         },
         "text": {
           "ko": "선택 하나하나를 끝까지 책임지는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1180,9 +1250,14 @@
     {
       "code": "GNHP",
       "name": {
-        "ko": "길드의 영웅",
-        "en": "The Guild Hero"
+        "ko": "라인하르트",
+        "en": "Reinhardt"
       },
+      "work": {
+        "ko": "오버워치",
+        "en": "Overwatch 2"
+      },
+      "workAppid": 2357570,
       "oneLiner": {
         "ko": "길드 채팅창에서 제일 바쁜 사람",
         "en": "The busiest voice in the guild chat"
@@ -1233,8 +1308,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 길드의 영웅!",
-          "en": "I'm a Guild Hero!"
+          "ko": "나는 라인하르트형 게이머",
+          "en": "I'm a Reinhardt-type gamer"
         },
         "text": {
           "ko": "길드 채팅창에서 제일 바쁜 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1245,9 +1320,14 @@
     {
       "code": "GNCS",
       "name": {
-        "ko": "세계관 수집가",
-        "en": "The Lore Collector"
+        "ko": "미미르",
+        "en": "Mimir"
       },
+      "work": {
+        "ko": "갓 오브 워",
+        "en": "God of War"
+      },
+      "workAppid": 1593500,
       "oneLiner": {
         "ko": "설정집을 읽다가 밤을 새우는 사람",
         "en": "Stays up all night reading the lore"
@@ -1293,8 +1373,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 세계관 수집가!",
-          "en": "I'm a Lore Collector!"
+          "ko": "나는 미미르형 게이머",
+          "en": "I'm a Mimir-type gamer"
         },
         "text": {
           "ko": "설정집을 읽다가 밤을 새우는 타입이래요. 너는 어떤 게임 유형이야?",
@@ -1305,9 +1385,14 @@
     {
       "code": "GNCP",
       "name": {
-        "ko": "마을의 해결사",
-        "en": "The Village Fixer"
+        "ko": "루이스 촌장",
+        "en": "Mayor Lewis"
       },
+      "work": {
+        "ko": "스타듀 밸리",
+        "en": "Stardew Valley"
+      },
+      "workAppid": 413150,
       "oneLiner": {
         "ko": "이웃 부탁이라면 일단 팔을 걷어붙이는 사람",
         "en": "Rolls up their sleeves for any neighbor's request"
@@ -1353,8 +1438,8 @@
       ],
       "share": {
         "title": {
-          "ko": "나는 마을의 해결사!",
-          "en": "I'm a Village Fixer!"
+          "ko": "나는 루이스 촌장형 게이머",
+          "en": "I'm a Mayor Lewis-type gamer"
         },
         "text": {
           "ko": "이웃 부탁이라면 일단 팔을 걷어붙이는 타입이래요. 너는 어떤 게임 유형이야?",

@@ -144,6 +144,10 @@ public final class TasteContentValidator {
                 errors.add(label + " code is not a combination of the axes in axis order");
             }
             checkText(label + " name", t.name(), errors);
+            checkText(label + " work", t.work(), errors);
+            if (t.workAppid() <= 0) {
+                errors.add(label + " workAppid must be positive, was " + t.workAppid());
+            }
             checkText(label + " oneLiner", t.oneLiner(), errors);
             checkText(label + " description", t.description(), errors);
             checkText(label + " traits", t.traits(), errors);

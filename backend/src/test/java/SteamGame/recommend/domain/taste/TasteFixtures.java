@@ -59,7 +59,7 @@ public final class TasteFixtures {
     }
 
     public static TasteType type(String code) {
-        return new TasteType(code, text("name " + code), text("one " + code), text("desc " + code),
+        return new TasteType(code, text("name " + code), text("work " + code), 100L, text("one " + code), text("desc " + code),
                 text("traits " + code), weights(6), List.of(1L, 2L, 3L),
                 new ShareText(text("title " + code), text("share " + code)));
     }

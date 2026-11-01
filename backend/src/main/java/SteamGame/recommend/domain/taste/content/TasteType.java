@@ -6,6 +6,8 @@ import java.util.List;
 public record TasteType(
         String code,
         LocalizedText name,
+        LocalizedText work,
+        long workAppid,
         LocalizedText oneLiner,
         LocalizedText description,
         LocalizedText traits,

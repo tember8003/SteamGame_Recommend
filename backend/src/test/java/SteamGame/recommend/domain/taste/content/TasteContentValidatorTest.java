@@ -29,15 +29,15 @@ class TasteContentValidatorTest {
     }
 
     private static TasteType withWeights(TasteType t, List<TagWeight> w) {
-        return new TasteType(t.code(), t.name(), t.oneLiner(), t.description(), t.traits(), w, t.featuredAppids(), t.share());
+        return new TasteType(t.code(), t.name(), t.work(), t.workAppid(), t.oneLiner(), t.description(), t.traits(), w, t.featuredAppids(), t.share());
     }
 
     private static TasteType withAppids(TasteType t, List<Long> ids) {
-        return new TasteType(t.code(), t.name(), t.oneLiner(), t.description(), t.traits(), t.tagWeights(), ids, t.share());
+        return new TasteType(t.code(), t.name(), t.work(), t.workAppid(), t.oneLiner(), t.description(), t.traits(), t.tagWeights(), ids, t.share());
     }
 
     private static TasteType withCode(TasteType t, String code) {
-        return new TasteType(code, t.name(), t.oneLiner(), t.description(), t.traits(), t.tagWeights(), t.featuredAppids(), t.share());
+        return new TasteType(code, t.name(), t.work(), t.workAppid(), t.oneLiner(), t.description(), t.traits(), t.tagWeights(), t.featuredAppids(), t.share());
     }
 
     @Test
@@ -65,6 +65,30 @@ class TasteContentValidatorTest {
         assertThatThrownBy(() -> TasteContentValidator.validate(withQuestions(c, qs)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("question ids must be 1..12 in list order");
+    }
+
+    @Test
+    void blankWork() {
+        TasteContent c = validContent();
+        for (LocalizedText bad : new LocalizedText[]{new LocalizedText("", "Work"), new LocalizedText("작품", " ")}) {
+            TasteContent broken = mapType(c, 0, t -> new TasteType(t.code(), t.name(), bad, t.workAppid(),
+                    t.oneLiner(), t.description(), t.traits(), t.tagWeights(), t.featuredAppids(), t.share()));
+            assertThatThrownBy(() -> TasteContentValidator.validate(broken))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("work");
+        }
+    }
+
+    @Test
+    void nonPositiveWorkAppid() {
+        TasteContent c = validContent();
+        for (long bad : new long[]{0L, -5L}) {
+            TasteContent broken = mapType(c, 0, t -> new TasteType(t.code(), t.name(), t.work(), bad,
+                    t.oneLiner(), t.description(), t.traits(), t.tagWeights(), t.featuredAppids(), t.share()));
+            assertThatThrownBy(() -> TasteContentValidator.validate(broken))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("workAppid");
+        }
     }
 
     @Test
@@ -133,7 +157,7 @@ class TasteContentValidatorTest {
     @Test
     void blankEnglishText_fails() {
         TasteContent c = validContent();
-        TasteContent broken = mapType(c, 3, t -> new TasteType(t.code(), t.name(),
+        TasteContent broken = mapType(c, 3, t -> new TasteType(t.code(), t.name(), t.work(), t.workAppid(),
                 new LocalizedText("한 줄", ""), t.description(), t.traits(), t.tagWeights(), t.featuredAppids(), t.share()));
         assertThatThrownBy(() -> TasteContentValidator.validate(broken))
                 .isInstanceOf(IllegalStateException.class);
