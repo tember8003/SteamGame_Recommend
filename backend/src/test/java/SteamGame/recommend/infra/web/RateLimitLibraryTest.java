@@ -41,7 +41,8 @@ class RateLimitLibraryTest {
     @MockitoBean FunnelEventService eventService;
 
     private MockHttpServletRequestBuilder postFrom(String path, String ip, String body) {
-        return post(path)
+        // URI 객체로 넘겨야 MockMvc가 퍼센트 문자를 다시 인코딩하지 않고 Tomcat처럼 원문 그대로 둔다
+        return post(java.net.URI.create(path))
                 .with(req -> { req.setRemoteAddr(ip); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);
@@ -60,14 +61,18 @@ class RateLimitLibraryTest {
         assertThat(other).isNotEqualTo(429);
     }
 
-    @Test
-    void analyze_first10AreOk_11th429() throws Exception {
+    private void stubAnalyze() {
         String tag = content.content().tagGroups().get("STRATEGY").get(0);
         LibraryAnalysis analysis = LibraryAnalyzer.analyze(
                 List.of(new OwnedGame(1, "G", 600, 0, null)), Map.of(1L, List.of(tag)), t -> 0.5,
                 content.content(), "76561198012345678");
         when(service.analyze("abc")).thenReturn(new LibraryAnalysisService.Analyzed("aid",
                 new SteamProfile("76561198012345678", "n", "u"), analysis));
+    }
+
+    @Test
+    void analyze_first10AreOk_11th429() throws Exception {
+        stubAnalyze();
         for (int i = 0; i < 10; i++) {
             assertThat(mvc.perform(postFrom("/api/library/analyze", "10.2.0.1", "{\"steamId\":\"abc\"}"))
                     .andReturn().getResponse().getStatus()).as("request %d", i + 1).isEqualTo(200);
@@ -88,5 +93,31 @@ class RateLimitLibraryTest {
                     .andReturn().getResponse().getStatus();
             assertThat(code).isNotEqualTo(429);
         }
+    }
+
+    // 글자 하나를 퍼센트 인코딩한 경로로 우회하지 못해야 한다, 같은 IP의 일반 경로와 한 버킷을 쓴다
+    @Test
+    void encodedPath_sharesBucketWithPlainPath() throws Exception {
+        stubAnalyze();
+        String body = "{\"steamId\":\"abc\"}";
+        for (int i = 0; i < 10; i++) {
+            int code = mvc.perform(postFrom("/api/library/%61nalyze", "10.2.0.4", body))
+                    .andReturn().getResponse().getStatus();
+            assertThat(code).as("encoded request %d (컨트롤러 도달)", i + 1).isEqualTo(200);
+        }
+        mvc.perform(postFrom("/api/library/analyze", "10.2.0.4", body)).andExpect(status().isTooManyRequests());
+        mvc.perform(postFrom("/api/library/%61nalyze", "10.2.0.4", body)).andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void encodedSharePath_is21stRequest429() throws Exception {
+        when(service.share("abc")).thenReturn("sid");
+        for (int i = 0; i < 20; i++) {
+            int code = mvc.perform(postFrom("/api/library/%73hare", "10.2.0.5", "{\"analysisId\":\"abc\"}"))
+                    .andReturn().getResponse().getStatus();
+            assertThat(code).as("request %d (컨트롤러 도달)", i + 1).isEqualTo(200);
+        }
+        mvc.perform(postFrom("/api/library/%73hare", "10.2.0.5", "{\"analysisId\":\"abc\"}"))
+                .andExpect(status().isTooManyRequests());
     }
 }

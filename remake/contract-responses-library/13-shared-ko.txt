@@ -1,0 +1,128 @@
+Request: GET /api/library/share/ZlrO0AqTzWoflNwdQYeXiw?lang=ko
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+{
+  "limitedData" : false,
+  "stats" : {
+    "ownedCount" : 25,
+    "totalHours" : 704.0,
+    "zeroPlayCount" : 10,
+    "zeroPlayRatio" : 0.4,
+    "mostPlayed" : {
+      "appid" : 292030,
+      "name" : "The Witcher 3: Wild Hunt",
+      "hours" : 150.0,
+      "ratio" : 0.213
+    },
+    "recentGameCount" : 3,
+    "recentHours" : 14.0,
+    "matchedCount" : 25,
+    "topTags" : [ {
+      "tag" : "Open World",
+      "hours" : 93.0,
+      "ratio" : 0.132
+    }, {
+      "tag" : "RPG",
+      "hours" : 89.0,
+      "ratio" : 0.126
+    }, {
+      "tag" : "Story Rich",
+      "hours" : 78.2,
+      "ratio" : 0.111
+    }, {
+      "tag" : "4X",
+      "hours" : 40.0,
+      "ratio" : 0.057
+    }, {
+      "tag" : "Strategy",
+      "hours" : 40.0,
+      "ratio" : 0.057
+    }, {
+      "tag" : "Turn-Based Strategy",
+      "hours" : 40.0,
+      "ratio" : 0.057
+    }, {
+      "tag" : "Choices Matter",
+      "hours" : 37.5,
+      "ratio" : 0.053
+    }, {
+      "tag" : "Souls-like",
+      "hours" : 26.3,
+      "ratio" : 0.037
+    }, {
+      "tag" : "City Builder",
+      "hours" : 25.0,
+      "ratio" : 0.036
+    }, {
+      "tag" : "Management",
+      "hours" : 25.0,
+      "ratio" : 0.036
+    } ]
+  },
+  "ledger" : {
+    "code" : "COLLECTOR",
+    "text" : "안 해 본 게임이 {zeroCount}개로 전체의 {zeroRatioPct}%입니다. 수집가의 기질이 보입니다.",
+    "params" : {
+      "zeroCount" : 10,
+      "zeroRatioPct" : 40
+    }
+  },
+  "verdict" : {
+    "crime" : {
+      "code" : "PILE_OF_SHAME",
+      "text" : "게임은 모으는데 플레이는 안 하는 죄",
+      "params" : { }
+    },
+    "sentence" : {
+      "code" : "SENTENCE_PILE_OF_SHAME",
+      "text" : "다음 할인 때 한 개만 구매할 것",
+      "params" : { }
+    }
+  },
+  "gamerStats" : [ {
+    "code" : "EXPLORATION",
+    "value" : 36,
+    "label" : "탐험 성향"
+  }, {
+    "code" : "STRATEGY",
+    "value" : 50,
+    "label" : "전략 성향"
+  }, {
+    "code" : "COLLECTION",
+    "value" : 26,
+    "label" : "수집 성향"
+  }, {
+    "code" : "DIVERSITY",
+    "value" : 77,
+    "label" : "취향 다양성"
+  }, {
+    "code" : "COOP",
+    "value" : 4,
+    "label" : "협동 성향"
+  } ],
+  "diagnosis" : {
+    "favoriteTag" : "Open World",
+    "concentratedGames" : [ {
+      "appid" : 292030,
+      "name" : "The Witcher 3: Wild Hunt",
+      "hours" : 150.0,
+      "ratio" : 0.213
+    }, {
+      "appid" : 289070,
+      "name" : "Sid Meier's Civilization VI",
+      "hours" : 120.0,
+      "ratio" : 0.17
+    }, {
+      "appid" : 1091500,
+      "name" : "Cyberpunk 2077",
+      "hours" : 90.0,
+      "ratio" : 0.128
+    } ],
+    "hiddenTaste" : "Cozy"
+  }
+}
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Type, Transfer-Encoding, Date]

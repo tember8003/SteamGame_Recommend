@@ -1,0 +1,14 @@
+Request: GET /api/library/share/doesnotexist1?lang=ko
+
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+{
+  "errorCode" : "NOT_FOUND",
+  "message" : "SHARE_NOT_FOUND",
+  "timestamp" : "2026-11-01T22:28:02.269944",
+  "details" : { }
+}
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Type, Transfer-Encoding, Date]

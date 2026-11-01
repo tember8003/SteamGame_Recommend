@@ -1,0 +1,9 @@
+Request: POST /api/events
+Request body: {"type":"SHARE_CLICK","ref":"LIBRARY","channel":"LINK","clientId":"a3f9c1e2-7b4d-4e8a-9c21-5d6e7f8a9b0c"}
+
+HTTP/1.1 202 Accepted
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+(empty body)
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Length, Date]
