@@ -1,0 +1,15 @@
+Request: POST /api/library/analyze?lang=ko
+Request body: {"steamId":"76561198012345681","clientId":"a3f9c1e2-7b4d-4e8a-9c21-5d6e7f8a9b0c"}
+
+HTTP/1.1 422 Unprocessable Entity
+Content-Type: application/json
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+{
+  "errorCode" : "UNPROCESSABLE_ENTITY",
+  "message" : "LIBRARY_EMPTY",
+  "timestamp" : "2026-11-01T22:28:02.0701499",
+  "details" : { }
+}
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Type, Transfer-Encoding, Date]

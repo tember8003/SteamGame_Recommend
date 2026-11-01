@@ -1,0 +1,15 @@
+Request: POST /api/library/share
+Request body: {"analysisId":"00000000-0000-4000-8000-000000000000"}
+
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+{
+  "errorCode" : "NOT_FOUND",
+  "message" : "ANALYSIS_EXPIRED",
+  "timestamp" : "2026-11-01T22:28:02.2121473",
+  "details" : { }
+}
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Type, Transfer-Encoding, Date]

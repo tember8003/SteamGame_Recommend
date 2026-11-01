@@ -1,0 +1,15 @@
+Request: POST /api/library/analyze?lang=ko
+Request body: {"steamId":"76561198012345682","clientId":"a3f9c1e2-7b4d-4e8a-9c21-5d6e7f8a9b0c"}
+
+HTTP/1.1 503 Service Unavailable
+Content-Type: application/json
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+
+{
+  "errorCode" : "SERVICE_UNAVAILABLE",
+  "message" : "There was a temporary problem with the system, please try again in a moment.",
+  "timestamp" : "2026-11-01T22:28:02.0943374",
+  "details" : { }
+}
+
+[all response headers] [Vary, X-Content-Type-Options, X-XSS-Protection, Cache-Control, Pragma, Expires, X-Frame-Options, Referrer-Policy, Content-Type, Transfer-Encoding, Date, Connection]

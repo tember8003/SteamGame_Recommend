@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UrlPathHelper;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -43,6 +44,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final Set<String> POST_ONLY_PATHS =
             Set.of("/api/library/analyze", "/api/library/share");
 
+    // 라우팅과 같은 규칙으로 디코딩한 경로로 비교한다, 원문 URI만 보면 %61 같은 인코딩으로 제한을 피할 수 있음
+    private static final UrlPathHelper PATH_HELPER = new UrlPathHelper();
+
     private final RateLimitProperties props;
     private final ClientIpResolver clientIpResolver;
     private final ObjectMapper objectMapper;
@@ -64,7 +68,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true; // CORS 프리플라이트는 제외함
         }
-        String path = request.getRequestURI();
+        String path = PATH_HELPER.getLookupPathForRequest(request);
         if (POST_ONLY_PATHS.contains(path) && !"POST".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
@@ -75,7 +79,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String endpointKey = PATH_TO_KEY.get(request.getRequestURI());
+        String endpointKey = PATH_TO_KEY.get(PATH_HELPER.getLookupPathForRequest(request));
         RateLimitProperties.Limit limit = props.getEndpoints().get(endpointKey);
         if (limit == null) { // 설정 누락 시 제한 없이 통과함
             filterChain.doFilter(request, response);

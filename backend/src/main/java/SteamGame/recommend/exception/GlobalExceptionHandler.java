@@ -117,7 +117,12 @@ public class GlobalExceptionHandler {
         String message;
 
         if (e.getStatusCode().is5xxServerError()) {
-            log.error("Response status error: {} {}", e.getStatusCode().value(), e.getReason(), e);
+            if (e.getStatusCode().value() == HttpStatus.SERVICE_UNAVAILABLE.value()) {
+                // 외부 장애 때 요청마다 스택이 ERROR로 쌓이면 키 문제 같은 진짜 오류가 묻혀서 WARN으로 낮춘다
+                log.warn("Response status error: {} {}", e.getStatusCode().value(), e.getReason());
+            } else {
+                log.error("Response status error: {} {}", e.getStatusCode().value(), e.getReason(), e);
+            }
             message = "There was a temporary problem with the system, please try again in a moment.";
         } else {
             message = e.getReason() != null ? e.getReason()
