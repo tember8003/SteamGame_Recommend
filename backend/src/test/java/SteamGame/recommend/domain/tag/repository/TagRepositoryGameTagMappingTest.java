@@ -50,7 +50,8 @@ class TagRepositoryGameTagMappingTest extends PostgresTestBase {
 
         assertThat(rows).hasSize(3);
         for (Map<String, Object> row : rows) {
-            assertThat(row.keySet()).containsExactlyInAnyOrder("appId", "tagName");
+            assertThat(row.keySet()).containsExactlyInAnyOrder("appId", "tagName", "votes");
+            assertThat(row.get("votes")).isInstanceOf(Number.class);
             assertThat(row.get("appId")).isInstanceOf(Number.class);
             assertThat(row.get("tagName")).isInstanceOf(String.class);
         }

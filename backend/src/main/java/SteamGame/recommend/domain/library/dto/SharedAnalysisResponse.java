@@ -9,5 +9,6 @@ public record SharedAnalysisResponse(
         PhraseView ledger,
         VerdictView verdict,
         List<GamerStatView> gamerStats,
-        DiagnosisView diagnosis) {
+        DiagnosisView diagnosis,
+        GenreProfileView genreProfile) {
 }

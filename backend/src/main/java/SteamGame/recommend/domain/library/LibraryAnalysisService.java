@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.library;
 
+import SteamGame.recommend.domain.library.analysis.GenreProfiler;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalyzer;
 import SteamGame.recommend.domain.library.content.LibraryContent;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import SteamGame.recommend.domain.library.dto.LibraryViewMapper;
 import SteamGame.recommend.domain.library.dto.SharedAnalysisResponse;
 import SteamGame.recommend.domain.taste.content.Lang;
@@ -34,6 +36,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -133,7 +136,9 @@ public class LibraryAnalysisService {
             warnRarityNotLoaded();
         }
         Function<String, Double> rarity = rarityReady ? rarityCache::rarity : tag -> null;
-        LibraryAnalysis analysis = LibraryAnalyzer.analyze(games, tagsOf(games), rarity, content, steamId64);
+        Map<Long, Map<String, Integer>> tagVotes = tagVotesOf(games);
+        LibraryAnalysis analysis = LibraryAnalyzer.analyze(games, tagNames(tagVotes), rarity, content, steamId64)
+                .withGenreProfile(GenreProfiler.profile(games, tagVotes, content));
 
         String analysisId = UUID.randomUUID().toString();
         analyses.put(analysisId, analysis);
@@ -209,27 +214,44 @@ public class LibraryAnalysisService {
                 .with(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
                 .with(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
         if (!root.has("v")) {
-            return strict.readValue(root, LibraryAnalysis.class);
+            return strict.readValue(withOptionalFields(root), LibraryAnalysis.class);
         }
         JsonNode v = root.get("v");
         if (!v.isInt() || v.asInt() != SharedSnapshot.CURRENT_VERSION) {
             throw new UnsupportedSnapshotVersionException(v.isInt() ? String.valueOf(v.asInt()) : "non-integer");
         }
+        withOptionalFields(root.get("analysis"));
         return strict.readValue(root, SharedSnapshot.class).analysis();
     }
 
-    // appid별 태그 이름, 게임이 많은 계정도 IN 절이 커지지 않게 나눠서 읽는다
-    private Map<Long, List<String>> tagsOf(List<OwnedGame> games) {
+    // 나중에 더한 선택 필드가 옛 저장분에 없으면 null로 채운다, 빠진 필드를 실패로 보는 엄격 읽기를 다른 필드에는 그대로 적용하기 위함
+    // genreProfile은 장르 기능 전에 저장된 공유에 없다
+    private static JsonNode withOptionalFields(JsonNode analysis) {
+        if (analysis instanceof ObjectNode obj && !obj.has("genreProfile")) {
+            obj.putNull("genreProfile");
+        }
+        return analysis;
+    }
+
+    // appid별 태그 이름과 득표수, 게임이 많은 계정도 IN 절이 커지지 않게 나눠서 읽는다
+    private Map<Long, Map<String, Integer>> tagVotesOf(List<OwnedGame> games) {
         List<Long> appids = games.stream().map(OwnedGame::appid).distinct().toList();
-        Map<Long, List<String>> tags = new HashMap<>();
+        Map<Long, Map<String, Integer>> tags = new HashMap<>();
         for (int from = 0; from < appids.size(); from += TAG_QUERY_CHUNK) {
             List<Long> chunk = new ArrayList<>(appids.subList(from, Math.min(from + TAG_QUERY_CHUNK, appids.size())));
             for (Map<String, Object> row : tagRepository.findGameTagMapping(chunk)) {
                 Long appid = ((Number) row.get("appId")).longValue();
-                tags.computeIfAbsent(appid, k -> new ArrayList<>()).add((String) row.get("tagName"));
+                int votes = ((Number) row.get("votes")).intValue();
+                tags.computeIfAbsent(appid, k -> new LinkedHashMap<>()).put((String) row.get("tagName"), votes);
             }
         }
         return tags;
+    }
+
+    private static Map<Long, List<String>> tagNames(Map<Long, Map<String, Integer>> tagVotes) {
+        Map<Long, List<String>> names = new HashMap<>();
+        tagVotes.forEach((appid, votes) -> names.put(appid, new ArrayList<>(votes.keySet())));
+        return names;
     }
 
     private static ResponseStatusException status(HttpStatus status, String reason) {

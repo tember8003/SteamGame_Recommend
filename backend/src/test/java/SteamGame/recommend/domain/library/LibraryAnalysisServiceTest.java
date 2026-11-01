@@ -1,6 +1,8 @@
 package SteamGame.recommend.domain.library;
 
 import SteamGame.recommend.config.JacksonConfig;
+import SteamGame.recommend.domain.library.analysis.GenreState;
+import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.dto.LibraryViewMapper;
 import SteamGame.recommend.domain.library.dto.SharedAnalysisResponse;
@@ -70,8 +72,8 @@ class LibraryAnalysisServiceTest {
         when(rarityCache.isLoaded()).thenReturn(true);
         when(rarityCache.rarity(anyString())).thenReturn(0.5);
         when(tagRepository.findGameTagMapping(anyList())).thenReturn(List.of(
-                Map.of("appId", 1L, "tagName", "STRATEGY_A"),
-                Map.of("appId", 2L, "tagName", "STRATEGY_B")));
+                Map.of("appId", 1L, "tagName", "STRATEGY_A", "votes", 100),
+                Map.of("appId", 2L, "tagName", "STRATEGY_B", "votes", 100)));
         service = new LibraryAnalysisService(resolver, client, tagRepository, rarityCache, loader, shareService,
                 objectMapper, nanos::get);
     }
@@ -197,6 +199,39 @@ class LibraryAnalysisServiceTest {
     }
 
     @Test
+    void renderShared_oldSnapshotsWithoutGenreProfileReadAsNull() throws Exception {
+        ObjectNode wrapped = (ObjectNode) objectMapper.readTree(savedPayload());
+        ((ObjectNode) wrapped.get("analysis")).remove("genreProfile");
+        String legacy = wrapped.get("analysis").toString();
+
+        when(shareService.find("V")).thenReturn(Optional.of(wrapped.toString()));
+        when(shareService.find("L")).thenReturn(Optional.of(legacy));
+
+        assertThat(service.renderShared("V", Lang.KO).genreProfile()).isNull();
+        assertThat(service.renderShared("L", Lang.KO).genreProfile()).isNull();
+    }
+
+    // 장르 결과가 있는데 필수 값이 빠졌으면 다른 필드처럼 읽지 못한 것으로 본다
+    @Test
+    void renderShared_brokenGenreProfileIs404() throws Exception {
+        useGenreTags();
+        String payload = savedPayload();
+        ObjectNode root = (ObjectNode) objectMapper.readTree(payload);
+        ((ObjectNode) root.at("/analysis/genreProfile")).remove("state");
+        when(shareService.find("S")).thenReturn(Optional.of(root.toString()));
+        // READY인데 주력 장르가 null인 것처럼 앞뒤가 맞지 않는 값도 같은 취급이다
+        ObjectNode inconsistent = (ObjectNode) objectMapper.readTree(payload);
+        ((ObjectNode) inconsistent.at("/analysis/genreProfile")).putNull("primaryGenre");
+        when(shareService.find("I")).thenReturn(Optional.of(inconsistent.toString()));
+
+        for (String id : List.of("S", "I")) {
+            assertThatThrownBy(() -> service.renderShared(id, Lang.KO)).as(id)
+                    .isInstanceOfSatisfying(ResponseStatusException.class,
+                            e -> assertThat(e.getStatusCode().value()).isEqualTo(404));
+        }
+    }
+
+    @Test
     void renderShared_outOfRangePhraseIndexIsClamped() throws Exception {
         ObjectNode root = (ObjectNode) objectMapper.readTree(savedPayload());
         ((ObjectNode) root.get("analysis").get("ledger")).put("phraseIndex", 99);
@@ -310,6 +345,8 @@ class LibraryAnalysisServiceTest {
                 .containsExactly("EXPLORATION:20", "STRATEGY:100", "COLLECTION:38", "DIVERSITY:null", "COOP:4");
         assertThat(r.diagnosis().favoriteTag()).isEqualTo("Strategy");
         assertThat(r.diagnosis().hiddenTaste()).isNull();
+        // 장르 기능 전에 저장된 공유라 장르 결과가 없고, 프론트가 기본 거점을 보여 준다
+        assertThat(r.genreProfile()).isNull();
     }
 
     @Test
@@ -424,6 +461,38 @@ class LibraryAnalysisServiceTest {
         assertRoundTripEquals(found().games());
     }
 
+    // found()의 1번 게임(600분)은 전략, 2번(120분)은 퍼즐로 분류되게 한다, 1번의 퍼즐 태그는 득표수가 낮아 무시된다
+    private void useGenreTags() {
+        when(tagRepository.findGameTagMapping(anyList())).thenReturn(List.of(
+                Map.of("appId", 1L, "tagName", "STRATEGY_MANAGEMENT_G1", "votes", 50),
+                Map.of("appId", 1L, "tagName", "PUZZLE_G1", "votes", 10),
+                Map.of("appId", 2L, "tagName", "PUZZLE_G1", "votes", 80)));
+    }
+
+    @Test
+    void analyze_attachesGenreProfileFromTagVotes() {
+        useGenreTags();
+        when(client.fetch(STEAM_ID)).thenReturn(found());
+
+        LibraryAnalysis.GenreProfile g = service.analyze("x").analysis().genreProfile();
+
+        assertThat(g).isNotNull();
+        assertThat(g.distribution()).containsExactly(
+                new LibraryAnalysis.GenreShare("STRATEGY_MANAGEMENT", 0.833),
+                new LibraryAnalysis.GenreShare("PUZZLE", 0.167));
+        assertThat(g.coverageRatio()).isEqualTo(1.0);
+        assertThat(g.primaryGenre()).isEqualTo("STRATEGY_MANAGEMENT");
+        assertThat(g.secondaryGenre()).isEqualTo("PUZZLE");
+        assertThat(g.state()).isEqualTo(GenreState.READY);
+    }
+
+    @Test
+    void roundTrip_keepsGenreProfile() {
+        useGenreTags();
+        assertRoundTripEquals(found().games());
+        assertThat(service.renderShared("S", Lang.KO).genreProfile()).isNotNull();
+    }
+
     @Test
     void roundTrip_zeroPlaytimeAccount() {
         List<OwnedGame> zero = List.of(new OwnedGame(1, "Alpha", 0, 0, null), new OwnedGame(2, "Beta", 0, 0, null),
@@ -497,7 +566,7 @@ class LibraryAnalysisServiceTest {
             String tag = "CHUNK_TAG_" + (chunk.get(0) - 1) / 1000;
             List<Map<String, Object>> rows = new ArrayList<>();
             for (Long appid : chunk) {
-                rows.add(Map.of("appId", appid, "tagName", tag));
+                rows.add(Map.of("appId", appid, "tagName", tag, "votes", 100));
             }
             return rows;
         });
@@ -519,7 +588,7 @@ class LibraryAnalysisServiceTest {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (long i = 1; i <= 7; i++) {
             games.add(new OwnedGame(i, "G" + i, (int) (1000 * (8 - i)), 0, null));
-            rows.add(Map.of("appId", i, "tagName", "T" + i));
+            rows.add(Map.of("appId", i, "tagName", "T" + i, "votes", 100));
         }
         when(client.fetch(STEAM_ID)).thenReturn(
                 new SteamLibraryResult.Found(new SteamProfile(STEAM_ID, PERSONA, AVATAR), games));

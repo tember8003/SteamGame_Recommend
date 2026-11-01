@@ -18,6 +18,10 @@ public final class LibraryContentValidator {
     public static final List<String> TAG_GROUP_KEYS =
             List.of("EXPLORATION", "STRATEGY", "COOP", "STORY", "ACTION", "RELAX", "SIMULATION", "PUZZLE",
                     "RPG", "HORROR", "SPORTS", "COMPETITIVE");
+    // 순서가 동점일 때 장르를 고르는 순서다
+    public static final List<String> GENRE_KEYS =
+            List.of("RPG_ADVENTURE", "STRATEGY_MANAGEMENT", "ACTION_SHOOTER", "SURVIVAL_CRAFTING", "LIFE_FARMING",
+                    "HORROR_MYSTERY", "RACING_SPORTS", "PUZZLE", "VISUAL_NOVEL");
     public static final List<String> LEDGER_CODES =
             List.of("STARTER", "LEGENDARY_COLLECTOR", "COLLECTOR", "EXPLORER", "PRACTICAL", "BALANCED");
     public static final List<String> SIN_CODES =
@@ -59,6 +63,8 @@ public final class LibraryContentValidator {
         checkGroupLabels(c.groupLabels(), errors);
         checkExcludedTags(c.excludedTags(), c.tagGroups(), errors);
         checkPhrases(c.phrases(), errors);
+        checkGenres(c.genres(), c.genreExcludedTags(), errors);
+        checkGenreRules(c.genreRules(), errors);
         if (!errors.isEmpty()) {
             throw new IllegalStateException("library content invalid (" + errors.size() + "): " + String.join("; ", errors));
         }
@@ -127,6 +133,70 @@ public final class LibraryContentValidator {
                     errors.add("excludedTags tag " + tag + " is also in group " + key);
                 }
             }
+        }
+    }
+
+    // 한 태그가 두 장르에 있으면 게임 하나가 어느 장르인지 정할 수 없다
+    // 장르 판단에서 뺀 태그가 장르에 들어가면 그 장르로 게임이 끌려간다
+    private static void checkGenres(Map<String, List<String>> genres, List<String> excluded, List<String> errors) {
+        Map<String, String> owner = new HashMap<>();
+        for (String key : GENRE_KEYS) {
+            List<String> tags = genres.get(key);
+            if (tags == null) {
+                errors.add("genres missing genre " + key);
+                continue;
+            }
+            if (tags.isEmpty()) {
+                errors.add("genres genre " + key + " is empty");
+            }
+            Set<String> seen = new HashSet<>();
+            for (String tag : tags) {
+                if (tag == null || tag.isBlank()) {
+                    errors.add("genres genre " + key + " has a blank tag");
+                    continue;
+                }
+                if (!seen.add(tag)) {
+                    errors.add("genres genre " + key + " tag duplicated: " + tag);
+                    continue;
+                }
+                String other = owner.putIfAbsent(tag, key);
+                if (other != null) {
+                    errors.add("genres tag " + tag + " is in both " + other + " and " + key);
+                }
+                if (excluded.contains(tag)) {
+                    errors.add("genres tag " + tag + " in " + key + " is in genreExcludedTags");
+                }
+            }
+        }
+        for (String key : new TreeSet<>(genres.keySet())) {
+            if (!GENRE_KEYS.contains(key)) {
+                errors.add("genres has unknown genre " + key);
+            }
+        }
+        for (String tag : excluded) {
+            if (tag == null || tag.isBlank()) {
+                errors.add("genreExcludedTags has a blank tag");
+            }
+        }
+    }
+
+    private static void checkGenreRules(GenreRules r, List<String> errors) {
+        if (r == null) {
+            errors.add("genreRules is missing");
+            return;
+        }
+        if (!(r.minClassifiedHours() >= 0 && Double.isFinite(r.minClassifiedHours()))) {
+            errors.add("genreRules.minClassifiedHours must be a finite number, 0 or more");
+        }
+        checkRatio("minCoverageRatio", r.minCoverageRatio(), errors);
+        checkRatio("mixedGapRatio", r.mixedGapRatio(), errors);
+        checkRatio("secondaryMinRatio", r.secondaryMinRatio(), errors);
+    }
+
+    // NaN도 걸러지도록 범위 안에 있는지로 비교한다
+    private static void checkRatio(String name, double value, List<String> errors) {
+        if (!(value >= 0 && value <= 1)) {
+            errors.add("genreRules." + name + " must be between 0 and 1");
         }
     }
 
