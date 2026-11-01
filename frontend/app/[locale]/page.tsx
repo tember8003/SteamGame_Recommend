@@ -80,6 +80,7 @@ export default function Home() {
         <p className={styles.trailNote}><span aria-hidden="true">✦</span> {t("landing.trailNote")}</p>
         <footer className={styles.footer}>
           <nav aria-label={t("landing.more")}>
+            <Link href={localeHref(locale, "/taste")}>{locale === "ko" ? "16가지 게이머 도감" : "16 player characters"}</Link>
             <Link href={localeHref(locale, "/steam")}>{t("landing.allFeatures")}</Link>
             <Link href={localeHref(locale, "/steam/review-guess")}>{t("landing.reviewGuess")}</Link>
             <Link href={localeHref(locale, "/steam/random")}>{t("landing.random")}</Link>
