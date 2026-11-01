@@ -14,7 +14,7 @@ type Layout = {
 };
 
 // 대괄호가 글롭 문자 집합으로 읽히지 않게 넓게 모은 뒤 키로 거른다
-const layouts = import.meta.glob<Layout>("../**/steam/**/layout.tsx", { eager: true });
+const layouts = import.meta.glob<Layout>("../**/layout.tsx", { eager: true });
 
 function layoutFor(path: string): Layout | undefined {
   const suffix = `[locale]${path}/layout.tsx`;

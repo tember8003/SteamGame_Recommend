@@ -27,19 +27,34 @@ const RESULT: RecommendationResult = {
 };
 
 describe("ProfileRecommendPage", () => {
+  it("accepts a numeric profile URL and explains invalid names without a request", async () => {
+    vi.mocked(recommendProfile).mockResolvedValue(RESULT);
+    render(<ProfileRecommendPage />);
+    const input = screen.getByRole("textbox", { name: "Steam ID" });
+    fireEvent.change(input, { target: { value: "my_display_name" } });
+    fireEvent.click(screen.getByRole("button", { name: "Get Recommendations" }));
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent("17-digit");
+    expect(recommendProfile).not.toHaveBeenCalled();
+    expect(screen.getByText("Where do I find my Steam ID?")).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "https://steamcommunity.com/profiles/76561198000000000/" } });
+    fireEvent.click(screen.getByRole("button", { name: "Get Recommendations" }));
+    await waitFor(() => expect(recommendProfile).toHaveBeenCalledWith("76561198000000000", expect.anything()));
+    expect(input).toHaveAttribute("aria-invalid", "false");
+  });
   it("입력한 SteamID(앞뒤 공백 제거)로 recommendProfile 을 호출하고, 결과 카드의 피드백은 context=PROFILE, steamId 를 함께 보낸다", async () => {
     vi.mocked(recommendProfile).mockResolvedValue(RESULT);
 
     render(<ProfileRecommendPage />);
 
-    fireEvent.change(screen.getByPlaceholderText("Enter your Steam ID (e.g., your_username)"), {
-      target: { value: "  testSteamId  " },
+    fireEvent.change(screen.getByRole("textbox", { name: "Steam ID" }), {
+      target: { value: "  76561198000000000  " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Get Recommendations" }));
 
     await waitFor(() =>
       expect(recommendProfile).toHaveBeenCalledWith(
-        "testSteamId",
+        "76561198000000000",
         expect.objectContaining({ review: 1000, koreanCheck: false, freeCheck: false })
       )
     );
@@ -48,7 +63,7 @@ describe("ProfileRecommendPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Like this game" }));
 
-    expect(sgrFeedback).toHaveBeenCalledWith(400, "UP", "PROFILE", 0, "testSteamId");
+    expect(sgrFeedback).toHaveBeenCalledWith(400, "UP", "PROFILE", 0, "76561198000000000");
   });
 
   it("SteamID 를 비운 채 제출하면 recommendProfile 을 호출하지 않는다", () => {

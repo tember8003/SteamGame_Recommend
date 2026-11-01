@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import SteamIdGuide from "@/components/SteamIdGuide";
+import { normalizeSteamId } from "@/lib/steamId";
 import Header from "@/components/Header";
 import WorkshopIntro from "@/components/WorkshopIntro";
 import GlassPanel from "@/components/ui/GlassPanel";
@@ -45,14 +47,15 @@ export default function ProfileRecommendPage() {
 
   // isFresh 가 true 면 새 검색(이전에 나온 게임을 제외하지 않음), false 면 다시추천(누적된 appid 를 제외함)
   async function runRecommend(isFresh: boolean) {
-    const trimmed = steamId.trim();
+    if (status === "loading") return;
+    const trimmed = normalizeSteamId(steamId);
     if (!trimmed) {
       setInvalid(true);
       steamIdRef.current?.focus();
-      setTimeout(() => setInvalid(false), 2000);
       return;
     }
 
+    setInvalid(false);
     setStatus("loading");
     try {
       const data = await recommendProfile(trimmed, {
@@ -112,10 +115,19 @@ export default function ProfileRecommendPage() {
                 className={`${styles.textInput} ${invalid ? styles.invalid : ""}`}
                 placeholder={t("profile.placeholder")}
                 value={steamId}
-                onChange={(e) => setSteamId(e.target.value)}
+                onChange={(e) => { setSteamId(e.target.value); setInvalid(false); }}
+                autoComplete="off"
+                spellCheck={false}
+                name="steamId"
+                aria-invalid={invalid}
+                aria-describedby={invalid ? "steam-id-error" : "steam-id-hint"}
                 onKeyDown={handleKeyDown}
               />
             </div>
+
+            <p id="steam-id-hint" className={styles.idHint}>{t("steamGuide.inputHint")}</p>
+            {invalid ? <p id="steam-id-error" className={styles.idError} role="alert">{t("steamGuide.invalid")}</p> : null}
+            <SteamIdGuide />
 
             <div className={styles.controls}>
               <h3 className={styles.controlsTitle}>{t("common.options")}</h3>
@@ -156,7 +168,7 @@ export default function ProfileRecommendPage() {
             </button>
           </GlassPanel>
 
-          <GlassPanel as="section" className={styles.resultPanel}>
+          <GlassPanel as="section" className={styles.resultPanel} aria-busy={loading} aria-live="polite">
             <div className={styles.resultHeader}>
               <h2 className={styles.resultTitle}>{t("profile.resultTitle")}</h2>
               <p className={styles.resultSubtitle}>{t("profile.resultSubtitle")}</p>

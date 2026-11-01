@@ -13,7 +13,7 @@ describe("Home", () => {
     render(<LocaleProvider locale={locale}><Home /></LocaleProvider>);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     const main = screen.getByRole("main");
-    for (const path of ["/taste/test", "/steam/choice", "/steam/profile", "/steam", "/steam/review-guess", "/steam/random"]) {
+    for (const path of ["/taste/test", "/steam/choice", "/library", "/steam", "/steam/review-guess", "/steam/random"]) {
       expect(main.querySelector(`a[href="/${locale}${path}"]`)).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: locale === "ko" ? "게임 취향 테스트" : "Game taste test" })).toBeVisible();
@@ -40,6 +40,6 @@ describe("Home", () => {
     expect(html).not.toContain("Discover your taste. Find a new world to get lost in.");
     expect(html).toContain('href="/en/steam/choice"');
     expect(html).toContain('href="/en/steam/similar"');
-    expect(html).toContain('href="/en/steam/profile"');
+    expect(html).toContain('href="/en/library"');
   });
 });

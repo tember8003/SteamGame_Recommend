@@ -32,14 +32,14 @@ describe("RecentRecommendPage", () => {
 
     render(<RecentRecommendPage />);
 
-    fireEvent.change(screen.getByPlaceholderText("Enter your Steam ID"), {
-      target: { value: "  anotherSteamId  " },
+    fireEvent.change(screen.getByRole("textbox", { name: "Steam ID" }), {
+      target: { value: "  76561198000000001  " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Get Recommendations" }));
 
     await waitFor(() =>
       expect(recommendRecent).toHaveBeenCalledWith(
-        "anotherSteamId",
+        "76561198000000001",
         expect.objectContaining({ review: 1000, koreanCheck: false, freeCheck: false })
       )
     );
@@ -48,7 +48,7 @@ describe("RecentRecommendPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Dislike this game" }));
 
-    expect(sgrFeedback).toHaveBeenCalledWith(620, "DOWN", "RECENT", 0, "anotherSteamId");
+    expect(sgrFeedback).toHaveBeenCalledWith(620, "DOWN", "RECENT", 0, "76561198000000001");
   });
 
   it("SteamID 를 비운 채 제출하면 recommendRecent 를 호출하지 않는다", () => {

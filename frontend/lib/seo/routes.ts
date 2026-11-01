@@ -10,6 +10,7 @@ export const INDEX_ROUTES = {
   input: "/steam/input",
   match: "/steam/match",
   profile: "/steam/profile",
+  library: "/library",
   recent: "/steam/recent",
   similar: "/steam/similar",
   graph: "/steam/graph",

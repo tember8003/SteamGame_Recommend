@@ -26,7 +26,7 @@ export default function GraphPage() {
     <>
       <Header />
       <main className={styles.page}>
-        <WorkshopIntro place="explorer" title={t("graph.title")} subtitle={t("graph.subtitle")} />
+        <WorkshopIntro compact place="explorer" title={t("graph.title")} subtitle={t("graph.subtitle")} />
         <SimilarityGraph />
       </main>
     </>

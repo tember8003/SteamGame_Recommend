@@ -199,3 +199,6 @@
     animation: none;
   }
 }
+
+.idHint { color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.idError { color: #f4877a; font-size: 13px; line-height: 1.7; }

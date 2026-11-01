@@ -65,7 +65,7 @@ export default function Home() {
           </article>
 
           <article className={styles.place}>
-            <Link className={styles.placeLink} href={localeHref(locale, "/steam/profile")} onClick={() => recordTasteEvent('FEATURE_SELECT', 'LIBRARY')}>
+            <Link className={styles.placeLink} href={localeHref(locale, "/library")} onClick={() => recordTasteEvent('FEATURE_SELECT', 'LIBRARY')}>
               <div className={styles.sign}>
                 <span className={styles.placeNumber}>03 / {t("landing.archiveName")}</span>
                 <h2>{t("landing.libraryTitle")}</h2>

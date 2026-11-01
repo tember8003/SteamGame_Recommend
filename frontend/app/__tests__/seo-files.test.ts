@@ -18,9 +18,9 @@ describe("robots", () => {
 describe("sitemap", () => {
   const entries = sitemap();
 
-  it("11개 화면 x 2개 언어 = 22개 주소", () => {
-    expect(entries).toHaveLength(22);
-    expect(new Set(entries.map((e) => e.url)).size).toBe(22);
+  it("12개 화면 x 2개 언어 = 24개 주소", () => {
+    expect(entries).toHaveLength(24);
+    expect(new Set(entries.map((e) => e.url)).size).toBe(24);
   });
 
   it("모든 주소에 언어 접두어가 있고 /metrics 는 없다", () => {
