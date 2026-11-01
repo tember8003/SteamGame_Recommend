@@ -1,0 +1,116 @@
+package SteamGame.recommend.domain.library.content;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+// 실제 library-v1.json을 읽어 구조, 문구 규칙, 운영 태그 이름과의 일치를 확인한다
+class LibraryContentFileTest {
+
+    private static LibraryContent load() {
+        return new LibraryContentLoader(new ObjectMapper()).content();
+    }
+
+    private static Set<String> prodTagNames() throws IOException {
+        try (InputStream in = new ClassPathResource("taste/prod-tag-names.txt").getInputStream()) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
+                    .map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
+        }
+    }
+
+    @Test
+    void loader_readsAndValidatesRealFile() {
+        LibraryContent c = load();
+        assertThat(c.version()).isEqualTo("v1");
+        assertThat(c.tagGroups().keySet()).containsExactlyInAnyOrderElementsOf(LibraryContentValidator.TAG_GROUP_KEYS);
+    }
+
+    @Test
+    void everyVerdictCodeHasPhrases() {
+        LibraryContent c = load();
+        assertThat(LibraryContentValidator.requiredPhraseCodes()).hasSize(21);
+        for (String code : LibraryContentValidator.requiredPhraseCodes()) {
+            assertThat(c.phrases().get(code)).as(code).hasSizeBetween(2, 3);
+        }
+    }
+
+    @Test
+    void allGroupTagsExistInProdCatalog() throws IOException {
+        Set<String> prod = prodTagNames();
+        assertThat(prod).hasSize(481);
+        List<String> missing = new ArrayList<>();
+        load().tagGroups().forEach((group, tags) -> tags.forEach(tag -> {
+            if (!prod.contains(tag)) {
+                missing.add(group + ":" + tag);
+            }
+        }));
+        assertThat(missing).as("운영 태그에 없는 이름").isEmpty();
+    }
+
+    @Test
+    void nearUniversalTagsAreInNoGroup() {
+        Set<String> universal = Set.of("Action", "Adventure", "Casual", "Indie", "Singleplayer", "Simulation", "Multiplayer");
+        LibraryContent c = load();
+        assertThat(c.excludedTags()).containsAll(universal);
+        List<String> found = new ArrayList<>();
+        c.tagGroups().forEach((group, tags) -> tags.forEach(tag -> {
+            if (universal.contains(tag)) {
+                found.add(group + ":" + tag);
+            }
+        }));
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void hasTwelveGroupsIncludingRpgHorrorSportsCompetitive() {
+        assertThat(load().tagGroups().keySet()).hasSize(12)
+                .contains("RPG", "HORROR", "SPORTS", "COMPETITIVE", "EXPLORATION", "STRATEGY", "COOP");
+        assertThat(load().tagGroups().get("RPG")).contains("RPG");
+        assertThat(load().excludedTags()).doesNotContain("RPG");
+    }
+
+    @Test
+    void groupLabelsExistForEveryGroup() {
+        LibraryContent c = load();
+        assertThat(c.groupLabels().keySet()).containsExactlyInAnyOrderElementsOf(LibraryContentValidator.TAG_GROUP_KEYS);
+    }
+
+    @Test
+    void genreLoyalistUsesGroupPlaceholders() {
+        load().phrases().get("GENRE_LOYALIST").forEach(p -> {
+            assertThat(p.params()).doesNotContain("topTag", "topTagRatioPct");
+            assertThat(p.params()).contains("topGroup");
+        });
+    }
+
+    @Test
+    void noForbiddenWording() throws IOException {
+        try (InputStream in = new ClassPathResource("library/library-v1.json").getInputStream()) {
+            String raw = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(raw.toLowerCase()).doesNotContain("mbti");
+            assertThat(raw).doesNotContain("·");
+        }
+    }
+
+    @Test
+    void phrasesCarryNoLiteralDigits() {
+        // 숫자는 자리표시자로만 들어간다
+        List<String> found = new ArrayList<>();
+        load().phrases().forEach((code, list) -> list.forEach(p -> {
+            if (p.text().ko().matches(".*\\d.*") || p.text().en().matches(".*\\d.*")) {
+                found.add(code + ": " + p.text().ko());
+            }
+        }));
+        assertThat(found).isEmpty();
+    }
+}
