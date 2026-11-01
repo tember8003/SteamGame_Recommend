@@ -1,0 +1,15 @@
+:root {
+  --taste-paper: #f1e4c4;
+  --taste-muted: #b9c5b5;
+  --taste-bg: #10252c;
+  --taste-panel: #1b3339;
+  --taste-stage: #243e43;
+  --taste-edge: #091b21;
+  --taste-wood: #9b8057;
+  --taste-gold: #e7c58b;
+  --taste-gold-light: #f8e6bd;
+  --taste-dark-ink: #26322f;
+  --taste-field: #10272d;
+  --taste-grid: #365054;
+  --taste-font: "Village Galmuri", var(--font-gmarket-sans), sans-serif;
+}

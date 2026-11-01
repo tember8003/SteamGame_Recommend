@@ -54,10 +54,6 @@ public class SteamApiService {
                     .bodyToMono(String.class)
                     .block();
 
-            log.info("Game ID: Raw Steam API response: {}", response);
-            JsonNode responseNode = objectMapper.readTree(response);
-            log.info("Game ID: Parsed response node: {}", responseNode);
-
             return parseOwnedGamesResponse(response, steamId);
         } catch (Exception e) {
             log.error("Unexpected error while retrieving owned games: steamId={}", steamId, e);
@@ -84,10 +80,6 @@ public class SteamApiService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-
-            log.info("Recent Play: Raw Steam API response: {}", response);
-            JsonNode responseNode = objectMapper.readTree(response);
-            log.info("Recent Play: Parsed response node: {}", responseNode);
 
             return parseRecentGamesResponse(response, steamId);
         } catch (Exception e) {

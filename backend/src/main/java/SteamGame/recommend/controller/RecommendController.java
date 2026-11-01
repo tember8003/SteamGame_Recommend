@@ -64,7 +64,7 @@ public class RecommendController {
         }
     }
 
-    // 노출된 게임을 비동기로 적재한다, client_id 가 없거나 게임이 없으면 서비스에서 걸러진다
+    // 사용자에게 보여 준 게임을 비동기로 DB에 기록한다, client_id 가 없거나 게임이 없으면 서비스에서 걸러진다
     // appid 가 없는 게임은 걸러 한 건 때문에 배치 전체가 실패하지 않게 한다
     private void logImpressions(FeedbackContext context, String clientId, String steamId, List<SteamAppDTO> games) {
         if (games == null) {

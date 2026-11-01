@@ -60,7 +60,7 @@ class ImpressionServiceTest {
     @Test
     void swallowsRepositoryFailure() {
         when(repo.saveAll(any())).thenThrow(new RuntimeException("db down"));
-        // 적재 실패가 밖으로 새어 추천 응답을 깨면 안 됨
+        // 저장 실패가 밖으로 새어 추천 응답을 깨면 안 됨
         assertThatCode(() -> service.record("cid", null, FeedbackContext.SIMILAR, List.of(1L)))
                 .doesNotThrowAnyException();
     }

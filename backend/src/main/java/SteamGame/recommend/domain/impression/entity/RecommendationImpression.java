@@ -35,7 +35,7 @@ public class RecommendationImpression {
     @Column(name = "rank_position")
     private Integer rankPosition;
 
-    // JPA 저장 시엔 @CreationTimestamp 가 값을 넣고, 원시 JDBC insert 는 DB DEFAULT now() 가 채운다
+    // 앱은 JPA 로 저장하므로 @CreationTimestamp 가 시각을 넣는다, 테스트나 수동 작업에서 SQL 로 직접 넣을 때는 DB 기본값 now() 가 채운다
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

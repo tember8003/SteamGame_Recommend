@@ -48,7 +48,7 @@ public class MetricsService {
                     .put(row.getSignal(), row.getCount());
         }
 
-        // 여섯 경로를 모두 채워 표가 항상 같은 행 수를 갖게 한다
+        // 모든 경로를 빠짐없이 채워 표가 항상 같은 행 수를 갖게 한다
         List<MetricsOverviewDTO.ContextMetric> contexts = new ArrayList<>();
         for (FeedbackContext context : FeedbackContext.values()) {
             long impressions = impressionByContext.getOrDefault(context, 0L);

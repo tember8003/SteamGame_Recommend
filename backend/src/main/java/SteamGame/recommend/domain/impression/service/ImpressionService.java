@@ -23,8 +23,8 @@ public class ImpressionService {
         this.repository = repository;
     }
 
-    // 노출된 appid 를 노출 순서대로 1-based rank 를 매겨 적재한다
-    // client_id 나 노출이 없으면 남기지 않고, 적재 실패는 삼켜 추천 응답에 영향을 주지 않는다
+    // 보여 준 appid 에 보여 준 순서대로 1부터 순위를 매겨 DB에 저장한다
+    // client_id 나 보여 준 게임이 없으면 남기지 않는다, 저장에 실패해도 예외를 밖으로 던지지 않아 추천 응답에는 영향이 없다
     @Async("impressionExecutor")
     public void record(String clientId, String steamId, FeedbackContext context, List<Long> appids) {
         record(clientId, steamId, context, appids, null);
@@ -46,7 +46,7 @@ public class ImpressionService {
             }
             repository.saveAll(rows);
         } catch (Exception e) {
-            log.warn("노출 적재 실패 clientId={} context={} count={}", clientId, context, appids.size(), e);
+            log.warn("노출 기록을 DB에 저장하지 못함, 추천 응답에는 영향 없음 clientId={} context={} count={}", clientId, context, appids.size(), e);
         }
     }
 }
