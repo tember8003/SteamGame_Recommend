@@ -8,3 +8,6 @@
 Thumbs.db
 *.log
 source/
+.vibe-wise/
+docs/
+remake/
