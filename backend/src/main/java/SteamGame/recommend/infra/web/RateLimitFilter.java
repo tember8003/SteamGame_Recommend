@@ -18,23 +18,30 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 
 // 지정한 엔드포인트만 IP당 토큰버킷으로 제한, 초과 시 429 + Retry-After 반환함
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
     // 요청 경로 → app.ratelimit.endpoints 키 매핑
-    private static final Map<String, String> PATH_TO_KEY = Map.of(
-            "/api/recommend/input", "input",
-            "/api/recommend/profile", "profile",
-            "/api/recommend/recent-play", "recent-play",
-            "/api/recommend/feedback", "feedback",
-            "/api/recommend/match", "match",
-            "/api/metrics/overview", "metrics",
-            "/api/taste/result", "taste-result",
-            "/api/taste/recommend", "taste-recommend",
-            "/api/events", "events"
+    private static final Map<String, String> PATH_TO_KEY = Map.ofEntries(
+            Map.entry("/api/recommend/input", "input"),
+            Map.entry("/api/recommend/profile", "profile"),
+            Map.entry("/api/recommend/recent-play", "recent-play"),
+            Map.entry("/api/recommend/feedback", "feedback"),
+            Map.entry("/api/recommend/match", "match"),
+            Map.entry("/api/metrics/overview", "metrics"),
+            Map.entry("/api/taste/result", "taste-result"),
+            Map.entry("/api/taste/recommend", "taste-recommend"),
+            Map.entry("/api/events", "events"),
+            Map.entry("/api/library/analyze", "library-analyze"),
+            Map.entry("/api/library/share", "library-share")
     );
+
+    // 이 경로들은 POST가 아닌 요청은 제한하지 않는다
+    private static final Set<String> POST_ONLY_PATHS =
+            Set.of("/api/library/analyze", "/api/library/share");
 
     private final RateLimitProperties props;
     private final ClientIpResolver clientIpResolver;
@@ -57,7 +64,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true; // CORS 프리플라이트는 제외함
         }
-        return !PATH_TO_KEY.containsKey(request.getRequestURI());
+        String path = request.getRequestURI();
+        if (POST_ONLY_PATHS.contains(path) && !"POST".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        return !PATH_TO_KEY.containsKey(path);
     }
 
     @Override
