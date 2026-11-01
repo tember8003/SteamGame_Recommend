@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import TasteAtlas from '@/components/taste/TasteAtlas';
+import TasteAtlasLoader from '@/components/taste/TasteAtlasLoader';
 import { isLocale } from '@/lib/i18n/locales';
 import { SITE_URL } from '@/lib/seo/routes';
 
@@ -24,5 +24,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TastePage({ params }: Props) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  return <TasteAtlas locale={locale} />;
+  return <TasteAtlasLoader key={locale} locale={locale} />;
 }

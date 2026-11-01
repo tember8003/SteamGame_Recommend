@@ -7,10 +7,13 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { localeHref } from "@/lib/i18n/routing";
 import { useT } from "@/lib/i18n/useT";
 import styles from "./page.module.css";
+import { useEffect } from 'react';
+import { recordLandingVisit, recordTasteEvent } from '@/lib/taste/api';
 
 export default function Home() {
   const t = useT();
   const locale = useLocale();
+  useEffect(() => { recordLandingVisit() }, []);
   return (
     <div className={styles.page}>
       <a className={styles.skipLink} href="#village">{t("landing.skip")}</a>
@@ -23,7 +26,7 @@ export default function Home() {
 
         <section className={styles.village} aria-label={t("landing.places")}>
           <article className={styles.place}>
-            <Link className={styles.placeLink} href={localeHref(locale, "/steam/choice")}>
+            <Link className={styles.placeLink} href={localeHref(locale, "/taste/test")} onClick={() => recordTasteEvent('FEATURE_SELECT', 'TASTE')}>
               <div className={styles.sign}>
                 <span className={styles.placeNumber}>01 / {t("landing.fortuneName")}</span>
                 <h2>{t("landing.tasteTitle")}</h2>
@@ -40,7 +43,7 @@ export default function Home() {
 
           <article className={`${styles.place} ${styles.explorer}`}>
             <details className={styles.searchOptions}>
-              <summary className={styles.placeLink}>
+              <summary className={styles.placeLink} onClick={event => { if (!event.currentTarget.parentElement?.hasAttribute('open')) recordTasteEvent('FEATURE_SELECT', 'SIMILAR') }}>
                 <div className={styles.sign}>
                   <span className={styles.placeNumber}>02 / {t("landing.explorerName")}</span>
                   <h2>{t("landing.similarTitle")}</h2>
@@ -62,7 +65,7 @@ export default function Home() {
           </article>
 
           <article className={styles.place}>
-            <Link className={styles.placeLink} href={localeHref(locale, "/steam/profile")}>
+            <Link className={styles.placeLink} href={localeHref(locale, "/steam/profile")} onClick={() => recordTasteEvent('FEATURE_SELECT', 'LIBRARY')}>
               <div className={styles.sign}>
                 <span className={styles.placeNumber}>03 / {t("landing.archiveName")}</span>
                 <h2>{t("landing.libraryTitle")}</h2>
@@ -81,6 +84,7 @@ export default function Home() {
         <footer className={styles.footer}>
           <nav aria-label={t("landing.more")}>
             <Link href={localeHref(locale, "/taste")}>{locale === "ko" ? "16가지 게이머 도감" : "16 player characters"}</Link>
+            <Link href={localeHref(locale, "/steam/choice")}>{locale === "ko" ? "게임 선택 월드컵" : "Game-pick tournament"}</Link>
             <Link href={localeHref(locale, "/steam")}>{t("landing.allFeatures")}</Link>
             <Link href={localeHref(locale, "/steam/review-guess")}>{t("landing.reviewGuess")}</Link>
             <Link href={localeHref(locale, "/steam/random")}>{t("landing.random")}</Link>

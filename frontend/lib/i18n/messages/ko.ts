@@ -41,6 +41,7 @@ export const ko: Messages = {
   },
   explain: {
     reason: {
+      tasteTagMatch: "{tags} 취향과 맞아요",
       becauseYouLiked: "‘{game}’ 같은 게임을 좋아해서",
       isFree: "무료 플레이",
       withinBudget: "예산 ${budget} 안",
@@ -153,7 +154,7 @@ export const ko: Messages = {
     explorerName: "게임 탐색소",
     archiveName: "플레이 기록관",
     tasteTitle: "게임 취향 테스트",
-    tasteDesc: "7라운드 게임 선택으로 내 취향 찾기",
+    tasteDesc: "12가지 질문으로 내 게이머 유형 찾기",
     tasteGreeting: "어떤 게임에 마음이 끌리나요?",
     tasteCta: "시작하기",
     similarTitle: "비슷한 게임 찾기",

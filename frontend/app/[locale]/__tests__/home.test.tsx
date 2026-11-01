@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import Home from "../page";
+vi.mock('@/lib/taste/api', () => ({ recordLandingVisit: vi.fn(), recordTasteEvent: vi.fn() }));
 
 afterEach(() => cleanup());
 
@@ -12,11 +13,11 @@ describe("Home", () => {
     render(<LocaleProvider locale={locale}><Home /></LocaleProvider>);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     const main = screen.getByRole("main");
-    for (const path of ["/steam/choice", "/steam/profile", "/steam", "/steam/review-guess", "/steam/random"]) {
+    for (const path of ["/taste/test", "/steam/choice", "/steam/profile", "/steam", "/steam/review-guess", "/steam/random"]) {
       expect(main.querySelector(`a[href="/${locale}${path}"]`)).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: locale === "ko" ? "게임 취향 테스트" : "Game taste test" })).toBeVisible();
-    expect(screen.getByText(locale === "ko" ? "7라운드 게임 선택으로 내 취향 찾기" : "Discover your taste in 7 rounds of game picks")).toBeVisible();
+    expect(screen.getByText(locale === "ko" ? "12가지 질문으로 내 게이머 유형 찾기" : "Find your player type in 12 questions")).toBeVisible();
   });
 
   it("탐색소를 펼치면 세 가지 실제 추천 기능을 선택할 수 있다", () => {

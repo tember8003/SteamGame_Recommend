@@ -15,9 +15,9 @@ export function getTasteType(code: string): TasteType | undefined {
   return tasteTypes.find(type => type.code === code.toUpperCase());
 }
 
-export function filterTasteTypes(query: string, side: string, locale: Locale): TasteType[] {
+export function filterTasteTypes(query: string, side: string, locale: Locale, types: readonly TasteType[] = tasteTypes): TasteType[] {
   const needle = query.trim().toLocaleLowerCase();
-  return tasteTypes.filter(type => (!side || type.code.includes(side)) &&
+  return types.filter(type => (!side || type.code.includes(side)) &&
     [type.code, type.name[locale], type.work[locale], type.oneLiner[locale], type.traits[locale]]
       .some(value => value.toLocaleLowerCase().includes(needle)));
 }

@@ -1,0 +1,392 @@
+{
+  "questions": {
+    "version": "v1",
+    "questions": [
+      {
+        "id": 1,
+        "text": "새 게임을 켜면 가장 먼저 하는 일은?",
+        "options": [
+          {
+            "key": "A",
+            "text": "일단 미지의 장소로 떠나 본다"
+          },
+          {
+            "key": "B",
+            "text": "성장 시스템부터 확인한다"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "text": "더 기억에 남는 것은?",
+        "options": [
+          {
+            "key": "A",
+            "text": "NPC의 이야기"
+          },
+          {
+            "key": "B",
+            "text": "전략이 멋지게 들어맞은 순간"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "text": "어려운 보스를 만나면?",
+        "options": [
+          {
+            "key": "A",
+            "text": "될 때까지 반복해서 도전한다"
+          },
+          {
+            "key": "B",
+            "text": "일단 넘기고 다른 콘텐츠를 즐긴다"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "text": "어떤 환경에서 게임하는 게 좋아요?",
+        "options": [
+          {
+            "key": "A",
+            "text": "혼자서 푹 빠져서"
+          },
+          {
+            "key": "B",
+            "text": "친구와 함께"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "text": "어떤 보상이 더 짜릿해요?",
+        "options": [
+          {
+            "key": "A",
+            "text": "숨겨진 지역을 발견하는 것"
+          },
+          {
+            "key": "B",
+            "text": "강력한 장비를 얻는 것"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "text": "더 흥미로운 것은?",
+        "options": [
+          {
+            "key": "A",
+            "text": "캐릭터들의 관계"
+          },
+          {
+            "key": "B",
+            "text": "정교하게 짜인 게임 메커니즘"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "text": "게임에서 실패했을 때는?",
+        "options": [
+          {
+            "key": "A",
+            "text": "공략을 고쳐서 바로 재도전한다"
+          },
+          {
+            "key": "B",
+            "text": "여유롭게 다른 활동을 한다"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "text": "어떤 플레이를 더 좋아해요?",
+        "options": [
+          {
+            "key": "A",
+            "text": "싱글 캠페인"
+          },
+          {
+            "key": "B",
+            "text": "협동 플레이"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "text": "자유 시간이 생기면?",
+        "options": [
+          {
+            "key": "A",
+            "text": "새로운 지역을 탐사한다"
+          },
+          {
+            "key": "B",
+            "text": "기존 캐릭터를 강화한다"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "text": "게임에서 더 중요한 것은?",
+        "options": [
+          {
+            "key": "A",
+            "text": "흥미로운 선택과 결말"
+          },
+          {
+            "key": "B",
+            "text": "전략적인 최적화"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "text": "최고 난도 콘텐츠는?",
+        "options": [
+          {
+            "key": "A",
+            "text": "도전하고 싶다"
+          },
+          {
+            "key": "B",
+            "text": "부담 없이 즐기고 싶다"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "text": "게임 속 성취는?",
+        "options": [
+          {
+            "key": "A",
+            "text": "나만의 이야기를 완성하는 것"
+          },
+          {
+            "key": "B",
+            "text": "친구들과 함께 이룬 공동 성취"
+          }
+        ]
+      }
+    ]
+  },
+  "recommendation": {
+    "games": [
+      {
+        "appid": 394360,
+        "name": "Hearts of Iron IV",
+        "shortDescription": "Hearts of Iron IV description",
+        "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/394360/header.jpg",
+        "steamStore": "https://store.steampowered.com/app/394360?l=korean"
+      },
+      {
+        "appid": 255710,
+        "name": "Cities: Skylines",
+        "shortDescription": "Cities: Skylines description",
+        "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/255710/header.jpg",
+        "steamStore": "https://store.steampowered.com/app/255710?l=korean"
+      },
+      {
+        "appid": 281990,
+        "name": "Stellaris",
+        "shortDescription": "Stellaris description",
+        "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/281990/header.jpg",
+        "steamStore": "https://store.steampowered.com/app/281990?l=korean"
+      },
+      {
+        "appid": 1245620,
+        "name": "ELDEN RING",
+        "shortDescription": "ELDEN RING description",
+        "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg",
+        "steamStore": "https://store.steampowered.com/app/1245620?l=korean"
+      },
+      {
+        "appid": 570,
+        "name": "Dota 2",
+        "shortDescription": "Dota 2 description",
+        "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
+        "steamStore": "https://store.steampowered.com/app/570?l=korean"
+      }
+    ],
+    "explanations": [
+      {
+        "appid": 394360,
+        "items": [
+          {
+            "code": "TASTE_TAG_MATCH",
+            "params": {
+              "tags": [
+                "Grand Strategy",
+                "Difficult",
+                "Strategy"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "appid": 255710,
+        "items": [
+          {
+            "code": "TASTE_TAG_MATCH",
+            "params": {
+              "tags": [
+                "Management",
+                "Resource Management",
+                "Strategy"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "appid": 281990,
+        "items": [
+          {
+            "code": "TASTE_TAG_MATCH",
+            "params": {
+              "tags": [
+                "Grand Strategy",
+                "Resource Management",
+                "Strategy"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "appid": 1245620,
+        "items": [
+          {
+            "code": "TASTE_TAG_MATCH",
+            "params": {
+              "tags": [
+                "Difficult"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "appid": 570,
+        "items": [
+          {
+            "code": "TASTE_TAG_MATCH",
+            "params": {
+              "tags": [
+                "Strategy"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "result": {
+    "code": "GMHS",
+    "axisScores": {
+      "EG": {
+        "E": 0,
+        "G": 3
+      },
+      "NM": {
+        "N": 0,
+        "M": 3
+      },
+      "HC": {
+        "H": 3,
+        "C": 0
+      },
+      "SP": {
+        "S": 3,
+        "P": 0
+      }
+    },
+    "type": {
+      "code": "GMHS",
+      "name": "에이전트 47",
+      "work": "히트맨",
+      "workAppid": 1659040,
+      "oneLiner": "혼자 치밀하게 계획을 세워 완벽해질 때까지 다시 해 보는 사람",
+      "description": "시스템과 동선을 하나하나 파악하고 혼자 조용히 계획을 세우는 걸 좋아해요. 계획이 틀어지면 처음부터 다시 해 보며 빈틈을 메우고, 한 치의 어긋남 없이 풀어낼 때 가장 큰 보람을 느껴요. 한 판에 오래 매달려도 지루하지 않아요.",
+      "traits": "성장, 시스템, 도전, 솔로",
+      "axes": [
+        {
+          "id": "EG",
+          "letter": "G",
+          "label": "성장"
+        },
+        {
+          "id": "NM",
+          "letter": "M",
+          "label": "시스템"
+        },
+        {
+          "id": "HC",
+          "letter": "H",
+          "label": "도전"
+        },
+        {
+          "id": "SP",
+          "letter": "S",
+          "label": "솔로"
+        }
+      ],
+      "tags": [
+        {
+          "tag": "Strategy",
+          "weight": 1.0
+        },
+        {
+          "tag": "Grand Strategy",
+          "weight": 0.9
+        },
+        {
+          "tag": "Management",
+          "weight": 0.85
+        },
+        {
+          "tag": "Difficult",
+          "weight": 0.8
+        },
+        {
+          "tag": "Resource Management",
+          "weight": 0.7
+        },
+        {
+          "tag": "Colony Sim",
+          "weight": 0.6
+        }
+      ],
+      "featuredGames": [
+        {
+          "appid": 294100,
+          "name": "RimWorld",
+          "shortDescription": "RimWorld description",
+          "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/294100/header.jpg",
+          "steamStore": "https://store.steampowered.com/app/294100?l=korean"
+        },
+        {
+          "appid": 233860,
+          "name": "Kenshi",
+          "shortDescription": "Kenshi description",
+          "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/233860/header.jpg",
+          "steamStore": "https://store.steampowered.com/app/233860?l=korean"
+        },
+        {
+          "appid": 1158310,
+          "name": "Crusader Kings III",
+          "shortDescription": "Crusader Kings III description",
+          "headerImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/1158310/header.jpg",
+          "steamStore": "https://store.steampowered.com/app/1158310?l=korean"
+        }
+      ],
+      "share": {
+        "title": "나는 에이전트 47형 게이머",
+        "text": "혼자 치밀하게 계획을 세우고 완벽할 때까지 다시 하는 타입이래요. 너는 어떤 게임 유형이야?"
+      }
+    }
+  }
+}
