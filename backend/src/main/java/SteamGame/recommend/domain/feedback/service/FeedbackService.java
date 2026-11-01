@@ -15,7 +15,7 @@ public class FeedbackService {
         this.repository = repository;
     }
 
-    // 단건 append-only 적재(중복 클릭도 신호로 보존)
+    // 반응 하나를 새 기록으로 추가만 하고 고치거나 지우지 않는다, 같은 게임을 여러 번 눌러도 각각 신호로 남긴다
     @Transactional
     public void record(FeedbackRequestDTO dto) {
         RecommendationFeedback f = new RecommendationFeedback();

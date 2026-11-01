@@ -45,7 +45,7 @@ class MetricsServiceTest {
     }
 
     @Test
-    void overview_emptyData_returnsSixZeroContexts() {
+    void overview_emptyData_returnsZeroForEveryContext() {
         when(impressionRepository.count()).thenReturn(0L);
         when(impressionRepository.countByContext()).thenReturn(List.of());
         when(feedbackRepository.countByContextAndSignal()).thenReturn(List.of());
@@ -54,7 +54,7 @@ class MetricsServiceTest {
         MetricsOverviewDTO dto = service.overview(20);
 
         assertThat(dto.totalImpressions()).isZero();
-        assertThat(dto.contexts()).hasSize(6);
+        assertThat(dto.contexts()).hasSize(FeedbackContext.values().length);
         assertThat(dto.contexts()).allSatisfy(c -> {
             assertThat(c.impressions()).isZero();
             assertThat(c.upRate()).isZero();

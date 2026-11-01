@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-// 노출 로그 적재와 지표 조회를 겸한다, 적재는 saveAll, 조회는 아래 집계를 쓴다
+// 노출 기록 저장과 지표 조회를 함께 맡는다, 저장은 saveAll, 조회는 아래 집계 쿼리를 쓴다
 public interface RecommendationImpressionRepository extends JpaRepository<RecommendationImpression, Long> {
 
     // 지표 조회용 노출수 집계 프로젝션
