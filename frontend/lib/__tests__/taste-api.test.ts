@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, tasteRequest, fireAndForget } from '../api';
-import { optionalClientId, recordLandingVisit, tasteResult, tasteRecommend } from '../taste/api';
+import { optionalClientId, recordLandingVisit, tasteQuestions, tasteResult, tasteRecommend } from '../taste/api';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('taste API contract', () => {
@@ -44,4 +44,11 @@ describe('taste API contract', () => {
     expect(payload.excludeAppids[0]).toBe(2);
     expect(payload.excludeAppids.at(-1)).toBe(501);
   });
+  it('explicitly requests the v2 questions', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: 'v2', questions: [] }) });
+    vi.stubGlobal('fetch', fetcher);
+    await tasteQuestions('en');
+    expect(fetcher.mock.calls[0][0]).toContain('/api/taste/questions?lang=en&version=v2');
+  });
+
 });

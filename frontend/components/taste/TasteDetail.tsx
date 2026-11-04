@@ -58,6 +58,7 @@ export default function TasteDetail({ type, locale, apiType, result }: { type: T
             {ko ? '원작 게임 보기' : 'See the original game'}<span className={styles.srOnly}>{ko ? ' (새 창)' : ' (opens a new tab)'}</span>
           </a>
         </div>
+        <p className={styles.scoreNote}>{ko ? '링크에는 캐릭터 유형만 공유돼요. 내 답변과 성향 비율은 포함되지 않아요.' : 'The link shares only the character type, without your answers or personal proportions.'}</p>
         <div role="status" className={styles.shareStatus}>
           {share === 'copied' ? (ko ? '링크를 복사했어요.' : 'Link copied.') : null}
           {share === 'manual' ? <label>{ko ? '아래 주소를 선택해서 복사해주세요.' : 'Select and copy the address below.'}
@@ -67,18 +68,32 @@ export default function TasteDetail({ type, locale, apiType, result }: { type: T
     </article>
     {result ? <section className={styles.scores} aria-label={ko ? '내 답변으로 본 성향' : 'Your answers by preference'}>
       <h2>{ko ? '내 답변으로 본 성향' : 'Your answers by preference'}</h2>
+      <p className={styles.scoreNote}>{ko ? '이번 답변에서 드러난 선호예요. 실력이나 정확도를 뜻하지 않아요.' : 'These proportions reflect your answers, not skill or accuracy.'}</p>
       {tasteAxes.map(axis => {
-        const values = result.axisScores[axis.map(side => side.code).join('')];
-        return <div key={axis[0].code} className={styles.scoreRow}>{axis.map(side => <label key={side.code}>
-          <span>{side[locale]} <strong>{values?.[side.code] ?? 0} / 3</strong></span>
-          <meter min={0} max={3} value={values?.[side.code] ?? 0} aria-label={side[locale]} />
-        </label>)}</div>;
+        const id = axis.map(side => side.code).join('');
+        const values = result.axisScores[id];
+        if (!values || axis.some(side => !Number.isFinite(values[side.code]))) return null;
+        const total = axis.reduce((sum, side) => sum + values[side.code], 0);
+        if (!total) return null;
+        const detail = result.version === 'v2' ? result.axisDetails?.find(d => d.id === id) : undefined;
+        const leftPercent = detail?.leftPercent ?? Math.round(values[axis[0].code] / total * 100);
+        const percentages = [leftPercent, 100 - leftPercent];
+        const summary = detail?.summary && !detail.summary.includes('TODO') ? detail.summary : null;
+        return <div key={id} className={styles.axisCard}>
+          <div className={styles.scoreRow}>{axis.map((side, index) => <label key={side.code}>
+            <span>{side[locale]} <strong>{result.version === 'v2' ? `${percentages[index]}%` : `${values[side.code]} / ${total}`}</strong></span>
+            <meter min={0} max={result.version === 'v2' ? 100 : total} value={result.version === 'v2' ? percentages[index] : values[side.code]} aria-label={side[locale]} />
+          </label>)}</div>
+          {summary ? <p className={styles.axisSummary}>{summary}</p> : null}
+          {detail?.tieBroken ? <p className={styles.scoreNote}>{ko ? '두 취향이 나란해요. 더 강하게 고른 행동을 기준으로 대표 캐릭터를 골랐어요.' : 'Both preferences are equal. Your strongest choice helped select a representative character.'}</p> : null}
+        </div>;
       })}
+      <p className={styles.scoreNote}>{ko ? '새로고침하면 유형 소개만 남아요.' : 'Refreshing this page keeps only the type introduction.'}</p>
     </section> : null}
     {apiType ? <TasteGames key={`${locale}-${type.code}`} view={apiType} result={result} locale={locale} /> : null}
     <section className={styles.nextStep}>
       <div><h2>{ko ? '캐릭터는 닮은꼴, 추천은 내 취향대로.' : 'A familiar face. Your own taste.'}</h2>
-        <p>{ko ? '12가지 질문으로 내 플레이 취향을 알아보세요.' : 'Discover your play style with twelve questions.'}</p></div>
+        <p>{ko ? '16가지 상황으로 내 플레이 취향을 알아보세요.' : 'Discover your play style through sixteen situations.'}</p></div>
       <Link href={`/${locale}/taste/test`} className={styles.secondaryButton}>{result ? (ko ? '다시 테스트하기' : 'Take the test again') : (ko ? '내 유형 찾기' : 'Find my type')}</Link>
     </section>
     <nav className={styles.pager} aria-label={ko ? '다른 캐릭터' : 'Other characters'}>

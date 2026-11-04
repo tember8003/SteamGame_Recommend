@@ -63,6 +63,14 @@
   .props { height: 270px; }.extraProp { width: 32px; height: 32px; top: 116px; right: 16px; left: auto; bottom: auto; }.coopChair, .secondaryProp { display: none; }
   .sceneFooter { padding: 12px; font-size: 11px; }.panel { padding: 18px; }.panelHeading { align-items: start; flex-wrap: wrap; }.panelHeading h2 { font-size: 21px; }.save { font-size: 11px; }
   .storage, .characterSheet, .mapLayout { grid-template-columns: 1fr; gap: 24px; }.crateDisplay { display: flex; justify-content: center; padding: 12px; }.crateDisplay svg { width: 60px; height: 60px; }.numbers dd { font-size: 21px; }.numbers { gap: 20px 12px; }
-  .memories { grid-template-columns: 1fr; }.equipment { display: none; }.attribute > div { font-size: 12px; }.npc { padding: 16px; }.npc p { font-size: 12px; }
+  .memories { grid-template-columns: 1fr; }.equipment { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 8px 16px; text-align: left; }.equipment > div { grid-row: 1 / span 4; }.equipment p { text-align: left; }.attribute > div { font-size: 12px; }.npc { padding: 16px; }.npc p { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .station { transition: none; } }
+
+.crateDisplay svg { width: 100%; height: auto; max-width: 180px; filter: drop-shadow(3px 5px #04151a); }
+.characterSheet { grid-template-columns: minmax(190px, 280px) minmax(0,1fr); }
+.equipment { align-content: start; gap: 14px; padding: 16px; min-width: 0; }
+.equipment > div { width: 100%; max-width: 250px; border: 2px solid #766848; }
+.equipment strong { color: #f0dcaf; font-size: 20px; line-height: 1.6; }.equipment p { letter-spacing: 0; margin: 0; }
+.equipment .companionLabel { font-size: 11px; letter-spacing: .12em; }.equipment small { font-size: 11px; line-height: 1.9; color: #b9c6b7; }
+@media (max-width: 700px) { .characterSheet { grid-template-columns: minmax(0,1fr); }.equipment > div { max-width: 100px; }.equipment strong { font-size: 17px; }.equipment small { grid-column: 1 / -1; }.crateDisplay svg { width: 110px; max-width: 40%; height: auto; } }

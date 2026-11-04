@@ -77,3 +77,14 @@ export const baseCopy = {
     } as Record<string, string>,
   },
 };
+
+// 장르 분위기에 어울리는 동행자를 고른다, 테스트 유형을 계산하지 않는다
+export function libraryCompanion(profile?: GenreProfile | null) {
+  const characters: Record<string, string> = {
+    RPG_ADVENTURE: 'GNHS', STRATEGY_MANAGEMENT: 'GMHS', ACTION_SHOOTER: 'EMHP',
+    SURVIVAL_CRAFTING: 'EMCS', LIFE_FARMING: 'GMCP', HORROR_MYSTERY: 'ENHS',
+    RACING_SPORTS: 'EMHP', PUZZLE: 'EMCP', VISUAL_NOVEL: 'GNCS',
+  };
+  const genre = profile?.state === 'READY' ? profile.primaryGenre : null;
+  return { code: genre ? characters[genre] ?? 'ENCS' : 'ENCS', genre: genre && characters[genre] ? genre : null };
+}

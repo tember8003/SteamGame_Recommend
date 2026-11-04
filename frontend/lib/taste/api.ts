@@ -4,7 +4,7 @@ import type { Locale } from '../i18n/locales';
 import type { ExplanationItem, SteamApp } from '../types';
 import { getTasteType, type TasteType } from './catalog';
 
-export type Answer = 'A' | 'B';
+export type Answer = 'A' | 'B' | 'C' | 'D';
 export interface TasteQuestion { id: number; text: string; options: { key: Answer; text: string }[] }
 export interface TasteQuestions { version: string; questions: TasteQuestion[] }
 export interface TypeSummary { code: string; name: string; work: string; oneLiner: string }
@@ -14,7 +14,12 @@ export interface TypeView extends TypeSummary {
   tags: { tag: string; weight: number }[]; featuredGames: SteamApp[];
   share: { title: string; text: string };
 }
-export interface TasteResult { code: string; axisScores: Record<string, Record<string, number>>; type: TypeView }
+export interface TasteAxisDetail {
+  id: string; left: string; right: string; total: number;
+  leftPercent: number; rightPercent: number; winner: string;
+  balance: 'BALANCED' | 'LEANING' | 'STRONG'; tieBroken: boolean; summary: string;
+}
+export interface TasteResult { version?: 'v2'; axisDetails?: TasteAxisDetail[]; code: string; axisScores: Record<string, Record<string, number>>; type: TypeView }
 export interface TasteRecommendations { games: SteamApp[]; explanations: { appid: number; items: ExplanationItem[] }[] }
 type EventType = 'LANDING_VISIT' | 'FEATURE_SELECT' | 'TEST_START' | 'SHARE_CLICK' | 'SHARE_INFLOW';
 
@@ -36,7 +41,7 @@ const post = <T>(path: string, body: unknown) => tasteRequest<T>(path, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
 export const tasteQuestions = (locale: Locale, reload = false, signal?: AbortSignal) =>
-  tasteRequest<TasteQuestions>(`/api/taste/questions?lang=${locale}`, { ...(reload ? { cache: 'reload' as const } : {}), signal });
+  tasteRequest<TasteQuestions>(`/api/taste/questions?lang=${locale}&version=v2`, { ...(reload ? { cache: 'reload' as const } : {}), signal });
 export const tasteSummaries = (locale: Locale, signal?: AbortSignal) => tasteRequest<TypeSummary[]>(`/api/taste/types?lang=${locale}`, { signal });
 export const tasteType = (code: string, locale: Locale, signal?: AbortSignal) => tasteRequest<TypeView>(`/api/taste/types/${encodeURIComponent(code)}?lang=${locale}`, { signal });
 export const tasteResult = (version: string, answers: Answer[], locale: Locale) =>
