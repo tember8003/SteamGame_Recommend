@@ -10,8 +10,10 @@ import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.recommendation.dto.ExplanationItem;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.taste.content.Lang;
+import SteamGame.recommend.domain.taste.content.TasteAxis;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
 import SteamGame.recommend.domain.taste.content.TasteType;
+import SteamGame.recommend.domain.taste.content.TasteV2ContentLoader;
 import SteamGame.recommend.domain.taste.service.GameExplanation;
 import SteamGame.recommend.domain.taste.service.TasteRecommendResult;
 import SteamGame.recommend.domain.taste.service.TasteRecommendService;
@@ -56,11 +58,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(TasteController.class)
 @Import({SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class,
-        TasteContentLoader.class})
+        TasteContentLoader.class, TasteV2ContentLoader.class})
 class TasteControllerTest {
 
     @Autowired MockMvc mvc;
     @Autowired TasteContentLoader loader;
+    @Autowired TasteV2ContentLoader v2Loader;
     @Autowired ObjectMapper objectMapper;
     @MockitoBean TasteRecommendService recommendService;
     @MockitoBean FeedbackSuppressionService suppressionService;
@@ -125,6 +128,45 @@ class TasteControllerTest {
         mvc.perform(get("/api/taste/questions"))
                 .andExpect(header().string("Cache-Control", containsString("max-age=3600")))
                 .andExpect(header().string("Cache-Control", containsString("public")));
+    }
+
+    // ---------- v2 questions ----------
+
+    @Test
+    void questions_explicitV1_sameAsDefault() throws Exception {
+        mvc.perform(get("/api/taste/questions?version=v1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value("v1"))
+                .andExpect(jsonPath("$.questions.length()").value(12));
+    }
+
+    @Test
+    void questions_v2() throws Exception {
+        String ko = v2Loader.content().questions().get(0).text().get(Lang.KO);
+        MvcResult res = mvc.perform(get("/api/taste/questions?version=v2"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", containsString("max-age=3600")))
+                .andExpect(jsonPath("$.version").value("v2"))
+                .andExpect(jsonPath("$.questions.length()").value(16))
+                .andExpect(jsonPath("$.questions[0].text").value(ko))
+                .andExpect(jsonPath("$.questions[0].options.length()").value(4))
+                .andReturn();
+        // 축과 점수가 응답에 실리면 안 되므로 키 집합을 직접 본다
+        JsonNode question = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
+                .get("questions").get(0);
+        Set<String> keys = new TreeSet<>();
+        question.fieldNames().forEachRemaining(keys::add);
+        assertThat(keys).containsExactly("id", "options", "text");
+        Set<String> optionKeys = new TreeSet<>();
+        question.get("options").get(0).fieldNames().forEachRemaining(optionKeys::add);
+        assertThat(optionKeys).containsExactly("key", "text");
+    }
+
+    @Test
+    void questions_unknownVersion_409() throws Exception {
+        mvc.perform(get("/api/taste/questions?version=v3"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("TASTE_VERSION_MISMATCH"));
     }
 
     // ---------- types ----------
@@ -260,6 +302,113 @@ class TasteControllerTest {
                         .content("{\"version\":\"v1\",\"answers\":" + answersJson("A", 12) + "}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type.name").value(en));
+    }
+
+    // ---------- v2 result ----------
+
+    private static String v2Body(String answersJson) {
+        return "{\"version\":\"v2\",\"answers\":" + answersJson + ",\"clientId\":\"client-1\"}";
+    }
+
+    // 실제 파일은 보기마다 점수 배치가 섞여 있다, 문항마다 왼쪽 3점 보기를 골라 모든 축이 왼쪽 12점이 되게 한다
+    private String allLeftStrongestJson() {
+        List<TasteAxis> axes = loader.content().axes();
+        List<String> keys = v2Loader.content().questions().stream()
+                .map(q -> {
+                    String left = axes.stream().filter(a -> a.id().equals(q.axis())).findFirst().orElseThrow()
+                            .left().code();
+                    return q.options().stream().filter(o -> o.scores().get(left) == 3).findFirst().orElseThrow().key();
+                })
+                .toList();
+        return "[" + keys.stream().map(k -> "\"" + k + "\"").collect(Collectors.joining(",")) + "]";
+    }
+
+    @Test
+    void result_v2_allLeftStrongest() throws Exception {
+        when(recommendService.featuredGames(any())).thenReturn(List.of(game(10L)));
+        String summaryKo = v2Loader.content().axisSummaries().get("EG").get("E_STRONG").get(Lang.KO);
+        mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                        .content(v2Body(allLeftStrongestJson())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value("v2"))
+                .andExpect(jsonPath("$.code").value("ENHS"))
+                .andExpect(jsonPath("$.axisScores.EG.E").value(12))
+                .andExpect(jsonPath("$.axisDetails.length()").value(4))
+                .andExpect(jsonPath("$.axisDetails[0].id").value("EG"))
+                .andExpect(jsonPath("$.axisDetails[0].total").value(12))
+                .andExpect(jsonPath("$.axisDetails[0].leftPercent").value(100))
+                .andExpect(jsonPath("$.axisDetails[0].winner").value("E"))
+                .andExpect(jsonPath("$.axisDetails[0].balance").value("STRONG"))
+                .andExpect(jsonPath("$.axisDetails[0].tieBroken").value(false))
+                .andExpect(jsonPath("$.axisDetails[0].summary").value(summaryKo))
+                .andExpect(jsonPath("$.type.code").value("ENHS"));
+        verify(eventService).record("client-1", FunnelEventType.TEST_COMPLETE, "ENHS", null);
+        verify(impressionService).record("client-1", null, FeedbackContext.TASTE, List.of(10L));
+    }
+
+    // 실제 문항에서 전부 A를 고르면 네 축 모두 6:6이고 해석 A 동점 규칙으로 EMCS가 된다
+    // EG는 1번 A (3,0), NM은 6번 A (0,3), HC는 3번 A (0,3), SP는 8번 A (3,0)이 기준 답이다
+    // 문항 점수 배치가 바뀌면 이 기대값도 바뀐다, 점수가 바뀌면 새 콘텐츠 버전을 만드는 것이 설계 규칙이다
+    @Test
+    void result_v2_allA_tiesEveryAxis() throws Exception {
+        when(recommendService.featuredGames(any())).thenReturn(List.of());
+        String evenKo = v2Loader.content().axisSummaries().get("EG").get("EVEN").get(Lang.KO);
+        mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                        .content(v2Body(answersJson("A", 16))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("EMCS"))
+                .andExpect(jsonPath("$.axisScores.EG.E").value(6))
+                .andExpect(jsonPath("$.axisDetails[*].leftPercent").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(50))))
+                .andExpect(jsonPath("$.axisDetails[*].tieBroken").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(true))))
+                .andExpect(jsonPath("$.axisDetails[*].balance").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("BALANCED"))))
+                .andExpect(jsonPath("$.axisDetails[0].summary").value(evenKo))
+                .andExpect(jsonPath("$.type.code").value("EMCS"));
+    }
+
+    // 같은 답이면 언어와 상관없이 code와 점수가 같고 summary만 언어를 따른다
+    @Test
+    void result_v2_langEnChangesOnlySummary() throws Exception {
+        when(recommendService.featuredGames(any())).thenReturn(List.of());
+        String summaryEn = v2Loader.content().axisSummaries().get("EG").get("E_STRONG").get(Lang.EN);
+        mvc.perform(post("/api/taste/result?lang=en").contentType(MediaType.APPLICATION_JSON)
+                        .content(v2Body(allLeftStrongestJson())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("ENHS"))
+                .andExpect(jsonPath("$.axisScores.EG.E").value(12))
+                .andExpect(jsonPath("$.axisDetails[0].summary").value(summaryEn));
+    }
+
+    @Test
+    void result_v2_badAnswers_400() throws Exception {
+        // 17개는 앞의 16개만 읽고 나머지를 버리는 구현을 막는다
+        for (String answers : List.of(answersJson("A", 12), answersJson("A", 17), answersJson("a", 16),
+                answersJson("E", 16), "[" + "\"A\",".repeat(15) + "null]")) {
+            mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                            .content(v2Body(answers)))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void result_unknownVersion_409() throws Exception {
+        mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":\"v3\",\"answers\":" + answersJson("A", 16) + "}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("TASTE_VERSION_MISMATCH"));
+    }
+
+    // v1 응답에는 새 필드가 null로도 끼면 안 된다
+    @Test
+    void result_v1_hasNoV2Fields() throws Exception {
+        when(recommendService.featuredGames(any())).thenReturn(List.of());
+        MvcResult res = mvc.perform(post("/api/taste/result").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":\"v1\",\"answers\":" + answersJson("A", 12) + "}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode body = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8));
+        Set<String> keys = new TreeSet<>();
+        body.fieldNames().forEachRemaining(keys::add);
+        assertThat(keys).containsExactly("axisScores", "code", "type");
     }
 
     @Test

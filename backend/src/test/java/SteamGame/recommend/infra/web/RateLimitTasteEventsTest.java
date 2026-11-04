@@ -8,6 +8,7 @@ import SteamGame.recommend.domain.event.service.FunnelEventService;
 import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
 import SteamGame.recommend.domain.impression.service.ImpressionService;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
+import SteamGame.recommend.domain.taste.content.TasteV2ContentLoader;
 import SteamGame.recommend.domain.taste.service.TasteRecommendService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // 취향 테스트와 이벤트 엔드포인트의 IP당 제한, 테스트마다 다른 IP를 써서 버킷이 섞이지 않게 한다
 @WebMvcTest({TasteController.class, EventController.class})
 @Import({SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class,
-        TasteContentLoader.class})
+        TasteContentLoader.class, TasteV2ContentLoader.class})
 class RateLimitTasteEventsTest {
 
     @Autowired MockMvc mvc;

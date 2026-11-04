@@ -118,3 +118,11 @@
 }
 @media (max-width: 360px) { .main { padding-inline: 12px; } .grid { gap: 12px; } .cardCopy h2 { font-size: 15px; } .traits { font-size: 10px; } }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover, .primaryButton:active, .secondaryButton:active, .filters button:active { transform: none; } }
+
+.quizIntro { display: flex; gap: 16px; align-items: start; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 2px solid var(--taste-grid); color: var(--taste-gold); }
+.quizIntro > span { font-size: 28px; }.quizIntro p { font-size: 14px; line-height: 1.9; }.quizIntro small { display: block; color: var(--taste-muted); font-size: 12px; margin-top: 8px; }
+.axisCard { max-width: 800px; padding: 20px; margin-bottom: 16px; background: var(--taste-panel); border: 2px solid var(--taste-grid); }
+.axisCard .scoreRow { margin-bottom: 0; }.axisSummary { margin-top: 16px; font-size: 14px; line-height: 1.9; color: var(--taste-paper); }
+.scoreNote { color: var(--taste-muted); font-size: 12px; line-height: 1.9; margin-block: 16px; }
+.answers button { overflow-wrap: anywhere; line-height: 1.8; }.answers button[aria-pressed="true"] strong { color: var(--taste-gold-light); }
+@media (max-width: 760px) { .axisCard { padding: 16px; }.scoreRow { gap: 12px; }.answers button { min-height: 80px; }.quizIntro { gap: 12px; } }

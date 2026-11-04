@@ -3,14 +3,17 @@
 import { useRef, useState } from 'react';
 import type { Locale } from '@/lib/i18n/locales';
 import type { LibrarySnapshot, PlayedGame } from '@/lib/library/api';
-import { baseCopy, baseTheme, genreName } from '@/lib/library/base';
+import { baseCopy, baseTheme, genreName, libraryCompanion } from '@/lib/library/base';
 import { libraryCopy } from '@/lib/library/copy';
 import { fillLibraryText, hoursText, numberText, percentText } from '@/lib/library/presentation';
 import styles from './base.module.css';
+import CollectionChest from './CollectionChest';
+import TastePortrait from '../taste/TastePortrait';
+import { getTasteType } from '@/lib/taste/catalog';
 
 function PixelProp({ kind }: { kind: string }) {
   const art: Record<string, React.ReactNode> = {
-    warehouse: <><path d="M4 13h24v16H4zM8 5h16v8H8z" fill="#a77943"/><path d="M4 17h24M8 5v24m16-24v24M12 13l12 16M8 29l16-16" stroke="#e5c78a" strokeWidth="2"/></>,
+    warehouse: <><path d="M4 13h24v16H4zM8 5h16v8H8z" fill="#a77943"/><path fill="none" d="M4 17h24M8 5v24m16-24v24M12 13l12 16M8 29l16-16" stroke="#e5c78a" strokeWidth="2"/></>,
     gallery: <><path d="M9 3h14v12l-5 5v6h7v4H7v-4h7v-6l-5-5z" fill="#e1bd69"/><path d="M9 6H3v8l6 4m14-12h6v8l-6 4" fill="none" stroke="#a88848" strokeWidth="3"/></>,
     attributes: <><path d="M5 4h22v14L16 30 5 18z" fill="#82b0a3"/><path d="M16 7v17M9 14h14" stroke="#e5d9b8" strokeWidth="3"/></>,
     map: <><path d="m2 7 9-4 10 4 9-4v23l-9 4-10-4-9 4z" fill="#d4bf8f"/><path d="M11 3v23M21 7v23" stroke="#9e845a" strokeWidth="2"/><path d="m6 21 6-8 6 6 7-9" fill="none" stroke="#7c553d" strokeWidth="2"/></>,
@@ -50,6 +53,9 @@ export default function LibraryBase({ data, locale, onSave, saving = false }: {
   const [selected, setSelected] = useState(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const theme = baseTheme(data.genreProfile);
+  const companion = libraryCompanion(data.genreProfile);
+  const character = getTasteType(companion.code)!;
+  const ko = locale === 'ko';
   const b = baseCopy[locale];
   const c = libraryCopy[locale];
   const stations = [b.warehouse, b.gallery, b.attributes, b.map];
@@ -87,14 +93,20 @@ export default function LibraryBase({ data, locale, onSave, saving = false }: {
     <section id="base-panel" className={styles.panel} role="tabpanel" aria-labelledby={`base-tab-${selected}`} tabIndex={0}>
       <header className={styles.panelHeading}><div><p>PLAYER RECORD / 0{selected + 1}</p><h2>{stations[selected]}</h2></div>{onSave ? <button className={styles.save} disabled={saving} type="button" onClick={() => onSave(selected)}>{b.save} ↓</button> : null}</header>
       {selected === 0 ? <div className={styles.storage}>
-        <div className={styles.crateDisplay} aria-hidden="true"><PixelProp kind="warehouse" /><span>× {numberText(data.stats.ownedCount, locale)}</span></div>
+        <div className={styles.crateDisplay} aria-hidden="true"><CollectionChest /><span>× {numberText(data.stats.ownedCount, locale)}</span></div>
         <div><p className={styles.classification}>{c.ledgerNames[data.ledger.code] ?? c.unknown}</p>
           <dl className={styles.numbers}><div><dt>{b.collected}</dt><dd>{numberText(data.stats.ownedCount, locale)} <small>{c.games}</small></dd></div><div><dt>{b.sleeping}</dt><dd>{numberText(data.stats.zeroPlayCount, locale)} <small>{c.games}</small></dd></div><div><dt>{c.recent}</dt><dd>{h(data.stats.recentHours)}</dd></div><div><dt>{c.unplayed}</dt><dd>{percentText(data.stats.zeroPlayRatio, locale)}</dd></div></dl>
           <progress max={1} value={data.stats.zeroPlayRatio} aria-label={c.unplayed} /><p className={styles.reading}>{fillLibraryText(data.ledger)}</p>
         </div></div> : null}
       {selected === 1 ? <><p className={styles.help}>{b.visits}</p><div className={styles.memories}>{memories.map((game, index) => <Memory game={game} key={game.appid} locale={locale} rank={index} />)}</div>{!memories.length ? <p>{b.noVisits}</p> : null}</> : null}
       {selected === 2 ? <div className={styles.characterSheet}>
-        <div className={styles.equipment} aria-hidden="true"><PixelProp kind="attributes" /><p>PLAYER<br />STATUS</p></div>
+        <div className={styles.equipment}>
+          <p className={styles.companionLabel}>{ko ? '취향의 동행자' : 'Your taste companion'}</p>
+          <TastePortrait key={companion.code} code={companion.code} name={character.name[locale]} />
+          <strong>{character.name[locale]}</strong>
+          <p>{companion.genre ? genreName(companion.genre, locale) : ko ? '함께 떠나는 여행자' : 'A fellow traveler'}</p>
+          <small>{ko ? '플레이 장르의 분위기에 맞춘 동행자예요. 테스트 유형 판정은 아니에요.' : 'A companion chosen for your genre’s atmosphere, not a scored test type.'}</small>
+        </div>
         <div className={styles.attributes}>{data.gamerStats.map(stat => <div key={stat.code} className={styles.attribute}><div><span>{stat.label}</span><strong>{stat.value === null ? c.insufficient : `${stat.value} / 100`}</strong></div>{stat.value === null ? <p className={styles.missing}>—</p> : <meter min={0} max={100} value={stat.value} aria-label={stat.label} />}</div>)}<p className={styles.help}>{c.statsNote}</p></div>
       </div> : null}
       {selected === 3 ? <div className={styles.mapLayout}><div><h3>{b.genreMap}</h3>

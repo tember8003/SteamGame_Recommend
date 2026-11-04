@@ -40,4 +40,18 @@ describe('interactive genre base', () => {
     rerender(<LibraryBase data={data({ ...profile, primaryGenre: null, state: 'INSUFFICIENT' })} locale="ko" />);
     expect(screen.getByText(/장르를 읽을 기록이 아직 적어/)).toBeInTheDocument();
   });
+  it('shows a genre companion rather than claiming a scored test type', () => {
+    render(<LibraryBase data={data({ ...profile, primaryGenre: 'LIFE_FARMING' })} locale="ko" />);
+    fireEvent.click(screen.getByRole('tab', { name: /캐릭터 상태창/ }));
+    expect(screen.getByRole('img', { name: '로빈' })).toBeInTheDocument();
+    expect(screen.getByText('취향의 동행자')).toBeVisible();
+    expect(screen.getByText(/테스트 유형 판정은 아니에요/)).toBeVisible();
+    expect(screen.getAllByRole('meter')).toHaveLength(5);
+  });
+  it('uses a traveler for insufficient genre data', () => {
+    render(<LibraryBase data={data({ ...profile, state: 'INSUFFICIENT' })} locale="en" />);
+    fireEvent.click(screen.getByRole('tab', { name: /Character attributes/ }));
+    expect(screen.getByText('A fellow traveler')).toBeVisible();
+  });
+
 });

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
-// answers 검증은 TasteScorer에 맡기고, 어떤 오류든 컨트롤러가 INVALID_ANSWERS 400으로 바꾼다
+// answers 검증은 버전별 점수 계산(TasteScorer, TasteV2Scorer)에 맡기고, 어떤 오류든 컨트롤러가 INVALID_ANSWERS 400으로 바꾼다
 public record TasteResultRequest(
         @NotNull String version,
         List<String> answers,

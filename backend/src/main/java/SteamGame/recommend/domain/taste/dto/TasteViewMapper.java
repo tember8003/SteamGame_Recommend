@@ -6,6 +6,8 @@ import SteamGame.recommend.domain.taste.content.Lang;
 import SteamGame.recommend.domain.taste.content.TasteAxis;
 import SteamGame.recommend.domain.taste.content.TasteContent;
 import SteamGame.recommend.domain.taste.content.TasteType;
+import SteamGame.recommend.domain.taste.content.TasteV2Content;
+import SteamGame.recommend.domain.taste.service.AxisDetail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,5 +51,24 @@ public final class TasteViewMapper {
 
     public static TypeSummary toSummary(TasteType t, Lang lang) {
         return new TypeSummary(t.code(), t.name().get(lang), t.work().get(lang), t.oneLiner().get(lang));
+    }
+
+    // v2 문항 응답, 점수와 축은 빼고 v1과 같은 모양으로 만든다
+    public static TasteQuestionsResponse toView(TasteV2Content c, Lang lang) {
+        List<QuestionView> questions = c.questions().stream()
+                .map(q -> new QuestionView(q.id(), q.text().get(lang), q.options().stream()
+                        .map(o -> new OptionView(o.key(), o.text().get(lang)))
+                        .toList()))
+                .toList();
+        return new TasteQuestionsResponse(c.version(), questions);
+    }
+
+    // 축 결과에 요청 언어의 보조 설명 문구를 붙인다
+    public static List<AxisDetailView> toDetailViews(List<AxisDetail> details, TasteV2Content c, Lang lang) {
+        return details.stream()
+                .map(d -> new AxisDetailView(d.id(), d.left(), d.right(), d.total(), d.leftPercent(),
+                        d.rightPercent(), d.winner(), d.balance().name(), d.tieBroken(),
+                        c.axisSummaries().get(d.id()).get(d.summaryKey()).get(lang)))
+                .toList();
     }
 }

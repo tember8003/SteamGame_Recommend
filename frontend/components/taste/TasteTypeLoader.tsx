@@ -10,7 +10,7 @@ import styles from './taste.module.css';
 export default function TasteTypeLoader({ code, locale }: { code: string; locale: Locale }) {
   const session = useTasteSession();
   const [sharedEntry] = useState(() => typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('s') === '1');
-  const result = !sharedEntry && session.result?.code === code ? session.result : null;
+  const result = !sharedEntry && session.locale === locale && session.result?.code === code ? session.result : null;
   const immediate = result && session.locale === locale ? result.type : null;
   const [view, setView] = useState<TypeView | null>(immediate);
   const [error, setError] = useState('');

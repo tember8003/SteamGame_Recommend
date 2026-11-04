@@ -17,7 +17,7 @@ describe("Home", () => {
       expect(main.querySelector(`a[href="/${locale}${path}"]`)).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: locale === "ko" ? "게임 취향 테스트" : "Game taste test" })).toBeVisible();
-    expect(screen.getByText(locale === "ko" ? "12가지 질문으로 내 게이머 유형 찾기" : "Find your player type in 12 questions")).toBeVisible();
+    expect(screen.getByText(locale === "ko" ? "16가지 상황으로 내 게이머 유형 찾기" : "Find your player type in 16 questions")).toBeVisible();
   });
 
   it("탐색소를 펼치면 세 가지 실제 추천 기능을 선택할 수 있다", () => {

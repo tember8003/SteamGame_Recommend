@@ -156,7 +156,7 @@ export const en = {
     explorerName: "The explorer",
     archiveName: "The archivist",
     tasteTitle: "Game taste test",
-    tasteDesc: "Find your player type in 12 questions",
+    tasteDesc: "Find your player type in 16 questions",
     tasteGreeting: "Which game speaks to you?",
     tasteCta: "Find my taste",
     similarTitle: "Find similar games",

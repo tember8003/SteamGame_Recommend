@@ -158,7 +158,7 @@ export const ko: Messages = {
     explorerName: "게임 탐색소",
     archiveName: "플레이 기록관",
     tasteTitle: "게임 취향 테스트",
-    tasteDesc: "12가지 질문으로 내 게이머 유형 찾기",
+    tasteDesc: "16가지 상황으로 내 게이머 유형 찾기",
     tasteGreeting: "어떤 게임에 마음이 끌리나요?",
     tasteCta: "시작하기",
     similarTitle: "비슷한 게임 찾기",
