@@ -64,6 +64,7 @@ public final class LibraryContentValidator {
         checkExcludedTags(c.excludedTags(), c.tagGroups(), errors);
         checkPhrases(c.phrases(), errors);
         checkGenres(c.genres(), c.genreExcludedTags(), errors);
+        checkConditionalExcludes(c.genres(), c.genreConditionalExcludes(), errors);
         checkGenreRules(c.genreRules(), errors);
         if (!errors.isEmpty()) {
             throw new IllegalStateException("library content invalid (" + errors.size() + "): " + String.join("; ", errors));
@@ -176,6 +177,40 @@ public final class LibraryContentValidator {
         for (String tag : excluded) {
             if (tag == null || tag.isBlank()) {
                 errors.add("genreExcludedTags has a blank tag");
+            }
+        }
+    }
+
+    // 태그 이름을 잘못 쓰면 규칙이 아무 말 없이 꺼지므로 장르 매핑에 있는 이름만 받는다
+    // 조건 태그는 붙어 있는지만 보므로 장르 태그일 필요는 없지만 오타를 기동 시점에 잡으려고 함께 제한한다
+    // 장르 밖 태그를 조건으로 쓰려면 이 제한을 풀고 운영 태그 목록 대조 테스트로 오타를 잡는다
+    // 같은 태그가 양쪽에 있으면 그 태그가 있을 때 그 태그를 빼라는 뜻이 되어 의미가 없다
+    private static void checkConditionalExcludes(Map<String, List<String>> genres, List<GenreConditionalExclude> rules,
+                                                 List<String> errors) {
+        Set<String> known = new HashSet<>();
+        genres.values().forEach(known::addAll);
+        for (int i = 0; i < rules.size(); i++) {
+            GenreConditionalExclude r = rules.get(i);
+            String at = "genreConditionalExcludes[" + i + "]";
+            checkRuleTags(at + ".whenAnyTag", r.whenAnyTag(), known, errors);
+            checkRuleTags(at + ".ignoreTags", r.ignoreTags(), known, errors);
+            for (String tag : r.whenAnyTag()) {
+                if (r.ignoreTags().contains(tag)) {
+                    errors.add(at + " tag " + tag + " is in both whenAnyTag and ignoreTags");
+                }
+            }
+        }
+    }
+
+    private static void checkRuleTags(String at, List<String> tags, Set<String> known, List<String> errors) {
+        if (tags.isEmpty()) {
+            errors.add(at + " is empty");
+        }
+        for (String tag : tags) {
+            if (tag.isBlank()) {
+                errors.add(at + " has a blank tag");
+            } else if (!known.contains(tag)) {
+                errors.add(at + " tag " + tag + " is not in genres");
             }
         }
     }

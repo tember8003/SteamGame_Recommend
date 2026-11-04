@@ -2,6 +2,7 @@ package SteamGame.recommend.domain.library.analysis;
 
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GenreProfile;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GenreShare;
+import SteamGame.recommend.domain.library.content.GenreConditionalExclude;
 import SteamGame.recommend.domain.library.content.GenreRules;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.LibraryContentValidator;
@@ -9,9 +10,11 @@ import SteamGame.recommend.domain.library.steam.OwnedGame;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 // 거점 배경을 정하는 장르 계산, 순수 함수다 (DB, 시간, 난수 없음)
 // 게임마다 장르에 속한 태그 중 득표수가 가장 높은 태그의 장르 하나에 플레이 시간을 모두 넣는다
@@ -42,7 +45,8 @@ public final class GenreProfiler {
                 continue;
             }
             totalMinutes += g.minutesTotal();
-            String genre = representativeGenre(tagVotesByAppid.get(g.appid()), genreOfTag);
+            String genre = representativeGenre(tagVotesByAppid.get(g.appid()), genreOfTag,
+                    content.genreConditionalExcludes());
             if (genre != null) {
                 minutesByGenre.merge(genre, (long) g.minutesTotal(), Long::sum);
                 classifiedMinutes += g.minutesTotal();
@@ -76,14 +80,22 @@ public final class GenreProfiler {
     }
 
     // 장르에 속한 태그가 하나도 없으면 null, 장르마다 그 장르 태그 중 가장 높은 득표수를 점수로 삼는다
-    private static String representativeGenre(Map<String, Integer> tagVotes, Map<String, String> genreOfTag) {
+    // 조건 태그가 있는 게임은 그 규칙의 ignoreTags 표를 세지 않는다
+    private static String representativeGenre(Map<String, Integer> tagVotes, Map<String, String> genreOfTag,
+                                              List<GenreConditionalExclude> conditionalExcludes) {
         if (tagVotes == null) {
             return null;
+        }
+        Set<String> ignored = new HashSet<>();
+        for (GenreConditionalExclude rule : conditionalExcludes) {
+            if (rule.whenAnyTag().stream().anyMatch(tagVotes::containsKey)) {
+                ignored.addAll(rule.ignoreTags());
+            }
         }
         Map<String, Integer> best = new HashMap<>();
         tagVotes.forEach((tag, votes) -> {
             String genre = genreOfTag.get(tag);
-            if (genre != null && votes != null) {
+            if (genre != null && votes != null && !ignored.contains(tag)) {
                 best.merge(genre, votes, Math::max);
             }
         });

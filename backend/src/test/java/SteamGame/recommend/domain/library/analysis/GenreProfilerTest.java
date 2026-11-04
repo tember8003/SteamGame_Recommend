@@ -3,6 +3,7 @@ package SteamGame.recommend.domain.library.analysis;
 import SteamGame.recommend.domain.library.LibraryFixtures;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GenreProfile;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.GenreShare;
+import SteamGame.recommend.domain.library.content.GenreConditionalExclude;
 import SteamGame.recommend.domain.library.content.GenreRules;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.LibraryContentLoader;
@@ -45,7 +46,11 @@ class GenreProfilerTest {
                     "Choices Matter", 522)),
             Map.entry(1174180L, votes("Open World", 1046, "Story Rich", 837, "Adventure", 697, "Shooter", 495)),
             Map.entry(264710L, votes("Open World Survival Craft", 817, "Survival", 814, "Horror", 745,
-                    "Open World", 677, "Exploration", 666, "Crafting", 559, "Base Building", 550)));
+                    "Open World", 677, "Exploration", 666, "Crafting", 559, "Base Building", 550)),
+            // PUBG의 Survival, Shooter는 2026-11-04 운영 DB 값이다, Battle Royale은 상점 페이지 순서대로 Shooter보다 작게 둔 값이다
+            Map.entry(578080L, votes("Survival", 1282, "Shooter", 1106, "Battle Royale", 950)),
+            // Road to Vostok의 Survival, FPS는 2026-11-04 운영 DB 값이다, Extraction Shooter는 같은 조회에서 FPS보다 작게 나와 그보다 작게 둔 값이다
+            Map.entry(1963610L, votes("Survival", 923, "FPS", 771, "Extraction Shooter", 700)));
 
     private static Map<String, Integer> votes(Object... pairs) {
         Map<String, Integer> m = new LinkedHashMap<>();
@@ -75,7 +80,9 @@ class GenreProfilerTest {
             "GTA V, 271590, ACTION_SHOOTER",
             "The Witcher 3, 292030, RPG_ADVENTURE",
             "Red Dead Redemption 2, 1174180, ACTION_SHOOTER",
-            "Subnautica, 264710, SURVIVAL_CRAFTING"
+            "Subnautica, 264710, SURVIVAL_CRAFTING",
+            "PUBG, 578080, ACTION_SHOOTER",
+            "Road to Vostok, 1963610, ACTION_SHOOTER"
     })
     void realGameGoesToExpectedGenre(String name, long appid, String expected) {
         GenreProfile p = GenreProfiler.profile(List.of(game(appid, 6000)), REAL_VOTES, REAL);
@@ -116,6 +123,75 @@ class GenreProfilerTest {
         GenreProfile p = GenreProfiler.profile(List.of(game(1, 6000)), v, FIXTURE);
 
         assertThat(p.primaryGenre()).isEqualTo("PUZZLE");
+    }
+
+    // 배틀로얄 게임은 Survival 표가 Shooter보다 많아 규칙이 없으면 생존 제작으로 간다
+    @Test
+    void battleRoyaleGoesToSurvivalWithoutConditionalRule() {
+        LibraryContent noRule = LibraryFixtures.withConditionalExcludes(REAL, List.of());
+
+        GenreProfile p = GenreProfiler.profile(List.of(game(578080, 6000)), REAL_VOTES, noRule);
+
+        assertThat(p.primaryGenre()).isEqualTo("SURVIVAL_CRAFTING");
+    }
+
+    // 픽스처 규칙: ACTION_SHOOTER_G1이 있으면 SURVIVAL_CRAFTING_G1 표를 뺀다
+    private static final LibraryContent WITH_RULE = LibraryFixtures.withConditionalExcludes(FIXTURE,
+            List.of(new GenreConditionalExclude(List.of("ACTION_SHOOTER_G1"), List.of("SURVIVAL_CRAFTING_G1"))));
+
+    @Test
+    void conditionTagPresentIgnoresTheTag() {
+        Map<Long, Map<String, Integer>> v = Map.of(1L, votes("SURVIVAL_CRAFTING_G1", 100, "ACTION_SHOOTER_G1", 50));
+
+        assertThat(GenreProfiler.profile(List.of(game(1, 6000)), v, WITH_RULE).primaryGenre())
+                .isEqualTo("ACTION_SHOOTER");
+        assertThat(GenreProfiler.profile(List.of(game(1, 6000)), v, FIXTURE).primaryGenre())
+                .isEqualTo("SURVIVAL_CRAFTING");
+    }
+
+    // PolyZ처럼 다른 생존 태그의 표가 더 많으면 뺀 태그와 상관없이 생존 제작에 남는다
+    @Test
+    void otherTagsOfSameGenreStillCount() {
+        Map<Long, Map<String, Integer>> v = Map.of(1L,
+                votes("SURVIVAL_CRAFTING_G1", 100, "SURVIVAL_CRAFTING_G2", 80, "ACTION_SHOOTER_G1", 50));
+
+        assertThat(GenreProfiler.profile(List.of(game(1, 6000)), v, WITH_RULE).primaryGenre())
+                .isEqualTo("SURVIVAL_CRAFTING");
+    }
+
+    // DayZ처럼 다른 슈팅 태그만 있고 조건 태그가 없으면 규칙이 적용되지 않는다
+    @Test
+    void withoutConditionTagRuleDoesNotApply() {
+        Map<Long, Map<String, Integer>> v = Map.of(1L, votes("SURVIVAL_CRAFTING_G1", 100, "ACTION_SHOOTER_G2", 90));
+
+        assertThat(GenreProfiler.profile(List.of(game(1, 6000)), v, WITH_RULE).primaryGenre())
+                .isEqualTo("SURVIVAL_CRAFTING");
+    }
+
+    // 조건이 맞는 규칙이 여럿이면 무시할 태그를 모두 합친다
+    @Test
+    void matchingRulesIgnoreTagsAreMerged() {
+        LibraryContent twoRules = LibraryFixtures.withConditionalExcludes(FIXTURE, List.of(
+                new GenreConditionalExclude(List.of("ACTION_SHOOTER_G1"), List.of("SURVIVAL_CRAFTING_G1")),
+                new GenreConditionalExclude(List.of("ACTION_SHOOTER_G1"), List.of("HORROR_MYSTERY_G1"))));
+        Map<Long, Map<String, Integer>> v = Map.of(1L,
+                votes("SURVIVAL_CRAFTING_G1", 100, "HORROR_MYSTERY_G1", 90, "ACTION_SHOOTER_G1", 50));
+
+        assertThat(GenreProfiler.profile(List.of(game(1, 6000)), v, twoRules).primaryGenre())
+                .isEqualTo("ACTION_SHOOTER");
+    }
+
+    // 규칙은 그 게임에만 적용된다, 조건 태그가 없는 다른 게임의 같은 태그는 그대로 센다
+    @Test
+    void ruleAppliesPerGame() {
+        Map<Long, Map<String, Integer>> v = Map.of(
+                1L, votes("SURVIVAL_CRAFTING_G1", 100, "ACTION_SHOOTER_G1", 50),
+                2L, votes("SURVIVAL_CRAFTING_G1", 100));
+
+        GenreProfile p = GenreProfiler.profile(List.of(game(1, 6000), game(2, 18000)), v, WITH_RULE);
+
+        assertThat(p.distribution()).containsExactly(
+                new GenreShare("SURVIVAL_CRAFTING", 0.75), new GenreShare("ACTION_SHOOTER", 0.25));
     }
 
     @Test

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static SteamGame.recommend.domain.library.LibraryFixtures.phrase;
 import static SteamGame.recommend.domain.library.LibraryFixtures.validContent;
+import static SteamGame.recommend.domain.library.LibraryFixtures.withConditionalExcludes;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withExcluded;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withGenres;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withGroup;
@@ -170,7 +171,7 @@ class LibraryContentValidatorTest {
     void blankVersion() {
         LibraryContent v = validContent();
         LibraryContent c = new LibraryContent(" ", v.tagGroups(), v.groupLabels(), v.excludedTags(), v.phrases(),
-                v.genres(), v.genreExcludedTags(), v.genreRules());
+                v.genres(), v.genreExcludedTags(), v.genreRules(), v.genreConditionalExcludes());
         assertThatThrownBy(() -> LibraryContentValidator.validate(c))
                 .hasMessageContaining("version is blank");
     }
@@ -274,6 +275,40 @@ class LibraryContentValidatorTest {
                 .hasMessageContaining("genres genre PUZZLE has a blank tag")
                 .hasMessageContaining("genres genre PUZZLE tag duplicated: PUZZLE_G1")
                 .hasMessageContaining("genreExcludedTags has a blank tag");
+    }
+
+    @Test
+    void conditionalExcludeValidRulePasses() {
+        LibraryContent c = withConditionalExcludes(validContent(), List.of(
+                new GenreConditionalExclude(List.of("ACTION_SHOOTER_G1"), List.of("SURVIVAL_CRAFTING_G1"))));
+        assertThatCode(() -> LibraryContentValidator.validate(c)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void conditionalExcludeEmptyListsRejected() {
+        LibraryContent c = withConditionalExcludes(validContent(), List.of(
+                new GenreConditionalExclude(List.of(), null)));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(c))
+                .hasMessageContaining("genreConditionalExcludes[0].whenAnyTag is empty")
+                .hasMessageContaining("genreConditionalExcludes[0].ignoreTags is empty");
+    }
+
+    // 태그 이름을 잘못 쓰면 규칙이 아무 말 없이 꺼지므로 장르 매핑에 있는 이름만 받는다
+    @Test
+    void conditionalExcludeUnknownOrBlankTagRejected() {
+        LibraryContent c = withConditionalExcludes(validContent(), List.of(
+                new GenreConditionalExclude(List.of("Battle Royal"), List.of(" "))));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(c))
+                .hasMessageContaining("genreConditionalExcludes[0].whenAnyTag tag Battle Royal is not in genres")
+                .hasMessageContaining("genreConditionalExcludes[0].ignoreTags has a blank tag");
+    }
+
+    @Test
+    void conditionalExcludeSameTagOnBothSidesRejected() {
+        LibraryContent c = withConditionalExcludes(validContent(), List.of(
+                new GenreConditionalExclude(List.of("ACTION_SHOOTER_G1"), List.of("ACTION_SHOOTER_G1"))));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(c))
+                .hasMessageContaining("genreConditionalExcludes[0] tag ACTION_SHOOTER_G1 is in both whenAnyTag and ignoreTags");
     }
 
     @Test
