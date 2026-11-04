@@ -10,10 +10,13 @@ import SteamGame.recommend.domain.taste.content.Lang;
 import SteamGame.recommend.domain.taste.content.TasteContent;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
 import SteamGame.recommend.domain.taste.content.TasteType;
+import SteamGame.recommend.domain.taste.content.TasteV2Content;
+import SteamGame.recommend.domain.taste.content.TasteV2ContentLoader;
 import SteamGame.recommend.domain.taste.dto.TasteQuestionsResponse;
 import SteamGame.recommend.domain.taste.dto.TasteRecommendRequest;
 import SteamGame.recommend.domain.taste.dto.TasteResultRequest;
 import SteamGame.recommend.domain.taste.dto.TasteResultResponse;
+import SteamGame.recommend.domain.taste.dto.TasteV2ResultResponse;
 import SteamGame.recommend.domain.taste.dto.TasteViewMapper;
 import SteamGame.recommend.domain.taste.dto.TypeSummary;
 import SteamGame.recommend.domain.taste.dto.TypeView;
@@ -21,6 +24,8 @@ import SteamGame.recommend.domain.taste.service.TasteRecommendResult;
 import SteamGame.recommend.domain.taste.service.TasteRecommendService;
 import SteamGame.recommend.domain.taste.service.TasteScore;
 import SteamGame.recommend.domain.taste.service.TasteScorer;
+import SteamGame.recommend.domain.taste.service.TasteV2Score;
+import SteamGame.recommend.domain.taste.service.TasteV2Scorer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -52,15 +57,17 @@ public class TasteController {
     private static final int DEFAULT_REVIEW = 300;
 
     private final TasteContentLoader contentLoader;
+    private final TasteV2ContentLoader v2Loader;
     private final TasteRecommendService recommendService;
     private final FeedbackSuppressionService suppressionService;
     private final ImpressionService impressionService;
     private final FunnelEventService eventService;
 
-    public TasteController(TasteContentLoader contentLoader, TasteRecommendService recommendService,
-                           FeedbackSuppressionService suppressionService, ImpressionService impressionService,
-                           FunnelEventService eventService) {
+    public TasteController(TasteContentLoader contentLoader, TasteV2ContentLoader v2Loader,
+                           TasteRecommendService recommendService, FeedbackSuppressionService suppressionService,
+                           ImpressionService impressionService, FunnelEventService eventService) {
         this.contentLoader = contentLoader;
+        this.v2Loader = v2Loader;
         this.recommendService = recommendService;
         this.suppressionService = suppressionService;
         this.impressionService = impressionService;
@@ -81,11 +88,21 @@ public class TasteController {
         return games.stream().map(SteamAppDTO::getAppid).filter(Objects::nonNull).toList();
     }
 
-    @Operation(summary = "Taste test questions")
+    @Operation(summary = "Taste test questions, version omitted means v1")
     @GetMapping("/questions")
-    public ResponseEntity<TasteQuestionsResponse> questions(@RequestParam(required = false) String lang) {
-        return ResponseEntity.ok().cacheControl(cache())
-                .body(TasteViewMapper.toView(contentLoader.content(), Lang.from(lang)));
+    public ResponseEntity<TasteQuestionsResponse> questions(@RequestParam(required = false) String lang,
+                                                            @RequestParam(required = false) String version) {
+        Lang l = Lang.from(lang);
+        TasteQuestionsResponse body;
+        // version을 생략한 옛 프론트는 계속 v1을 받는다
+        if (version == null || version.equals(contentLoader.content().version())) {
+            body = TasteViewMapper.toView(contentLoader.content(), l);
+        } else if (version.equals(v2Loader.content().version())) {
+            body = TasteViewMapper.toView(v2Loader.content(), l);
+        } else {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "TASTE_VERSION_MISMATCH");
+        }
+        return ResponseEntity.ok().cacheControl(cache()).body(body);
     }
 
     @Operation(summary = "All 16 type summaries")
@@ -107,11 +124,15 @@ public class TasteController {
         return ResponseEntity.ok().cacheControl(cache()).body(body);
     }
 
-    @Operation(summary = "Compute the type from 12 answers")
+    @Operation(summary = "Compute the type from answers (v1: 12 A/B, v2: 16 A-D)")
     @PostMapping("/result")
-    public ResponseEntity<TasteResultResponse> result(@Valid @RequestBody TasteResultRequest request,
-                                                      @RequestParam(required = false) String lang) {
+    public ResponseEntity<?> result(@Valid @RequestBody TasteResultRequest request,
+                                    @RequestParam(required = false) String lang) {
+        Lang l = Lang.from(lang);
         TasteContent content = contentLoader.content();
+        if (v2Loader.content().version().equals(request.version())) {
+            return ResponseEntity.ok(resultV2(request, content, l));
+        }
         if (!content.version().equals(request.version())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "TASTE_VERSION_MISMATCH");
         }
@@ -123,14 +144,33 @@ public class TasteController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_ANSWERS");
         }
         TasteType type = findType(score.code());
-        List<SteamAppDTO> featured = recommendService.featuredGames(type);
-
-        eventService.record(request.clientId(), FunnelEventType.TEST_COMPLETE, type.code(), null);
-        // 결과 화면에 보이는 대표 게임의 노출을 남겨 그 카드의 클릭과 짝을 맞춘다
-        impressionService.record(request.clientId(), null, FeedbackContext.TASTE, appidsOf(featured));
-
+        List<SteamAppDTO> featured = completeResult(request.clientId(), type);
         return ResponseEntity.ok(new TasteResultResponse(score.code(), score.axisScores(),
-                TasteViewMapper.toView(content, type, Lang.from(lang), featured)));
+                TasteViewMapper.toView(content, type, l, featured)));
+    }
+
+    private TasteV2ResultResponse resultV2(TasteResultRequest request, TasteContent content, Lang l) {
+        TasteV2Content v2 = v2Loader.content();
+        TasteV2Score score;
+        try {
+            score = TasteV2Scorer.score(content.axes(), v2, request.answers());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_ANSWERS");
+        }
+        TasteType type = findType(score.code());
+        List<SteamAppDTO> featured = completeResult(request.clientId(), type);
+        return new TasteV2ResultResponse(v2.version(), score.code(), score.axisScores(),
+                TasteViewMapper.toDetailViews(score.axisDetails(), v2, l),
+                TasteViewMapper.toView(content, type, l, featured));
+    }
+
+    // 대표 게임을 고르고 완료 이벤트와 노출을 남긴다, v1과 v2가 같은 기록을 남긴다
+    private List<SteamAppDTO> completeResult(String clientId, TasteType type) {
+        List<SteamAppDTO> featured = recommendService.featuredGames(type);
+        eventService.record(clientId, FunnelEventType.TEST_COMPLETE, type.code(), null);
+        // 결과 화면에 보이는 대표 게임의 노출을 남겨 그 카드의 클릭과 짝을 맞춘다
+        impressionService.record(clientId, null, FeedbackContext.TASTE, appidsOf(featured));
+        return featured;
     }
 
     @Operation(summary = "More games for a taste type")
