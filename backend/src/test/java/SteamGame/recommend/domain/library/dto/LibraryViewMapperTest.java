@@ -27,7 +27,7 @@ class LibraryViewMapperTest {
         LibraryAnalysis base = emptyBase();
         return new LibraryAnalysis(false, base.stats(), base.ledger(),
                 new LibraryAnalysis.Verdict(new Judged("GENRE_LOYALIST", index, params), base.verdict().sentence()),
-                base.gamerStats(), base.diagnosis(), null);
+                base.gamerStats(), base.diagnosis(), null, null);
     }
 
     private LibraryAnalysis emptyBase() {
@@ -38,7 +38,7 @@ class LibraryViewMapperTest {
                         new Judged("SENTENCE_INNOCENT", 0, Map.of())),
                 List.of(new LibraryAnalysis.GamerStat(SteamGame.recommend.domain.library.analysis.StatCode.COOP, null)),
                 new LibraryAnalysis.Diagnosis(null, List.of(), null),
-                null);
+                null, null);
     }
 
     @Test

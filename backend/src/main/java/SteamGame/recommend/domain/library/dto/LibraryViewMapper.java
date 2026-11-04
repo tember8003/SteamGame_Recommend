@@ -37,7 +37,8 @@ public final class LibraryViewMapper {
                 verdict(a, content, lang, false),
                 gamerStats(a.gamerStats(), content, lang),
                 diagnosis(a.diagnosis()),
-                genreProfile(a.genreProfile()));
+                genreProfile(a.genreProfile()),
+                picks(a.picks()));
     }
 
     // 공유 스냅샷은 문구 파일이 바뀐 뒤에 읽힐 수 있어 현재 문구 파일에서 채울 수 있는 후보를 고른다
@@ -48,7 +49,20 @@ public final class LibraryViewMapper {
                 verdict(a, content, lang, true),
                 gamerStats(a.gamerStats(), content, lang),
                 diagnosis(a.diagnosis()),
-                genreProfile(a.genreProfile()));
+                genreProfile(a.genreProfile()),
+                picks(a.picks()));
+    }
+
+    // 그 기능 전에 저장된 공유는 null이고, 프론트는 해당 카드를 보여 주지 않는다
+    private static PicksView picks(LibraryAnalysis.Picks p) {
+        if (p == null) {
+            return null;
+        }
+        LibraryAnalysis.AbandonedGenre ab = p.abandonedGenre();
+        return new PicksView(
+                p.playNext().stream().map(x -> new PicksView.PlayNextView(x.appid(), x.name(), x.matchedTags())).toList(),
+                p.revisit().stream().map(x -> new PicksView.RevisitView(x.appid(), x.name(), x.hours(), x.idleDays())).toList(),
+                ab == null ? null : new PicksView.AbandonedGenreView(ab.genre(), ab.gameCount(), ab.games()));
     }
 
     // 장르 기능 전에 저장된 공유는 null이고, 프론트가 기본 거점으로 보여 준다

@@ -47,7 +47,7 @@ class DefensiveCopyTest {
                 new Verdict(judged(Map.of()), judged(Map.of())),
                 stats,
                 new Diagnosis(null, concentrated, null),
-                null);
+                null, null);
         tags.clear();
         concentrated.clear();
         stats.clear();
@@ -67,7 +67,7 @@ class DefensiveCopyTest {
     @Test
     void analysisRejectsMissingRequiredParts() {
         assertThatThrownBy(() -> new LibraryAnalysis(false, null, judged(Map.of()),
-                new Verdict(judged(Map.of()), judged(Map.of())), List.of(), new Diagnosis(null, List.of(), null), null))
+                new Verdict(judged(Map.of()), judged(Map.of())), List.of(), new Diagnosis(null, List.of(), null), null, null))
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new GamerStat(null, 1)).isInstanceOf(NullPointerException.class);
     }

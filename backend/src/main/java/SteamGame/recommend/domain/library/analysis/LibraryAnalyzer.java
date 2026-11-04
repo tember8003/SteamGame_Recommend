@@ -8,6 +8,7 @@ import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.TagShare;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.TopGame;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis.Verdict;
 import SteamGame.recommend.domain.library.content.LibraryContent;
+import SteamGame.recommend.domain.library.content.LibraryContentValidator;
 import SteamGame.recommend.domain.library.content.Phrase;
 import SteamGame.recommend.domain.library.steam.OwnedGame;
 
@@ -93,7 +94,7 @@ public final class LibraryAnalyzer {
         double tagTotal = tagMinutes.values().stream().mapToDouble(Double::doubleValue).sum();
 
         List<TagShare> topTags = new ArrayList<>();
-        for (Map.Entry<String, Double> e : rankedTags.subList(0, Math.min(10, rankedTags.size()))) {
+        for (Map.Entry<String, Double> e : rankedTags.subList(0, Math.min(LibraryContentValidator.MAX_TASTE_TAGS, rankedTags.size()))) {
             topTags.add(new TagShare(e.getKey(), hours(e.getValue()), ratio(e.getValue() / tagTotal)));
         }
 
@@ -174,7 +175,7 @@ public final class LibraryAnalyzer {
                 recentGames, hours(recentMinutes), matched, topTags);
         boolean limited = totalMinutes == 0 || matched < LIMITED_MATCHED_MIN;
         // 장르 결과는 태그 득표수가 필요해서 호출 쪽이 GenreProfiler로 따로 붙인다
-        return new LibraryAnalysis(limited, stats, ledger, verdict, gamerStats, diagnosis, null);
+        return new LibraryAnalysis(limited, stats, ledger, verdict, gamerStats, diagnosis, null, null);
     }
 
     // 비율은 정수로 비교해 부동소수 오차를 피한다

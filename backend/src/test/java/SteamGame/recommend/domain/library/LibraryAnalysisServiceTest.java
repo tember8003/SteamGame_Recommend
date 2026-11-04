@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.library;
 
 import SteamGame.recommend.config.JacksonConfig;
+import SteamGame.recommend.domain.game.repository.ReviewRepository;
 import SteamGame.recommend.domain.library.analysis.GenreState;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.content.LibraryContent;
@@ -32,6 +33,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +64,9 @@ class LibraryAnalysisServiceTest {
     TagRarityCache rarityCache = mock(TagRarityCache.class);
     LibraryContentLoader loader = mock(LibraryContentLoader.class);
     LibraryShareService shareService = mock(LibraryShareService.class);
+    ReviewRepository reviewRepository = mock(ReviewRepository.class);
+    static final Instant NOW = Instant.parse("2026-11-04T00:00:00Z");
+    static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
     // 운영과 같은 설정(JacksonConfig)으로 저장하고 읽는다
     ObjectMapper objectMapper = new JacksonConfig().objectMapper();
     AtomicLong nanos = new AtomicLong();
@@ -75,7 +82,7 @@ class LibraryAnalysisServiceTest {
                 Map.of("appId", 1L, "tagName", "STRATEGY_A", "votes", 100),
                 Map.of("appId", 2L, "tagName", "STRATEGY_B", "votes", 100)));
         service = new LibraryAnalysisService(resolver, client, tagRepository, rarityCache, loader, shareService,
-                objectMapper, nanos::get);
+                objectMapper, reviewRepository, nanos::get, CLOCK);
     }
 
     private SteamLibraryResult.Found found() {
@@ -209,6 +216,18 @@ class LibraryAnalysisServiceTest {
 
         assertThat(service.renderShared("V", Lang.KO).genreProfile()).isNull();
         assertThat(service.renderShared("L", Lang.KO).genreProfile()).isNull();
+    }
+
+    @Test
+    void renderShared_oldSnapshotsWithoutPicksReadAsNull() throws Exception {
+        ObjectNode wrapped = (ObjectNode) objectMapper.readTree(savedPayload());
+        ((ObjectNode) wrapped.get("analysis")).remove("picks");
+        String legacy = wrapped.get("analysis").toString();
+        when(shareService.find("V")).thenReturn(Optional.of(wrapped.toString()));
+        when(shareService.find("L")).thenReturn(Optional.of(legacy));
+
+        assertThat(service.renderShared("V", Lang.KO).picks()).isNull();
+        assertThat(service.renderShared("L", Lang.KO).picks()).isNull();
     }
 
     // 장르 결과가 있는데 필수 값이 빠졌으면 다른 필드처럼 읽지 못한 것으로 본다
@@ -628,5 +647,47 @@ class LibraryAnalysisServiceTest {
                     assertThat(e.getStatusCode().value()).isEqualTo(status.value());
                     assertThat(e.getReason()).isEqualTo(reason);
                 });
+    }
+    private static ReviewRepository.Rating rating(long appid, int total, double pct) {
+        return new ReviewRepository.Rating() {
+            public Long getAppid() {
+                return appid;
+            }
+
+            public Integer getTotalReviews() {
+                return total;
+            }
+
+            public java.math.BigDecimal getPositivePercentage() {
+                return java.math.BigDecimal.valueOf(pct);
+            }
+        };
+    }
+
+    // found()의 3번 게임(0분)만 후보라 평가 조회에는 3번만 넘어가고, 취향 태그 둘과 겹쳐 지금 해볼 게임이 된다
+    @Test
+    void analyze_attachesPlayNextFromUnplayedGamesOnly() {
+        when(tagRepository.findGameTagMapping(anyList())).thenReturn(List.of(
+                Map.of("appId", 1L, "tagName", "STRATEGY_A", "votes", 100),
+                Map.of("appId", 2L, "tagName", "STRATEGY_B", "votes", 100),
+                Map.of("appId", 3L, "tagName", "STRATEGY_A", "votes", 90),
+                Map.of("appId", 3L, "tagName", "STRATEGY_B", "votes", 80)));
+        when(reviewRepository.findRatingsByAppidIn(anyList())).thenReturn(List.of(rating(3, 500, 90)));
+        when(client.fetch(STEAM_ID)).thenReturn(found());
+
+        LibraryAnalysis.Picks picks = service.analyze("x").analysis().picks();
+
+        ArgumentCaptor<List<Long>> asked = ArgumentCaptor.forClass(List.class);
+        verify(reviewRepository).findRatingsByAppidIn(asked.capture());
+        assertThat(asked.getValue()).containsExactly(3L);
+        assertThat(picks.playNext()).extracting(LibraryAnalysis.PlayNext::name).containsExactly("Gamma");
+        assertThat(picks.playNext().get(0).matchedTags()).containsExactlyInAnyOrder("STRATEGY_A", "STRATEGY_B");
+    }
+
+    @Test
+    void roundTrip_keepsPicks() {
+        when(reviewRepository.findRatingsByAppidIn(anyList())).thenReturn(List.of());
+        assertRoundTripEquals(found().games());
+        assertThat(service.renderShared("S", Lang.KO).picks()).isNotNull();
     }
 }

@@ -111,6 +111,7 @@ class LibraryContentFileTest {
         assertThat(c.genreExcludedTags()).containsExactlyInAnyOrder(
                 "Open World", "Adventure", "Exploration", "Story Rich", "Choices Matter", "Automobile Sim");
         assertThat(c.genreRules()).isEqualTo(new GenreRules(10, 0.3, 0.1, 0.15));
+        assertThat(c.picks()).isEqualTo(new PickRules(10, 5, 2, 50, 70, 3, 10, 365, 3, 60, 120, 90, 3));
     }
 
     // 배틀로얄과 익스트랙션 슈터는 Survival 표가 많아도 생존 게임이 아니므로 이 두 태그가 있으면 Survival을 장르 판단에서 뺀다
