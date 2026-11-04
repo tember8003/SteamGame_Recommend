@@ -450,6 +450,13 @@
   "Automobile Sim"
  ],
  "genreExcludedNote": "장르 판단에 쓰지 않는 태그다. 여러 장르의 게임에 높은 득표수로 붙어서 넣으면 그 장르로 게임이 끌려간다. Automobile Sim은 GTA V처럼 레이싱이 아닌 게임에도 높게 붙어서 뺐다",
+ "genreConditionalExcludes": [
+  {
+   "whenAnyTag": ["Battle Royale", "Extraction Shooter"],
+   "ignoreTags": ["Survival"]
+  }
+ ],
+ "genreConditionalExcludesNote": "게임에 whenAnyTag 중 하나라도 있으면 그 게임에서만 ignoreTags 표를 장르 판단에서 뺀다. 배틀로얄 게임에는 끝까지 살아남는다는 뜻으로 Survival 표가 많이 붙어 PUBG가 생존 제작으로 갔다. 2026-11-04 운영 DB에서 두 태그가 붙은 게임 20개는 모두 실제 배틀로얄이나 익스트랙션 슈터였다. Survival을 항상 빼면 DayZ, Rust, 7 Days to Die 같은 진짜 생존 게임이 다른 장르로 가므로 조건을 두었다",
  "genreRules": {
   "minClassifiedHours": 10,
   "minCoverageRatio": 0.3,

@@ -1,5 +1,6 @@
 package SteamGame.recommend.domain.library;
 
+import SteamGame.recommend.domain.library.content.GenreConditionalExclude;
 import SteamGame.recommend.domain.library.content.GenreRules;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.LibraryContentValidator;
@@ -36,7 +37,7 @@ public final class LibraryFixtures {
             genres.put(key, new ArrayList<>(List.of(key + "_G1", key + "_G2")));
         }
         return new LibraryContent("v1", groups, labels, List.of("Action", "Casual"), phrases,
-                genres, List.of("Open World"), RULES);
+                genres, List.of("Open World"), RULES, List.of());
     }
 
     // 운영 내용 파일과 같은 기준값
@@ -45,7 +46,12 @@ public final class LibraryFixtures {
     public static LibraryContent withGenres(LibraryContent c, Map<String, List<String>> genres,
                                             List<String> excluded, GenreRules rules) {
         return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), c.excludedTags(), c.phrases(),
-                genres, excluded, rules);
+                genres, excluded, rules, c.genreConditionalExcludes());
+    }
+
+    public static LibraryContent withConditionalExcludes(LibraryContent c, List<GenreConditionalExclude> rules) {
+        return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), c.excludedTags(), c.phrases(),
+                c.genres(), c.genreExcludedTags(), c.genreRules(), rules);
     }
 
     // 자리표시자 없는 문구
@@ -64,7 +70,7 @@ public final class LibraryFixtures {
         } else {
             groups.put(key, tags);
         }
-        return new LibraryContent(c.version(), groups, c.groupLabels(), c.excludedTags(), c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules());
+        return new LibraryContent(c.version(), groups, c.groupLabels(), c.excludedTags(), c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules(), c.genreConditionalExcludes());
     }
 
     public static LibraryContent withPhrases(LibraryContent c, String code, List<Phrase> list) {
@@ -74,7 +80,7 @@ public final class LibraryFixtures {
         } else {
             phrases.put(code, list);
         }
-        return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), c.excludedTags(), phrases, c.genres(), c.genreExcludedTags(), c.genreRules());
+        return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), c.excludedTags(), phrases, c.genres(), c.genreExcludedTags(), c.genreRules(), c.genreConditionalExcludes());
     }
 
     public static LibraryContent withLabel(LibraryContent c, String key, LocalizedText label) {
@@ -84,10 +90,10 @@ public final class LibraryFixtures {
         } else {
             labels.put(key, label);
         }
-        return new LibraryContent(c.version(), c.tagGroups(), labels, c.excludedTags(), c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules());
+        return new LibraryContent(c.version(), c.tagGroups(), labels, c.excludedTags(), c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules(), c.genreConditionalExcludes());
     }
 
     public static LibraryContent withExcluded(LibraryContent c, List<String> excluded) {
-        return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), excluded, c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules());
+        return new LibraryContent(c.version(), c.tagGroups(), c.groupLabels(), excluded, c.phrases(), c.genres(), c.genreExcludedTags(), c.genreRules(), c.genreConditionalExcludes());
     }
 }

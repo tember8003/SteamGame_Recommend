@@ -96,6 +96,10 @@ class LibraryContentFileTest {
                 missing.add("excluded:" + tag);
             }
         });
+        c.genreConditionalExcludes().forEach(rule -> {
+            rule.whenAnyTag().stream().filter(tag -> !prod.contains(tag)).forEach(tag -> missing.add("when:" + tag));
+            rule.ignoreTags().stream().filter(tag -> !prod.contains(tag)).forEach(tag -> missing.add("ignore:" + tag));
+        });
         assertThat(missing).as("운영 태그에 없는 이름").isEmpty();
     }
 
@@ -107,6 +111,13 @@ class LibraryContentFileTest {
         assertThat(c.genreExcludedTags()).containsExactlyInAnyOrder(
                 "Open World", "Adventure", "Exploration", "Story Rich", "Choices Matter", "Automobile Sim");
         assertThat(c.genreRules()).isEqualTo(new GenreRules(10, 0.3, 0.1, 0.15));
+    }
+
+    // 배틀로얄과 익스트랙션 슈터는 Survival 표가 많아도 생존 게임이 아니므로 이 두 태그가 있으면 Survival을 장르 판단에서 뺀다
+    @Test
+    void battleRoyaleIgnoresSurvival() {
+        assertThat(load().genreConditionalExcludes()).containsExactly(
+                new GenreConditionalExclude(List.of("Battle Royale", "Extraction Shooter"), List.of("Survival")));
     }
 
     @Test
