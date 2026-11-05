@@ -31,6 +31,17 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.useRealTimers(); window.history.replaceState(null, '', '/'); });
 
 describe('library views', () => {
+  it('renders owned-game picks from shared responses without asking for the original profile', async () => {
+    vi.mocked(libraryShared).mockResolvedValue({ ...fixture.shared, picks: {
+      playNext: [{ appid: 294100, name: 'RimWorld', matchedTags: ['Colony Sim', 'Strategy'] }],
+      revisit: [], abandonedGenre: null,
+    } } as LibrarySnapshot);
+    render(<LibraryShared locale="ko" shareId="abcdefghijklmnopqrstuv" />);
+    expect(await screen.findByRole('region', { name: '창고에서 꺼내볼 게임' })).toHaveTextContent('RimWorld');
+    expect(libraryAnalyze).not.toHaveBeenCalled();
+    expect(recommendProfile).not.toHaveBeenCalled();
+    expect(screen.queryByText('Test Player')).not.toBeInTheDocument();
+  });
   it('opens the collapsed input and focuses it when starting another analysis', async () => {
     render(<LibraryWorkbench locale="ko" />); await enter();
     const input = screen.getByLabelText('Steam ID 또는 프로필 주소');
@@ -67,6 +78,7 @@ describe('library views', () => {
     fireEvent.click(screen.getByRole('button', { name: '거점 링크 공유' }));
     expect(libraryShare).not.toHaveBeenCalled();
     expect(screen.getByText(/누구나 90일 동안/)).toBeInTheDocument();
+    expect(screen.getByText(/분석 당시 마지막 플레이부터 지난 날 수/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '확인했어요. 공유 링크 만들기' }));
     await screen.findByText('공유 링크를 복사했어요.');
     expect((screen.getByLabelText('공유 링크') as HTMLInputElement).value).toContain('/ko/library/share/abcdefghijklmnopqrstuv?s=1');

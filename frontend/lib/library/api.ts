@@ -4,12 +4,19 @@ import type { Locale } from '../i18n/locales';
 
 export interface LibraryText { code: string; text: string; params: Record<string, string | number> }
 export interface PlayedGame { appid: number; name: string; hours: number; ratio: number }
+export interface LibraryPicks {
+  playNext: { appid: number; name: string; matchedTags: string[] }[];
+  revisit: { appid: number; name: string; hours: number; idleDays: number }[];
+  abandonedGenre: { genre: string; gameCount: number; games: string[] } | null;
+}
 export interface GenreProfile {
   primaryGenre: string | null; secondaryGenre: string | null;
   state: 'READY' | 'MIXED' | 'INSUFFICIENT'; coverageRatio: number;
   distribution: { code: string; ratio: number }[];
 }
 export interface LibrarySnapshot {
+  /** Missing in responses from before picks were introduced. */
+  picks?: LibraryPicks | null;
   genreProfile?: GenreProfile | null;
   limitedData: boolean;
   stats: {

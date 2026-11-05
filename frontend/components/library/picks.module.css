@@ -1,0 +1,26 @@
+/* Hallmark · component: library picks · genre: playful · theme: existing moonlit village · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V3 · weakest: V; keeps the user's existing places instead of adding another dashboard. */
+.picks { margin-bottom: 32px; padding-bottom: 32px; border-bottom: 2px solid var(--library-frame); }
+.picks h3, .abandoned h3 { color: var(--library-gold); font-size: 18px; line-height: 1.7; margin: 0 0 8px; overflow-wrap: break-word; min-width: 0; }
+.hint { color: var(--library-text-muted); font-size: 12px; line-height: 1.9; margin: 8px 0 20px; }
+.games { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; padding: 0; margin: 0; list-style: none; }
+.games li { min-width: 0; }
+.games a { display: block; height: 100%; color: var(--library-text); background: var(--library-ink); border: 2px solid var(--library-border); text-decoration: none; }
+.games a:hover { border-color: var(--library-gold); background: var(--library-surface-hover); }
+.games a:active { background: var(--library-surface-selected); }
+.games a:focus-visible { outline: 3px solid var(--library-focus); outline-offset: 4px; }
+.cover { width: 100%; min-width: 0; aspect-ratio: 460/215; display: grid; place-items: center; overflow: hidden; background: var(--library-surface); }
+.cover img { display: block; width: 100%; min-width: 0; height: 100%; object-fit: cover; }
+.cover svg { width: 48px; height: 48px; }
+.detail { padding: 16px; }
+.detail strong { display: block; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+.detail > span { display: block; margin-top: 12px; color: var(--library-gold); font-size: 13px; }
+.detail p { margin: 12px 0 0; color: var(--library-text-muted); font-size: 12px; line-height: 1.9; overflow-wrap: anywhere; }
+.abandoned { margin-top: 32px; border-left: 4px solid var(--library-border); padding: 0 0 0 20px; }
+.abandoned > strong { display: block; margin: 16px 0 8px; color: var(--library-heading); font-size: 17px; line-height: 1.7; }
+.abandoned p, .abandoned li { font-size: 12px; line-height: 1.9; }
+.abandoned ul { padding-left: 20px; margin: 8px 0 16px; }
+.abandoned .label { color: var(--library-text-muted); margin-top: 16px; }
+.abandoned .hint { margin-bottom: 0; }
+@media (max-width: 800px) { .games { grid-template-columns: minmax(0,1fr); gap: 16px; }.games a { display: grid; grid-template-columns: minmax(100px, 32%) minmax(0,1fr); }.cover { height: 100%; aspect-ratio: auto; }.detail { padding: 12px; }.detail strong { font-size: 13px; } }
+@media (max-width: 420px) { .games a { display: block; }.cover { height: auto; aspect-ratio: 460/215; }.picks h3, .abandoned h3 { font-size: 16px; } }

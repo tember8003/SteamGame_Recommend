@@ -3,10 +3,33 @@ import type { LibrarySnapshot } from './api';
 import { libraryCopy } from './copy';
 import { baseCopy, baseTheme, genreName } from './base';
 import { fillLibraryText, hoursText, numberText, percentText } from './presentation';
+import { picksCopy, matchedReason, idleReason, pickedGenreName, briefVisits } from './picks';
+
+function imagePicks(data: LibrarySnapshot, locale: Locale) {
+  const p = data.picks; const c = picksCopy[locale];
+  return [
+    p?.playNext.length ? { title: c.playNext, lines: p.playNext.flatMap(game => [game.name || `App ${game.appid}`, matchedReason(game.matchedTags, locale)]) } : null,
+    p?.revisit.length ? { title: c.revisit, lines: p.revisit.flatMap(game => [`${game.name || `App ${game.appid}`} / ${hoursText(game.hours, locale)} ${libraryCopy[locale].hourUnit}`, idleReason(game.idleDays, locale)]) } : null,
+    null,
+    p?.abandonedGenre ? { title: c.abandoned, lines: [
+      `${pickedGenreName(p.abandonedGenre.genre, locale)}: ${briefVisits(p.abandonedGenre.gameCount, locale)}`,
+      ...(p.abandonedGenre.games.length ? [p.abandonedGenre.games.join(', ')] : []), c.abandonedHint,
+    ] } : null,
+  ];
+}
+
+const extraHeight = (extra: ReturnType<typeof imagePicks>[number]) => extra ? 140 + extra.lines.length * 90 : 0;
+
+export function libraryImageSize(data: LibrarySnapshot, locale: Locale, index?: number) {
+  const extras = imagePicks(data, locale).map(extraHeight);
+  return index === undefined ? { width: 1600, height: 2200 + Math.max(extras[0], extras[1]) + Math.max(extras[2], extras[3]) }
+    : { width: 1080, height: 1400 + extras[index] };
+}
 
 /** Only report fields are drawn; identity and share URLs are deliberately excluded. */
 export function libraryImageSections(data: LibrarySnapshot, locale: Locale) {
   const c = libraryCopy[locale]; const b = baseCopy[locale];
+  const extras = imagePicks(data, locale);
   const h = (value: number) => `${hoursText(value, locale)} ${c.hourUnit}`;
   return [
     { title: b.warehouse, subtitle: c.ledgerNames[data.ledger.code] ?? c.unknown, lines: [
@@ -20,14 +43,15 @@ export function libraryImageSections(data: LibrarySnapshot, locale: Locale) {
       ...(data.genreProfile?.distribution.slice(0, 3).map(genre => `${genreName(genre.code, locale)}: ${percentText(genre.ratio, locale)}`) ?? []),
       `${c.hidden}: ${data.diagnosis.hiddenTaste ?? c.insufficient}`,
     ], note: data.genreProfile ? b.basis : b.noGenres },
-  ];
+  ].map((section, index) => ({ ...section, extra: extras[index] }));
 }
 
 export async function saveLibraryImage(data: LibrarySnapshot, locale: Locale, index?: number): Promise<string> {
   await document.fonts.load('700 32px "Village Galmuri"'); await document.fonts.ready;
   const sections = libraryImageSections(data, locale); const theme = baseTheme(data.genreProfile); const b = baseCopy[locale];
   const combined = index === undefined;
-  const canvas = document.createElement('canvas'); canvas.width = combined ? 1600 : 1080; canvas.height = combined ? 2200 : 1400;
+  const canvas = document.createElement('canvas');
+  const size = libraryImageSize(data, locale, index); canvas.width = size.width; canvas.height = size.height;
   const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas unavailable');
   const w = canvas.width; const sceneH = Math.round(w * 9 / 16);
   ctx.fillStyle = '#10252b'; ctx.fillRect(0, 0, w, canvas.height);
@@ -61,6 +85,7 @@ export async function saveLibraryImage(data: LibrarySnapshot, locale: Locale, in
     return Math.min(maxLines, lines.length) * size * 1.55;
   };
   const draw = (section: typeof sections[number], i: number, x: number, y: number, width: number, height: number) => {
+    const coreHeight = height - extraHeight(section.extra);
     ctx.fillStyle = '#a28a60'; ctx.fillRect(x, y, width, height); ctx.fillStyle = '#10252b'; ctx.fillRect(x + 5, y + 5, width - 10, height - 10);
     ctx.save(); ctx.beginPath(); ctx.rect(x + 24, y + 20, width - 48, height - 40); ctx.clip();
     let lineY = y + 55; ctx.fillStyle = '#e4c68b';
@@ -75,9 +100,19 @@ export async function saveLibraryImage(data: LibrarySnapshot, locale: Locale, in
         lineY += 24;
       }
     }
-    ctx.fillStyle = '#b9c5b4'; write(section.note, x + 28, Math.max(lineY + 12, y + height - 74), width - 56, combined ? 17 : 21, 3); ctx.restore();
+    ctx.fillStyle = '#b9c5b4'; write(section.note, x + 28, Math.max(lineY + 12, y + coreHeight - 74), width - 56, combined ? 17 : 21, 3);
+    if (section.extra) {
+      ctx.fillStyle = '#a28a60'; ctx.fillRect(x + 28, y + coreHeight + 8, width - 56, 2);
+      let extraY = y + coreHeight + 60;
+      ctx.fillStyle = '#e4c68b'; extraY += write(section.extra.title, x + 28, extraY, width - 56, combined ? 28 : 32, 2) + 18;
+      for (const line of section.extra.lines) {
+        ctx.fillStyle = '#eee3c9';
+        extraY += write(line, x + 28, extraY, width - 56, combined ? 22 : 25, 2) + 20;
+      }
+    }
+    ctx.restore();
   };
-  if (combined) sections.forEach((section, i) => draw(section, i, 40 + (i % 2) * 780, sceneH + 30 + Math.floor(i / 2) * 590, 740, 560));
+  if (combined) sections.forEach((section, i) => draw(section, i, 40 + (i % 2) * 780, sceneH + 30 + Math.floor(i / 2) * (590 + Math.max(extraHeight(sections[0].extra), extraHeight(sections[1].extra))), 740, 560 + extraHeight(section.extra)));
   else draw(sections[index], index, 30, sceneH + 25, w - 60, canvas.height - sceneH - 95);
   ctx.fillStyle = '#e4c68b'; ctx.font = `22px ${font}`; ctx.fillText('playalike.online', 40, canvas.height - 25);
   const url = canvas.toDataURL('image/png'); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `playalike-base-${combined ? 'overview' : index + 1}.png`;

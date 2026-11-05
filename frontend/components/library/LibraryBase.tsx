@@ -12,6 +12,7 @@ import CollectionChest from './CollectionChest';
 import StationEmblem, { type StationKind } from './StationEmblem';
 import TastePortrait from '../taste/TastePortrait';
 import { getTasteType } from '@/lib/taste/catalog';
+import { GamePicks, AbandonedGenre } from './LibraryPicks';
 
 function Memory({ game, locale, rank }: { game: PlayedGame; locale: Locale; rank: number }) {
   const [failed, setFailed] = useState(false);
@@ -68,13 +69,13 @@ export default function LibraryBase({ data, locale, onSave, saving = false }: {
 
     <section id="base-panel" className={styles.panel} role="tabpanel" aria-labelledby={`base-tab-${selected}`} tabIndex={0}>
       <header className={styles.panelHeading}><div><p>PLAYER RECORD / 0{selected + 1}</p><h2>{stations[selected]}</h2></div>{onSave ? <button className={styles.save} disabled={saving} type="button" onClick={() => onSave(selected)}>{b.save} ↓</button> : null}</header>
-      {selected === 0 ? <div className={styles.storage}>
+      {selected === 0 ? <><GamePicks picks={data.picks} kind="playNext" locale={locale} /><div className={styles.storage}>
         <div className={styles.crateDisplay} aria-hidden="true"><CollectionChest /><span>× {numberText(data.stats.ownedCount, locale)}</span></div>
         <div><p className={styles.classification}>{c.ledgerNames[data.ledger.code] ?? c.unknown}</p>
           <dl className={styles.numbers}><div><dt>{b.collected}</dt><dd>{numberText(data.stats.ownedCount, locale)} <small>{c.games}</small></dd></div><div><dt>{b.sleeping}</dt><dd>{numberText(data.stats.zeroPlayCount, locale)} <small>{c.games}</small></dd></div><div><dt>{c.recent}</dt><dd>{h(data.stats.recentHours)}</dd></div><div><dt>{c.unplayed}</dt><dd>{percentText(data.stats.zeroPlayRatio, locale)}</dd></div></dl>
           <progress max={1} value={data.stats.zeroPlayRatio} aria-label={c.unplayed} /><p className={styles.reading}>{fillLibraryText(data.ledger)}</p>
-        </div></div> : null}
-      {selected === 1 ? <><p className={styles.help}>{b.visits}</p><div className={styles.memories}>{memories.map((game, index) => <Memory game={game} key={game.appid} locale={locale} rank={index} />)}</div>{!memories.length ? <p>{b.noVisits}</p> : null}</> : null}
+        </div></div></> : null}
+      {selected === 1 ? <><GamePicks picks={data.picks} kind="revisit" locale={locale} /><p className={styles.help}>{b.visits}</p><div className={styles.memories}>{memories.map((game, index) => <Memory game={game} key={game.appid} locale={locale} rank={index} />)}</div>{!memories.length ? <p>{b.noVisits}</p> : null}</> : null}
       {selected === 2 ? <div className={styles.characterSheet}>
         <div className={styles.equipment}>
           <p className={styles.companionLabel}>{ko ? '취향의 동행자' : 'Your taste companion'}</p>
@@ -87,6 +88,7 @@ export default function LibraryBase({ data, locale, onSave, saving = false }: {
       </div> : null}
       {selected === 3 ? <div className={styles.mapLayout}><div><h3>{b.genreMap}</h3>
         {data.genreProfile?.distribution.length ? <><ol className={styles.genreList}>{data.genreProfile.distribution.map(genre => <li key={genre.code}><div><span>{genreName(genre.code, locale)}</span><strong>{percentText(genre.ratio, locale)}</strong></div><progress max={1} value={genre.ratio} aria-label={genreName(genre.code, locale)} /></li>)}</ol><p className={styles.help}>{b.basis}</p><p className={styles.coverage}>{b.coverage}: {percentText(data.genreProfile.coverageRatio, locale)}</p></> : <p className={styles.help}>{b.noGenres}</p>}
+        <AbandonedGenre picks={data.picks} locale={locale} />
       </div><div className={styles.discoveries}><StationEmblem kind="map" /><h3>{b.glimpse}</h3><p><span>{c.favorite}</span><strong>{data.diagnosis.favoriteTag ?? c.insufficient}</strong></p><p><span>{c.hidden}</span><strong>{data.diagnosis.hiddenTaste ?? c.insufficient}</strong></p><ul className={styles.tags}>{data.stats.topTags.map(tag => <li key={tag.tag}>{tag.tag} <strong>{percentText(tag.ratio, locale)}</strong></li>)}</ul></div></div> : null}
     </section>
     <aside className={styles.npc}><span aria-hidden="true">◆</span><div><strong>{b.archive}</strong><p>{npc}</p></div></aside>
