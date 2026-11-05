@@ -35,6 +35,9 @@ public final class LibraryContentValidator {
             "ownedCount", "zeroCount", "zeroRatioPct", "totalHours", "topGame", "topGameHours",
             "topRatioPct", "topTag", "topTagRatioPct", "topGroup", "topGroupRatioPct", "shortPlayedRatioPct");
 
+    // 분석기가 만드는 많이 한 태그 목록(stats.topTags)의 최대 길이, 지금 해볼 게임은 이 안에서만 취향 태그를 고른다
+    public static final int MAX_TASTE_TAGS = 10;
+
     static final int MIN_CANDIDATES = 2;
     static final int MAX_CANDIDATES = 3;
 
@@ -66,6 +69,7 @@ public final class LibraryContentValidator {
         checkGenres(c.genres(), c.genreExcludedTags(), errors);
         checkConditionalExcludes(c.genres(), c.genreConditionalExcludes(), errors);
         checkGenreRules(c.genreRules(), errors);
+        checkPickRules(c.picks(), errors);
         if (!errors.isEmpty()) {
             throw new IllegalStateException("library content invalid (" + errors.size() + "): " + String.join("; ", errors));
         }
@@ -212,6 +216,43 @@ public final class LibraryContentValidator {
             } else if (!known.contains(tag)) {
                 errors.add(at + " tag " + tag + " is not in genres");
             }
+        }
+    }
+
+    private static void checkPickRules(PickRules r, List<String> errors) {
+        if (r == null) {
+            errors.add("picks is missing");
+            return;
+        }
+        positive("tasteTagCount", r.tasteTagCount(), errors);
+        positive("candidateTagCount", r.candidateTagCount(), errors);
+        positive("minMatchedTags", r.minMatchedTags(), errors);
+        positive("maxPlayNext", r.maxPlayNext(), errors);
+        positive("maxRevisit", r.maxRevisit(), errors);
+        positive("abandonedMinGames", r.abandonedMinGames(), errors);
+        if (r.minMatchedTags() > r.candidateTagCount() || r.minMatchedTags() > r.tasteTagCount()) {
+            errors.add("picks.minMatchedTags must not exceed candidateTagCount or tasteTagCount");
+        }
+        if (r.tasteTagCount() > MAX_TASTE_TAGS) {
+            errors.add("picks.tasteTagCount must be " + MAX_TASTE_TAGS + " or less");
+        }
+        if (r.minReviews() < 0 || r.revisitIdleDays() < 0 || r.abandonedIdleDays() < 0 || r.abandonedMinMinutes() < 0) {
+            errors.add("picks counts and days must be 0 or more");
+        }
+        if (!(r.minPositivePct() >= 0 && r.minPositivePct() <= 100)) {
+            errors.add("picks.minPositivePct must be between 0 and 100");
+        }
+        if (!(r.revisitMinHours() >= 0 && Double.isFinite(r.revisitMinHours()))) {
+            errors.add("picks.revisitMinHours must be a finite number, 0 or more");
+        }
+        if (r.abandonedMaxMinutes() < r.abandonedMinMinutes()) {
+            errors.add("picks.abandonedMaxMinutes must not be less than abandonedMinMinutes");
+        }
+    }
+
+    private static void positive(String name, int value, List<String> errors) {
+        if (value < 1) {
+            errors.add("picks." + name + " must be 1 or more");
         }
     }
 

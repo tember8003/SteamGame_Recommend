@@ -1,0 +1,15 @@
+/* Hallmark · component: station emblems · genre: playful · theme: existing moonlit village · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V; retained the user's four-place layout and replaced only the crude illustrations. */
+.emblem {
+  display: block;
+  flex: none;
+  image-rendering: pixelated;
+}
+.outline, .ink { fill: var(--library-emblem-ink); }
+.wood { fill: var(--library-emblem-wood); }
+.shadow { fill: var(--library-emblem-shadow); }
+.gold { fill: var(--library-emblem-gold); }
+.light { fill: var(--library-emblem-light); }
+.paper { fill: var(--library-emblem-paper); }
+.teal { fill: var(--library-emblem-teal); }
+.red { fill: var(--library-emblem-red); }

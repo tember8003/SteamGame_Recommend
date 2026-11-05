@@ -22,9 +22,10 @@ public record LibraryAnalysis(
         @JsonProperty("verdict") Verdict verdict,
         @JsonProperty("gamerStats") List<GamerStat> gamerStats,
         @JsonProperty("diagnosis") Diagnosis diagnosis,
-        @JsonProperty("genreProfile") GenreProfile genreProfile) {
+        @JsonProperty("genreProfile") GenreProfile genreProfile,
+        @JsonProperty("picks") Picks picks) {
 
-    // genreProfile은 장르 기능 전에 저장된 공유에 없으므로 null을 허용한다
+    // genreProfile과 picks는 그 기능 전에 저장된 공유에 없으므로 null을 허용한다
     public LibraryAnalysis {
         Objects.requireNonNull(stats, "stats");
         Objects.requireNonNull(ledger, "ledger");
@@ -34,7 +35,11 @@ public record LibraryAnalysis(
     }
 
     public LibraryAnalysis withGenreProfile(GenreProfile profile) {
-        return new LibraryAnalysis(limitedData, stats, ledger, verdict, gamerStats, diagnosis, profile);
+        return new LibraryAnalysis(limitedData, stats, ledger, verdict, gamerStats, diagnosis, profile, picks);
+    }
+
+    public LibraryAnalysis withPicks(Picks value) {
+        return new LibraryAnalysis(limitedData, stats, ledger, verdict, gamerStats, diagnosis, genreProfile, value);
     }
 
     // 시간은 소수 첫째 자리, 비율은 소수 셋째 자리, mostPlayed가 null이면 플레이 시간이 없는 것
@@ -141,6 +146,58 @@ public record LibraryAnalysis(
 
         public GenreShare {
             Objects.requireNonNull(code, "code");
+        }
+    }
+
+    // 라이브러리에서 고른 게임들, 조건에 맞는 게임이 없으면 목록은 비고 abandonedGenre는 null이다
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Picks(
+            @JsonProperty("playNext") List<PlayNext> playNext,
+            @JsonProperty("revisit") List<Revisit> revisit,
+            @JsonProperty("abandonedGenre") AbandonedGenre abandonedGenre) {
+
+        public Picks {
+            playNext = List.copyOf(playNext);
+            revisit = List.copyOf(revisit);
+        }
+    }
+
+    // 플레이 0분인 게임 중 취향에 맞는 게임, matchedTags는 사용자가 많이 한 태그 순서로 담는다
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PlayNext(
+            @JsonProperty("appid") long appid,
+            @JsonProperty("name") String name,
+            @JsonProperty("matchedTags") List<String> matchedTags) {
+
+        public PlayNext {
+            Objects.requireNonNull(name, "name");
+            matchedTags = List.copyOf(matchedTags);
+        }
+    }
+
+    // 오래 했지만 한동안 안 켠 게임, idleDays는 분석 시점 기준 마지막 플레이부터 지난 날 수
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Revisit(
+            @JsonProperty("appid") long appid,
+            @JsonProperty("name") String name,
+            @JsonProperty("hours") double hours,
+            @JsonProperty("idleDays") int idleDays) {
+
+        public Revisit {
+            Objects.requireNonNull(name, "name");
+        }
+    }
+
+    // 잠깐 하고 그만둔 게임이 가장 많이 몰린 장르, games는 예시 이름 최대 3개
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record AbandonedGenre(
+            @JsonProperty("genre") String genre,
+            @JsonProperty("gameCount") int gameCount,
+            @JsonProperty("games") List<String> games) {
+
+        public AbandonedGenre {
+            Objects.requireNonNull(genre, "genre");
+            games = List.copyOf(games);
         }
     }
 

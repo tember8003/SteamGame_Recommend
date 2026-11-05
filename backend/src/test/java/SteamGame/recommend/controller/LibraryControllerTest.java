@@ -79,7 +79,11 @@ class LibraryControllerTest {
         }
         games.add(new OwnedGame(7, "Unplayed", 0, 0, null));
         analysis = LibraryAnalyzer.analyze(games, tags, t -> 0.5, loader.content(), profile.steamId64())
-                .withGenreProfile(GenreProfiler.profile(games, votes, loader.content()));
+                .withGenreProfile(GenreProfiler.profile(games, votes, loader.content()))
+                .withPicks(new LibraryAnalysis.Picks(
+                        List.of(new LibraryAnalysis.PlayNext(9, "Next", List.of("Strategy", "Colony Sim"))),
+                        List.of(new LibraryAnalysis.Revisit(8, "Old", 12.5, 400)),
+                        new LibraryAnalysis.AbandonedGenre("PUZZLE", 3, List.of("a", "b", "c"))));
     }
 
     private static final String BODY = "{\"steamId\":\"76561198012345678\",\"clientId\":\"cid-1\"}";
@@ -112,7 +116,11 @@ class LibraryControllerTest {
         assertThat(res.getResponse().getStatus()).isEqualTo(200);
         JsonNode body = json(res);
         assertThat(keys(body)).containsExactlyInAnyOrder("analysisId", "limitedData", "profile", "stats", "ledger",
-                "verdict", "gamerStats", "diagnosis", "genreProfile");
+                "verdict", "gamerStats", "diagnosis", "genreProfile", "picks");
+        assertThat(keys(body.get("picks"))).containsExactlyInAnyOrder("playNext", "revisit", "abandonedGenre");
+        assertThat(keys(body.get("picks").get("playNext").get(0))).containsExactlyInAnyOrder("appid", "name", "matchedTags");
+        assertThat(keys(body.get("picks").get("revisit").get(0))).containsExactlyInAnyOrder("appid", "name", "hours", "idleDays");
+        assertThat(keys(body.get("picks").get("abandonedGenre"))).containsExactlyInAnyOrder("genre", "gameCount", "games");
         assertThat(keys(body.get("genreProfile"))).containsExactlyInAnyOrder("primaryGenre", "secondaryGenre", "state",
                 "coverageRatio", "distribution");
         assertThat(keys(body.get("genreProfile").get("distribution").get(0))).containsExactlyInAnyOrder("code", "ratio");
@@ -171,7 +179,7 @@ class LibraryControllerTest {
     void analyze_renderFailureLeavesNoEvent() throws Exception {
         LibraryAnalysis broken = new LibraryAnalysis(false, analysis.stats(),
                 new LibraryAnalysis.Judged("NO_SUCH_CODE", 0, Map.of()), analysis.verdict(),
-                analysis.gamerStats(), analysis.diagnosis(), analysis.genreProfile());
+                analysis.gamerStats(), analysis.diagnosis(), analysis.genreProfile(), analysis.picks());
         when(service.analyze(anyString()))
                 .thenReturn(new LibraryAnalysisService.Analyzed("aid-1", profile, broken));
 
@@ -269,7 +277,7 @@ class LibraryControllerTest {
         assertThat(res.getResponse().getStatus()).isEqualTo(200);
         JsonNode body = json(res);
         assertThat(keys(body)).containsExactlyInAnyOrder("limitedData", "stats", "ledger", "verdict", "gamerStats",
-                "diagnosis", "genreProfile");
+                "diagnosis", "genreProfile", "picks");
         String code = analysis.ledger().code();
         assertThat(body.get("ledger").get("text").asText())
                 .isEqualTo(loader.content().phrases().get(code).get(analysis.ledger().phraseIndex()).text().en());

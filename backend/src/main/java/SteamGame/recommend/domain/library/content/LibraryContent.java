@@ -13,6 +13,7 @@ import java.util.Map;
 // groupLabels는 묶음 이름 표기, excludedTags는 거의 모든 게임에 붙어 어느 묶음에도 넣지 않는 태그
 // genres는 거점 배경용 장르별 태그, genreExcludedTags는 장르 판단에 쓰지 않는 태그, genreRules는 state 기준값
 // genreConditionalExcludes는 특정 태그가 있는 게임에서만 장르 판단에서 빼는 태그
+// picks는 지금 해볼 게임, 다시 켤 게임, 안 맞는 장르를 고르는 기준값
 // excludedNote 같은 사람이 읽는 설명 필드는 읽지 않고 넘긴다
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record LibraryContent(
@@ -24,10 +25,11 @@ public record LibraryContent(
         Map<String, List<String>> genres,
         List<String> genreExcludedTags,
         GenreRules genreRules,
-        List<GenreConditionalExclude> genreConditionalExcludes) {
+        List<GenreConditionalExclude> genreConditionalExcludes,
+        PickRules picks) {
 
     // 요청마다 같은 객체를 나눠 쓰므로 안쪽 목록까지 바꿀 수 없게 복사한다, null은 빈 값으로 두어 검증기가 누락으로 잡는다
-    // genreRules는 null 그대로 두고 검증기가 잡는다
+    // genreRules와 picks는 null 그대로 두고 검증기가 잡는다
     public LibraryContent {
         tagGroups = tagGroups == null ? Map.of() : copyLists(tagGroups);
         groupLabels = groupLabels == null ? Map.of() : Map.copyOf(groupLabels);

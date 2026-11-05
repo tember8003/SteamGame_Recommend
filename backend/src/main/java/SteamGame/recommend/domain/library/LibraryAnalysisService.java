@@ -1,6 +1,9 @@
 package SteamGame.recommend.domain.library;
 
+import SteamGame.recommend.domain.game.repository.ReviewRepository;
 import SteamGame.recommend.domain.library.analysis.GenreProfiler;
+import SteamGame.recommend.domain.library.analysis.LibraryPicker;
+import SteamGame.recommend.domain.library.analysis.ReviewRating;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalyzer;
 import SteamGame.recommend.domain.library.content.LibraryContent;
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +68,9 @@ public class LibraryAnalysisService {
     private final LibraryContentLoader contentLoader;
     private final LibraryShareService shareService;
     private final ObjectMapper objectMapper;
+    private final ReviewRepository reviewRepository;
+    // 다시 켤 게임과 안 맞는 장르가 마지막 플레이부터 지난 날을 세는 기준 시각
+    private final Clock clock;
     // 분석 결과만 둔다, SteamID64와 프로필은 넣지 않는다
     private final Cache<String, LibraryAnalysis> analyses;
     // 분석 번호별로 이미 만든 shareId, 같은 분석을 연달아 공유해도 저장 항목이 하나만 생기게 한다
@@ -75,15 +82,17 @@ public class LibraryAnalysisService {
     @Autowired
     public LibraryAnalysisService(SteamIdResolver resolver, SteamLibraryClient client, TagRepository tagRepository,
                                   TagRarityCache rarityCache, LibraryContentLoader contentLoader,
-                                  LibraryShareService shareService, ObjectMapper objectMapper) {
+                                  LibraryShareService shareService, ObjectMapper objectMapper,
+                                  ReviewRepository reviewRepository) {
         this(resolver, client, tagRepository, rarityCache, contentLoader, shareService, objectMapper,
-                Ticker.systemTicker());
+                reviewRepository, Ticker.systemTicker(), Clock.systemUTC());
     }
 
     // 테스트에서 가짜 시계를 넣기 위한 생성자
     LibraryAnalysisService(SteamIdResolver resolver, SteamLibraryClient client, TagRepository tagRepository,
                            TagRarityCache rarityCache, LibraryContentLoader contentLoader,
-                           LibraryShareService shareService, ObjectMapper objectMapper, Ticker ticker) {
+                           LibraryShareService shareService, ObjectMapper objectMapper,
+                           ReviewRepository reviewRepository, Ticker ticker, Clock clock) {
         this.resolver = resolver;
         this.client = client;
         this.tagRepository = tagRepository;
@@ -91,7 +100,9 @@ public class LibraryAnalysisService {
         this.contentLoader = contentLoader;
         this.shareService = shareService;
         this.objectMapper = objectMapper;
+        this.reviewRepository = reviewRepository;
         this.ticker = ticker;
+        this.clock = clock;
         this.analyses = Caffeine.newBuilder()
                 .expireAfterWrite(ANALYSIS_TTL)
                 .maximumSize(10_000)
@@ -139,6 +150,8 @@ public class LibraryAnalysisService {
         Map<Long, Map<String, Integer>> tagVotes = tagVotesOf(games);
         LibraryAnalysis analysis = LibraryAnalyzer.analyze(games, tagNames(tagVotes), rarity, content, steamId64)
                 .withGenreProfile(GenreProfiler.profile(games, tagVotes, content));
+        analysis = analysis.withPicks(LibraryPicker.pick(games, tagVotes, ratingsOfUnplayed(games),
+                analysis.stats().topTags(), content, clock.instant()));
 
         String analysisId = UUID.randomUUID().toString();
         analyses.put(analysisId, analysis);
@@ -225,12 +238,33 @@ public class LibraryAnalysisService {
     }
 
     // 나중에 더한 선택 필드가 옛 저장분에 없으면 null로 채운다, 빠진 필드를 실패로 보는 엄격 읽기를 다른 필드에는 그대로 적용하기 위함
-    // genreProfile은 장르 기능 전에 저장된 공유에 없다
+    // genreProfile과 picks는 그 기능 전에 저장된 공유에 없다
     private static JsonNode withOptionalFields(JsonNode analysis) {
-        if (analysis instanceof ObjectNode obj && !obj.has("genreProfile")) {
-            obj.putNull("genreProfile");
+        if (analysis instanceof ObjectNode obj) {
+            for (String field : List.of("genreProfile", "picks")) {
+                if (!obj.has(field)) {
+                    obj.putNull(field);
+                }
+            }
         }
         return analysis;
+    }
+
+    // 지금 해볼 게임 후보(플레이 0분)만 리뷰 수와 긍정 비율을 읽는다, IN 절이 커지지 않게 나눠서 읽는다
+    private Map<Long, ReviewRating> ratingsOfUnplayed(List<OwnedGame> games) {
+        List<Long> appids = games.stream().filter(g -> g.minutesTotal() == 0).map(OwnedGame::appid).distinct().toList();
+        Map<Long, ReviewRating> ratings = new HashMap<>();
+        for (int from = 0; from < appids.size(); from += TAG_QUERY_CHUNK) {
+            List<Long> chunk = new ArrayList<>(appids.subList(from, Math.min(from + TAG_QUERY_CHUNK, appids.size())));
+            for (ReviewRepository.Rating r : reviewRepository.findRatingsByAppidIn(chunk)) {
+                if (r.getAppid() == null || r.getPositivePercentage() == null) {
+                    continue;
+                }
+                int total = r.getTotalReviews() == null ? 0 : r.getTotalReviews();
+                ratings.put(r.getAppid(), new ReviewRating(total, r.getPositivePercentage().doubleValue()));
+            }
+        }
+        return ratings;
     }
 
     // appid별 태그 이름과 득표수, 게임이 많은 계정도 IN 절이 커지지 않게 나눠서 읽는다

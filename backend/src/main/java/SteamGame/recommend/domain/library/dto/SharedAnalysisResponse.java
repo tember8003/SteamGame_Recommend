@@ -10,5 +10,6 @@ public record SharedAnalysisResponse(
         VerdictView verdict,
         List<GamerStatView> gamerStats,
         DiagnosisView diagnosis,
-        GenreProfileView genreProfile) {
+        GenreProfileView genreProfile,
+        PicksView picks) {
 }

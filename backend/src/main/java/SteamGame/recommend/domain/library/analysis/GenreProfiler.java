@@ -31,8 +31,7 @@ public final class GenreProfiler {
     // tagVotesByAppid는 appid별 태그 이름과 득표수, 카탈로그에 없는 게임은 키가 없다
     public static GenreProfile profile(List<OwnedGame> games, Map<Long, Map<String, Integer>> tagVotesByAppid,
                                        LibraryContent content) {
-        Map<String, String> genreOfTag = new HashMap<>();
-        content.genres().forEach((genre, tags) -> tags.forEach(tag -> genreOfTag.put(tag, genre)));
+        Map<String, String> genreOfTag = genreOfTag(content);
 
         Map<String, Long> minutesByGenre = new LinkedHashMap<>();
         for (String genre : LibraryContentValidator.GENRE_KEYS) {
@@ -79,9 +78,15 @@ public final class GenreProfiler {
         return new GenreProfile(ranked.get(0).getKey(), secondary, state, ratio(coverageRaw), distribution);
     }
 
+    static Map<String, String> genreOfTag(LibraryContent content) {
+        Map<String, String> genreOfTag = new HashMap<>();
+        content.genres().forEach((genre, tags) -> tags.forEach(tag -> genreOfTag.put(tag, genre)));
+        return genreOfTag;
+    }
+
     // 장르에 속한 태그가 하나도 없으면 null, 장르마다 그 장르 태그 중 가장 높은 득표수를 점수로 삼는다
     // 조건 태그가 있는 게임은 그 규칙의 ignoreTags 표를 세지 않는다
-    private static String representativeGenre(Map<String, Integer> tagVotes, Map<String, String> genreOfTag,
+    static String representativeGenre(Map<String, Integer> tagVotes, Map<String, String> genreOfTag,
                                               List<GenreConditionalExclude> conditionalExcludes) {
         if (tagVotes == null) {
             return null;

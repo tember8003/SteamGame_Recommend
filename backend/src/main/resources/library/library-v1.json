@@ -457,6 +457,22 @@
   }
  ],
  "genreConditionalExcludesNote": "게임에 whenAnyTag 중 하나라도 있으면 그 게임에서만 ignoreTags 표를 장르 판단에서 뺀다. 배틀로얄 게임에는 끝까지 살아남는다는 뜻으로 Survival 표가 많이 붙어 PUBG가 생존 제작으로 갔다. 2026-11-04 운영 DB에서 두 태그가 붙은 게임 20개는 모두 실제 배틀로얄이나 익스트랙션 슈터였다. Survival을 항상 빼면 DayZ, Rust, 7 Days to Die 같은 진짜 생존 게임이 다른 장르로 가므로 조건을 두었다",
+ "picks": {
+  "tasteTagCount": 10,
+  "candidateTagCount": 5,
+  "minMatchedTags": 2,
+  "minReviews": 50,
+  "minPositivePct": 70,
+  "maxPlayNext": 3,
+  "revisitMinHours": 10,
+  "revisitIdleDays": 365,
+  "maxRevisit": 3,
+  "abandonedMinMinutes": 60,
+  "abandonedMaxMinutes": 120,
+  "abandonedIdleDays": 90,
+  "abandonedMinGames": 3
+ },
+ "picksNote": "playNext는 플레이 0분인 게임 중 많이 한 태그 상위 tasteTagCount개(최대 10)와 그 게임의 득표 상위 candidateTagCount개 태그가 minMatchedTags개 이상 겹치고 리뷰 minReviews개 이상, 긍정 minPositivePct% 이상인 게임을 최대 maxPlayNext개 고른다. revisit은 revisitMinHours시간 이상 했는데 revisitIdleDays일 이상 안 켠 게임이다. abandoned는 abandonedMinMinutes~abandonedMaxMinutes분만 하고 abandonedIdleDays일 이상 안 켠 게임이 abandonedMinGames개 이상 몰린 장르다. 2026-11-04 운영 DB에서 리뷰 50개 이상, 긍정 70% 이상인 게임은 44,505개 중 32,132개였다",
  "genreRules": {
   "minClassifiedHours": 10,
   "minCoverageRatio": 0.3,

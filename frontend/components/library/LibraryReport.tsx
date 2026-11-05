@@ -26,7 +26,7 @@ export default function LibraryReport({ data, locale, owner, submittedInput, onR
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [shareUrl, setShareUrl] = useState('');
-  const [image, setImage] = useState<{ url: string; index?: number } | null>(null);
+  const [image, setImage] = useState<{ url: string; index?: number; width: number; height: number } | null>(null);
   const shareId = useRef(existingShareId);
   const latestAnalysis = useRef(owner);
   const lock = useRef(false);
@@ -36,9 +36,9 @@ export default function LibraryReport({ data, locale, owner, submittedInput, onR
     if (saving) return;
     setSaving(true); setError('');
     try {
-      const { saveLibraryImage } = await import('@/lib/library/export');
+      const { saveLibraryImage, libraryImageSize } = await import('@/lib/library/export');
       const url = await saveLibraryImage(data, locale, index);
-      setImage({ url, index });
+      setImage({ url, index, ...libraryImageSize(data, locale, index) });
       recordTasteEvent('SHARE_CLICK', 'LIBRARY', 'IMAGE'); setStatus(c.imageSaved);
     } catch { setError(c.imageError); }
     finally { setSaving(false); }
@@ -90,7 +90,7 @@ export default function LibraryReport({ data, locale, owner, submittedInput, onR
     {image ? <details className={styles.imagePreview} open>
       <summary>{c.imagePreview}</summary>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.url} alt={c.imagePreview} width={image.index === undefined ? 1600 : 1080} height={image.index === undefined ? 2200 : 1400} />
+      <img src={image.url} alt={c.imagePreview} width={image.width} height={image.height} />
       <a className={styles.secondary} href={image.url} download={`playalike-base-${image.index === undefined ? 'overview' : image.index + 1}.png`}>{c.download}</a>
     </details> : null}
     {error ? <p role="alert" className={styles.error}>{error}</p> : null}

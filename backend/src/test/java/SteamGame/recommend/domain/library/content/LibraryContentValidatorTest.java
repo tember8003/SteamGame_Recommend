@@ -13,6 +13,7 @@ import static SteamGame.recommend.domain.library.LibraryFixtures.withConditional
 import static SteamGame.recommend.domain.library.LibraryFixtures.withExcluded;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withGenres;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withGroup;
+import static SteamGame.recommend.domain.library.LibraryFixtures.withPicks;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withLabel;
 import static SteamGame.recommend.domain.library.LibraryFixtures.withPhrases;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -171,7 +172,7 @@ class LibraryContentValidatorTest {
     void blankVersion() {
         LibraryContent v = validContent();
         LibraryContent c = new LibraryContent(" ", v.tagGroups(), v.groupLabels(), v.excludedTags(), v.phrases(),
-                v.genres(), v.genreExcludedTags(), v.genreRules(), v.genreConditionalExcludes());
+                v.genres(), v.genreExcludedTags(), v.genreRules(), v.genreConditionalExcludes(), v.picks());
         assertThatThrownBy(() -> LibraryContentValidator.validate(c))
                 .hasMessageContaining("version is blank");
     }
@@ -318,5 +319,33 @@ class LibraryContentValidatorTest {
                 new GenreRules(Double.POSITIVE_INFINITY, 0.3, 0.1, 0.15));
         assertThatThrownBy(() -> LibraryContentValidator.validate(c))
                 .hasMessageContaining("minClassifiedHours");
+    }
+    @Test
+    void picksMissing() {
+        LibraryContent c = withPicks(validContent(), null);
+        assertThatThrownBy(() -> LibraryContentValidator.validate(c)).hasMessageContaining("picks is missing");
+    }
+
+    @Test
+    void picksOutOfRange() {
+        LibraryContent c = withPicks(validContent(), new PickRules(0, 2, 3, -1, 101, 0, -1, 365, 3, 120, 60, 90, 0));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(c))
+                .hasMessageContaining("picks.tasteTagCount must be 1 or more")
+                .hasMessageContaining("picks.maxPlayNext must be 1 or more")
+                .hasMessageContaining("picks.abandonedMinGames must be 1 or more")
+                .hasMessageContaining("picks.minMatchedTags must not exceed candidateTagCount or tasteTagCount")
+                .hasMessageContaining("picks counts and days must be 0 or more")
+                .hasMessageContaining("picks.minPositivePct must be between 0 and 100")
+                .hasMessageContaining("picks.revisitMinHours")
+                .hasMessageContaining("picks.abandonedMaxMinutes must not be less than abandonedMinMinutes");
+    }
+    @Test
+    void picksTasteTagCountLimits() {
+        LibraryContent tooMany = withPicks(validContent(), new PickRules(11, 5, 2, 50, 70, 3, 10, 365, 3, 60, 120, 90, 3));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(tooMany))
+                .hasMessageContaining("picks.tasteTagCount must be 10 or less");
+        LibraryContent unreachable = withPicks(validContent(), new PickRules(1, 5, 2, 50, 70, 3, 10, 365, 3, 60, 120, 90, 3));
+        assertThatThrownBy(() -> LibraryContentValidator.validate(unreachable))
+                .hasMessageContaining("picks.minMatchedTags must not exceed candidateTagCount or tasteTagCount");
     }
 }
