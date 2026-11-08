@@ -17,3 +17,18 @@ export interface Dashboard {
   recommendations: { totalImpressions: number; contexts: ContextMetric[]; topGames: TopGame[] };
   shares: { taste: ShareStat; library: ShareStat };
 }
+
+// 관리자 운영 상태 응답 타입, 백엔드 MetricsStatusDTO 와 같은 모양이다, 기간과 무관한 지금 상태다
+export interface StatusServer { revision: string; startedAt: string; flywayVersion: string | null }
+export interface StatusEvent {
+  at: string; type: string; ref: string | null; channel: string | null;
+  ledgerCode: string | null; crimeCode: string | null; genreCode: string | null;
+}
+export interface StatusCodeCount { status: number; errorCode: string; count: number }
+export interface StatusErrorEntry { at: string; status: number; errorCode: string; route: string }
+export interface StatusErrors { since: string; counts: StatusCodeCount[]; recent: StatusErrorEntry[] }
+export interface Status {
+  server: StatusServer;
+  recentEvents: StatusEvent[];
+  errors: StatusErrors;
+}

@@ -371,6 +371,65 @@
   color: var(--ink-secondary);
 }
 
+/* 운영 상태 영역, 대시보드 아래 따로 둔다 */
+.statusHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 32px 0 16px;
+}
+
+.statusHeader h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.statusList {
+  margin: 0;
+}
+
+.statusList > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.statusList dt {
+  color: var(--ink-secondary);
+  font-size: 0.85rem;
+}
+
+.statusList dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+/* 운영 상태 표 전용 수정, 글자 칸이 많아 공용 .table 의 숫자 칸 정렬(오른쪽 정렬+tabular-nums)을 되돌린다 */
+/* .table 의 th:not(:first-child)/td:not(:first-child) 규칙과 명시도를 맞춰, 뒤에 적은 이 규칙이 이기게 한다 */
+.textTable th:not(:first-child),
+.textTable td:not(:first-child) {
+  text-align: left;
+  font-variant-numeric: normal;
+}
+
+.textTable th {
+  white-space: nowrap;
+}
+
+/* 시간, 상태, 종류 칸처럼 줄바꿈되면 안 되는 칸에 붙인다 */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* 경로, ref 처럼 공백 없는 긴 값이 올 수 있는 칸에만 붙인다 */
+.wrap {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
   .kpis {
     grid-template-columns: repeat(2, 1fr);
@@ -399,5 +458,10 @@
 
   .table th {
     white-space: nowrap;
+  }
+
+  .textTable th,
+  .textTable td {
+    padding: 6px 4px;
   }
 }
