@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchDashboard, DashboardAuthError } from "./api";
-import type { Dashboard, Range } from "./types";
+import { fetchDashboard, fetchStatus, DashboardAuthError } from "./api";
+import type { Dashboard, Range, Status } from "./types";
 import BarList from "./BarList";
 import Funnel from "./Funnel";
+import StatusPanel from "./StatusPanel";
 import TrendChart from "./TrendChart";
 import TypeGrid from "./TypeGrid";
 import { CONTEXT_LABEL, CRIME_LABEL, FEATURE_LABEL, LEDGER_LABEL, libraryGenreLabel, num, pct, ratio } from "./format";
@@ -25,10 +26,31 @@ export default function MetricsPage() {
   const [error, setError] = useState<string | null>(null);
   const [tokenInput, setTokenInput] = useState("");
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
+  // 운영 상태는 대시보드와 따로 관리한다, 기간과 무관한 지금 상태라 range 를 바꿔도 다시 부르지 않는다
+  const [status, setStatus] = useState<Status | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   // 요청마다 번호를 매겨, 먼저 보낸 요청이 늦게 응답해도 마지막 요청 것만 반영한다
   const requestIdRef = useRef(0);
+  // 운영 상태 조회도 같은 방식으로 늦게 온 응답을 거른다, 대시보드와 번호를 같이 쓰면 기간만 바꿔도(상태는
+  // 다시 부르지 않는데도) 번호가 올라가 진행 중인 상태 요청이 자신과 무관한 이유로 버려지므로 따로 둔다
+  const statusRequestIdRef = useRef(0);
   // 화면 숫자가 실제로 보여 주는 기간이다, 실패하면 기간 버튼을 이 값으로 되돌린다
   const shownRangeRef = useRef<Range>("7d");
+
+  // 대시보드와 운영 상태 둘 중 하나라도 401 을 받으면 토큰 화면으로 간다, 둘 다 같은 토큰을 쓰기 때문이다
+  // 두 요청 번호를 함께 올려서, 이미 보낸 뒤 늦게 도착하는 반대쪽의 성공 응답이 토큰 화면을 다시 뒤집지 못하게 한다
+  const goToTokenScreen = useCallback((message: string) => {
+    requestIdRef.current++;
+    statusRequestIdRef.current++;
+    try { localStorage.removeItem(TOKEN_KEY); } catch {}
+    setToken(null);
+    setData(null);
+    setStatus(null);
+    setStatusError(null);
+    setNeedToken(true);
+    setError(message);
+  }, []);
 
   // 첫 문장이 await 라 이펙트에서 호출해도 동기 setState 가 없다
   const load = useCallback(async (t: string, r: Range) => {
@@ -44,11 +66,7 @@ export default function MetricsPage() {
     } catch (e) {
       if (id !== requestIdRef.current) return; // 마찬가지로 늦게 온 실패도 버린다
       if (e instanceof DashboardAuthError) {
-        try { localStorage.removeItem(TOKEN_KEY); } catch {}
-        setToken(null);
-        setData(null);
-        setNeedToken(true);
-        setError("토큰이 올바르지 않습니다");
+        goToTokenScreen("토큰이 올바르지 않습니다");
       } else {
         setError("지표를 불러오지 못했습니다");
         setRange(shownRangeRef.current); // 화면 숫자는 이전 기간 그대로이니 버튼도 그 기간으로 되돌린다
@@ -56,7 +74,29 @@ export default function MetricsPage() {
     } finally {
       if (id === requestIdRef.current) setLoading(false);
     }
-  }, []);
+  }, [goToTokenScreen]);
+
+  // 운영 상태 조회, 첫 로드/토큰 제출/새로고침 버튼에서만 부르고 기간 버튼에는 반응하지 않는다
+  const loadStatus = useCallback(async (t: string) => {
+    const id = ++statusRequestIdRef.current;
+    setStatusLoading(true);
+    try {
+      const res = await fetchStatus(t);
+      if (id !== statusRequestIdRef.current) return;
+      setStatus(res);
+      setStatusError(null);
+    } catch (e) {
+      if (id !== statusRequestIdRef.current) return;
+      if (e instanceof DashboardAuthError) {
+        goToTokenScreen("토큰이 올바르지 않습니다");
+      } else {
+        // 대시보드는 그대로 두고 운영 상태 영역에만 오류를 보인다
+        setStatusError("운영 상태를 불러오지 못했습니다");
+      }
+    } finally {
+      if (id === statusRequestIdRef.current) setStatusLoading(false);
+    }
+  }, [goToTokenScreen]);
 
   useEffect(() => {
     // 이펙트에서 동기로 setState 하지 않으려고 async 로 감싼다, SSR 초기 렌더는 로딩 상태로 고정된다
@@ -68,12 +108,13 @@ export default function MetricsPage() {
         await Promise.resolve();
         setNeedToken(true);
         setLoading(false);
+        setStatusLoading(false);
         return;
       }
       setToken(saved);
-      await load(saved, "7d");
+      await Promise.all([load(saved, "7d"), loadStatus(saved)]);
     })();
-  }, [load]);
+  }, [load, loadStatus]);
 
   function submitToken(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -84,6 +125,7 @@ export default function MetricsPage() {
     setNeedToken(false);
     setLoading(true);
     load(t, range);
+    loadStatus(t);
   }
 
   function chooseRange(r: Range) {
@@ -93,13 +135,21 @@ export default function MetricsPage() {
     load(token, r);
   }
 
+  function refreshStatus() {
+    if (!token) return;
+    loadStatus(token);
+  }
+
   function forgetToken() {
     // 기다리던 응답이 지운 토큰으로 화면을 다시 띄우지 않게 번호를 올린다
     requestIdRef.current++;
+    statusRequestIdRef.current++;
     setLoading(false);
     try { localStorage.removeItem(TOKEN_KEY); } catch {}
     setToken(null);
     setData(null);
+    setStatus(null);
+    setStatusError(null);
     setNeedToken(true);
   }
 
@@ -233,6 +283,8 @@ export default function MetricsPage() {
           </div>
         </>
       ) : null}
+
+      <StatusPanel status={status} error={statusError} loading={statusLoading} onRefresh={refreshStatus} />
     </main>
   );
 }

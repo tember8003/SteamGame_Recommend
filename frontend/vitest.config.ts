@@ -11,6 +11,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['lib/**/*.test.ts', 'components/**/*.test.ts', 'components/**/*.test.tsx', 'app/**/*.test.ts', 'app/**/*.test.tsx'],
+    // 테스트 실행 환경의 시간대를 UTC 로 고정한다, 이 기기의 Node 기본 시간대(Asia/Seoul)와 달라야
+    // formatKst/formatKstShort 가 timeZone 옵션 없이도 우연히 맞는 값을 내는 상황을 막을 수 있다
+    env: { TZ: 'UTC' },
   },
   resolve: {
     alias: {

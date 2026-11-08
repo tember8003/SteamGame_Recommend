@@ -1,12 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import MetricsPage from './page';
-import { fetchDashboard, DashboardAuthError } from './api';
-import type { Dashboard } from './types';
+import { fetchDashboard, fetchStatus, DashboardAuthError } from './api';
+import type { Dashboard, Status } from './types';
 
 vi.mock('./api', () => ({
   fetchDashboard: vi.fn(),
+  fetchStatus: vi.fn(),
   DashboardAuthError: class extends Error {},
 }));
 
@@ -33,9 +34,19 @@ const sample: Dashboard = {
   },
 };
 
+// 운영 상태 샘플, 서버 상태+이벤트 1건(장부 판정 있음)+오류 없음
+const sampleStatus: Status = {
+  server: { revision: 'abcdef1234567890', startedAt: '2026-11-08T05:47:22Z', flywayVersion: '29' },
+  recentEvents: [
+    { at: '2026-11-08T05:47:22Z', type: 'LIBRARY_COMPLETE', ref: null, channel: null, ledgerCode: 'PRACTICAL', crimeCode: null, genreCode: null },
+  ],
+  errors: { since: '2026-11-08T05:47:22Z', counts: [], recent: [] },
+};
+
 beforeEach(() => {
   try { localStorage.clear(); } catch {}
   vi.mocked(fetchDashboard).mockReset();
+  vi.mocked(fetchStatus).mockReset();
 });
 
 afterEach(() => { cleanup(); });
@@ -166,5 +177,83 @@ describe('MetricsPage', () => {
     await screen.findByText('지표를 불러오지 못했습니다');
     expect(screen.getByRole('button', { name: '7일' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: '30일' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows the three operations status cards with the short commit and the Flyway version', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    expect(await screen.findByLabelText('서버 상태')).toBeInTheDocument();
+    expect(screen.getByLabelText('최근 이벤트')).toBeInTheDocument();
+    expect(screen.getByLabelText('최근 오류')).toBeInTheDocument();
+    // 커밋은 앞 7자리만 보인다
+    expect(screen.getByText('abcdef1')).toBeInTheDocument();
+    // 서버 상태 영역으로 범위를 좁힌다, Flyway 버전 '29' 가 다른 영역의 숫자와 헷갈리지 않게 한다
+    expect(within(screen.getByLabelText('서버 상태')).getByText('29')).toBeInTheDocument();
+  });
+
+  it('shows the verdict code of a recent event as its Korean name', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    expect(await screen.findByText('실속파')).toBeInTheDocument();
+  });
+
+  it('shows a no-errors message when there have been no errors since startup', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    expect(await screen.findByText('기동 이후 오류 없음')).toBeInTheDocument();
+  });
+
+  it('keeps the dashboard numbers when only the status fetch fails', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockRejectedValue(new Error('status down'));
+    render(<MetricsPage />);
+    expect(await screen.findByText('운영 상태를 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.getByTestId('kpi-visitors')).toHaveTextContent('120');
+    expect(screen.queryByText('지표를 불러오지 못했습니다')).not.toBeInTheDocument();
+  });
+
+  it('goes back to the token screen when the status fetch returns 401', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockRejectedValue(new DashboardAuthError('unauthorized'));
+    render(<MetricsPage />);
+    expect(await screen.findByLabelText('접근 토큰')).toBeInTheDocument();
+    expect(screen.getByText('토큰이 올바르지 않습니다')).toBeInTheDocument();
+    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+  });
+
+  it('keeps the token screen when a stale dashboard response arrives after a status 401', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    let resolveDashboard!: (value: Dashboard) => void;
+    const dashboardPromise = new Promise<Dashboard>(resolve => { resolveDashboard = resolve; });
+    vi.mocked(fetchDashboard).mockImplementation(() => dashboardPromise);
+    vi.mocked(fetchStatus).mockRejectedValue(new DashboardAuthError('unauthorized'));
+
+    render(<MetricsPage />);
+    // 운영 상태 조회가 먼저 401 로 실패해 토큰 화면으로 간다
+    expect(await screen.findByLabelText('접근 토큰')).toBeInTheDocument();
+
+    // 늦게 도착하는 대시보드 응답(성공)이 토큰 화면을 다시 뒤집으면 안 된다
+    // act 로 후속 처리(setState)까지 끝날 때까지 기다린 뒤 확인한다
+    await act(async () => { resolveDashboard(sample); await dashboardPromise; });
+
+    expect(screen.getByLabelText('접근 토큰')).toBeInTheDocument();
+    expect(screen.queryByTestId('kpi-visitors')).not.toBeInTheDocument();
+  });
+
+  it('shows timestamps converted to Korean time regardless of the test runner timezone', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    // UTC 2026-11-08T05:47:22Z 는 한국 시간으로 11-08 14:47 이다
+    expect(await screen.findByText('11-08 14:47')).toBeInTheDocument();
   });
 });
