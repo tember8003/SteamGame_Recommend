@@ -68,4 +68,24 @@ class FunnelEventAsyncTest extends PostgresTestBase {
         assertThat(counted).as("funnelEventExecutor completed the task").isTrue();
         assertThat(executor.getThreadNamePrefix()).isEqualTo("funnel-event-");
     }
+
+    @Test
+    void recordLibraryCompleteRunsOnDedicatedExecutorAndSavesRow() throws Exception {
+        long completedBefore = executor.getThreadPoolExecutor().getCompletedTaskCount();
+
+        service.recordLibraryComplete(CLIENT, "COLLECTOR", "PILE_OF_SHAME", "ACTION_SHOOTER");
+
+        boolean saved = await(() -> jdbc.queryForObject(
+                "SELECT count(*) FROM funnel_event WHERE client_id = ?", Integer.class, CLIENT) == 1);
+        assertThat(saved).as("row saved within 10s").isTrue();
+        assertThat(jdbc.queryForMap(
+                "SELECT ledger_code, crime_code, genre_code FROM funnel_event WHERE client_id = ?", CLIENT))
+                .containsEntry("ledger_code", "COLLECTOR")
+                .containsEntry("crime_code", "PILE_OF_SHAME")
+                .containsEntry("genre_code", "ACTION_SHOOTER");
+
+        // 전용 실행기가 이 작업을 끝낸 것으로 센다, 호출 스레드에서 돌았다면 늘지 않는다
+        boolean counted = await(() -> executor.getThreadPoolExecutor().getCompletedTaskCount() > completedBefore);
+        assertThat(counted).as("funnelEventExecutor completed the task").isTrue();
+    }
 }

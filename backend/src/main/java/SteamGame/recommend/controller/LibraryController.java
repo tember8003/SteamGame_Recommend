@@ -1,8 +1,8 @@
 package SteamGame.recommend.controller;
 
-import SteamGame.recommend.domain.event.entity.FunnelEventType;
 import SteamGame.recommend.domain.event.service.FunnelEventService;
 import SteamGame.recommend.domain.library.LibraryAnalysisService;
+import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
 import SteamGame.recommend.domain.library.content.LibraryContentLoader;
 import SteamGame.recommend.domain.library.dto.AnalyzeRequest;
 import SteamGame.recommend.domain.library.dto.AnalyzeResponse;
@@ -46,9 +46,11 @@ public class LibraryController {
         LibraryAnalysisService.Analyzed result = service.analyze(request.steamId());
         AnalyzeResponse body = LibraryViewMapper.toAnalyzeResponse(result.analysisId(), result.profile(),
                 result.analysis(), contentLoader.content(), Lang.from(lang));
-        // 응답을 다 만든 뒤에 완료 이벤트를 남긴다, clientId가 있을 때만 남긴다
+        // 응답을 다 만든 뒤에 완료 이벤트와 판정 코드를 남긴다, clientId가 있을 때만 남긴다
         if (request.clientId() != null) {
-            eventService.record(request.clientId(), FunnelEventType.LIBRARY_COMPLETE, null, null);
+            LibraryAnalysis a = result.analysis();
+            String genre = a.genreProfile() == null ? null : a.genreProfile().primaryGenre();
+            eventService.recordLibraryComplete(request.clientId(), a.ledger().code(), a.verdict().crime().code(), genre);
         }
         return ResponseEntity.ok(body);
     }

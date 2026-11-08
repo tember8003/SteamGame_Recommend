@@ -3,7 +3,6 @@ package SteamGame.recommend.controller;
 import SteamGame.recommend.config.JacksonConfig;
 import SteamGame.recommend.config.RateLimitProperties;
 import SteamGame.recommend.config.SecurityConfig;
-import SteamGame.recommend.domain.event.entity.FunnelEventType;
 import SteamGame.recommend.domain.event.service.FunnelEventService;
 import SteamGame.recommend.domain.library.LibraryAnalysisService;
 import SteamGame.recommend.domain.library.analysis.LibraryAnalysis;
@@ -168,11 +167,25 @@ class LibraryControllerTest {
                 .thenReturn(new LibraryAnalysisService.Analyzed("aid-1", profile, analysis));
 
         analyze("", BODY);
-        verify(eventService).record("cid-1", FunnelEventType.LIBRARY_COMPLETE, null, null);
+        verify(eventService).recordLibraryComplete("cid-1", analysis.ledger().code(),
+                analysis.verdict().crime().code(), analysis.genreProfile().primaryGenre());
 
         org.mockito.Mockito.clearInvocations(eventService);
         analyze("", "{\"steamId\":\"76561198012345678\"}");
-        verify(eventService, never()).record(any(), any(), any(), any());
+        verify(eventService, never()).recordLibraryComplete(any(), any(), any(), any());
+    }
+
+    // genreProfile이 없는 분석은 장르 코드 없이 null로 넘어가야 한다
+    @Test
+    void analyze_recordsNullGenreWhenGenreProfileAbsent() throws Exception {
+        LibraryAnalysis noGenre = analysis.withGenreProfile(null);
+        when(service.analyze(anyString()))
+                .thenReturn(new LibraryAnalysisService.Analyzed("aid-1", profile, noGenre));
+
+        analyze("", BODY);
+
+        verify(eventService).recordLibraryComplete("cid-1", noGenre.ledger().code(),
+                noGenre.verdict().crime().code(), null);
     }
 
     @Test
@@ -185,7 +198,7 @@ class LibraryControllerTest {
 
         assertThat(analyze("", BODY).getResponse().getStatus()).isEqualTo(500);
 
-        verify(eventService, never()).record(any(), any(), any(), any());
+        verify(eventService, never()).recordLibraryComplete(any(), any(), any(), any());
     }
 
     @Test
@@ -194,7 +207,7 @@ class LibraryControllerTest {
 
         analyze("", BODY);
 
-        verify(eventService, never()).record(any(), any(), any(), any());
+        verify(eventService, never()).recordLibraryComplete(any(), any(), any(), any());
     }
 
     @Test
