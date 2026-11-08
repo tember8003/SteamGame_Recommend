@@ -1,16 +1,20 @@
 package SteamGame.recommend.controller;
 
-import SteamGame.recommend.domain.metrics.dto.MetricsOverviewDTO;
-import SteamGame.recommend.domain.metrics.service.MetricsService;
+import SteamGame.recommend.domain.metrics.DashboardRange;
+import SteamGame.recommend.domain.metrics.dto.MetricsDashboardDTO;
+import SteamGame.recommend.domain.metrics.service.MetricsDashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -20,25 +24,27 @@ import java.security.MessageDigest;
 @RequestMapping("/api/metrics")
 public class MetricsController {
 
-    private static final int TOP_N = 20;
-
-    private final MetricsService metricsService;
+    private final MetricsDashboardService dashboardService;
     private final String metricsToken;
 
-    public MetricsController(MetricsService metricsService,
+    public MetricsController(MetricsDashboardService dashboardService,
                             @Value("${app.metrics.token:}") String metricsToken) {
-        this.metricsService = metricsService;
+        this.dashboardService = dashboardService;
         this.metricsToken = metricsToken;
     }
 
-    @Operation(summary = "Read recommendation metrics overview")
-    @GetMapping("/overview")
-    public ResponseEntity<MetricsOverviewDTO> overview(
+    @Operation(summary = "Read admin dashboard metrics for a period")
+    @GetMapping("/dashboard")
+    public ResponseEntity<MetricsDashboardDTO> dashboard(
+            @RequestParam(required = false) String range,
             @RequestHeader(value = "X-Metrics-Token", required = false) String token) {
+        // 토큰을 먼저 본다, 토큰 없이 기간 오류 응답으로 엔드포인트를 더듬지 못하게 함
         if (!authorized(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(metricsService.overview(TOP_N));
+        DashboardRange r = DashboardRange.parse(range)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_RANGE"));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(dashboardService.dashboard(r));
     }
 
     // 설정 토큰이 비어 있으면 항상 거부한다, 비교는 상수 시간으로 한다

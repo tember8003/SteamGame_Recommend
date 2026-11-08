@@ -62,4 +62,14 @@ public class FunnelEventService {
             log.warn("이벤트를 DB에 저장하지 못함, 사용자 응답에는 영향 없음 clientId={} type={} ref={}", clientId, type, ref, e);
         }
     }
+
+    // 라이브러리 분석 완료와 판정 코드를 남긴다, 저장에 실패해도 예외를 밖으로 던지지 않아 사용자 응답에는 영향이 없다
+    @Async("funnelEventExecutor")
+    public void recordLibraryComplete(String clientId, String ledgerCode, String crimeCode, String genreCode) {
+        try {
+            repository.save(FunnelEvent.libraryComplete(clientId, ledgerCode, crimeCode, genreCode));
+        } catch (Exception e) {
+            log.warn("라이브러리 완료 이벤트를 DB에 저장하지 못함, 사용자 응답에는 영향 없음 clientId={}", clientId, e);
+        }
+    }
 }

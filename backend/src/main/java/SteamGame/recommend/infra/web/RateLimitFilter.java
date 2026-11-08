@@ -32,7 +32,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             Map.entry("/api/recommend/recent-play", "recent-play"),
             Map.entry("/api/recommend/feedback", "feedback"),
             Map.entry("/api/recommend/match", "match"),
-            Map.entry("/api/metrics/overview", "metrics"),
+            Map.entry("/api/metrics/dashboard", "metrics"),
             Map.entry("/api/taste/result", "taste-result"),
             Map.entry("/api/taste/recommend", "taste-recommend"),
             Map.entry("/api/events", "events"),

@@ -1,0 +1,403 @@
+/* dataviz 스킬 지침의 어두운 표면 쪽 토큰이다, 이 화면이 단색 어두운 배경을 쓰기로 정했기 때문에 밝은 쪽은 쓰지 않는다 */
+.page {
+  --surface-1: #1a1a19;
+  --border: rgba(255, 255, 255, 0.1);
+  --ink: #ffffff;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --accent: #3987e5;
+  --critical: #d03b3b;
+
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 4vw, 40px) 64px;
+  color: var(--ink);
+}
+
+.topBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-right: auto;
+}
+
+.ranges {
+  display: flex;
+  gap: 8px;
+}
+
+.ranges button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.ranges button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.meta {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ghost {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.error {
+  margin-bottom: 16px;
+  color: var(--critical);
+}
+
+.tokenForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.tokenForm label {
+  color: var(--ink-secondary);
+}
+
+.tokenForm input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: inherit;
+}
+
+.tokenForm button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpis > div {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+}
+
+.kpis span {
+  display: block;
+  color: var(--ink-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.kpis strong {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.card {
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.card h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  margin: 16px 0 8px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* 그리드 칸의 기본 min-width: auto 를 풀어서 안의 표가 칸 너비에 맞춰 줄바꿈되게 한다 */
+.two > * {
+  min-width: 0;
+}
+
+.note {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+}
+
+/* 가로 막대 목록 묶음, 소제목과 함께 쓰여 묶음 사이에 간격을 둔다 */
+.barGroup {
+  margin-bottom: 16px;
+}
+
+.barGroup:last-child {
+  margin-bottom: 0;
+}
+
+.barGroupTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  margin: 0 0 8px;
+}
+
+/* 가로 막대 목록, 막대 색은 TrendChart 1번 선과 같은 계열을 쓴다 */
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 7rem 1fr 5rem;
+  align-items: center;
+  gap: 8px;
+}
+
+.barLabel {
+  color: var(--ink-secondary);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--gridline);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+
+.barValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+.barValue small {
+  color: var(--ink-muted);
+  margin-left: 4px;
+}
+
+/* 16유형 4x4, 칸 바탕은 TypeGrid.tsx 가 직접 계산한 인라인 색을 쓴다 */
+.typeGrid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.typeGrid td {
+  width: 25%;
+  padding: 10px 8px;
+  border-radius: 6px;
+  background: var(--gridline);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.typeCode {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.typeCount {
+  display: block;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.trend {
+  margin: 0;
+}
+
+.trendChartWrap {
+  position: relative;
+}
+
+.trend svg {
+  width: 100%;
+  height: auto;
+}
+
+.trendMax {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.trendDates {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.axis {
+  stroke: var(--baseline);
+  stroke-width: 1;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-secondary);
+  font-size: 0.8rem;
+}
+
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.table th,
+.table td {
+  padding: 8px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.table th:not(:first-child),
+.table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.topGames {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.topGames li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.topGames li span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topGames li span:last-child {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-secondary);
+}
+
+@media (max-width: 720px) {
+  .kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .two {
+    grid-template-columns: 1fr;
+  }
+
+  .barRow {
+    grid-template-columns: 6rem 1fr 4rem;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 4px;
+  }
+
+  .table th {
+    white-space: nowrap;
+  }
+}

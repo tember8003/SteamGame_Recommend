@@ -81,6 +81,13 @@ class FunnelEventServiceTest {
     }
 
     @Test
+    void recordLibraryComplete_swallowsRepositoryFailure() {
+        when(repository.save(any())).thenThrow(new RuntimeException("db down"));
+        assertThatCode(() -> service.recordLibraryComplete("c1", "COLLECTOR", "PILE_OF_SHAME", "ACTION_SHOOTER"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void record_storesUppercaseTypeCode() {
         service.record("c1", FunnelEventType.SHARE_CLICK, "gmhs", ShareChannel.LINK);
         ArgumentCaptor<FunnelEvent> captor = ArgumentCaptor.forClass(FunnelEvent.class);
