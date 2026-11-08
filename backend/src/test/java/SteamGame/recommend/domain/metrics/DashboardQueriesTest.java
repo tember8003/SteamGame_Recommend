@@ -1,6 +1,7 @@
 package SteamGame.recommend.domain.metrics;
 
 import SteamGame.recommend.domain.metrics.repository.DashboardQueries;
+import SteamGame.recommend.domain.metrics.repository.StatusQueries;
 import SteamGame.recommend.support.PostgresTestBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,9 +18,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// StatusQueriesTest 와 애너테이션을 똑같이 둬 테스트 컨텍스트와 연결 풀을 함께 쓴다, 달라지면 컨텍스트가 하나 더 생겨 공유 테스트 DB의 연결 한도를 넘음
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(DashboardQueries.class)
+@Import({DashboardQueries.class, StatusQueries.class})
 class DashboardQueriesTest extends PostgresTestBase {
 
     @Autowired JdbcTemplate jdbc;

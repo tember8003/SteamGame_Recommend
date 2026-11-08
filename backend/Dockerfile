@@ -16,6 +16,9 @@ RUN --mount=type=cache,target=/root/.gradle \
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/build/libs/recommend-0.0.1-SNAPSHOT.jar app.jar
+# COPY 뒤에 둬서 커밋만 바뀌어도 위 레이어 캐시를 덜 깨게 함, 값은 배포 워크플로가 github.sha 로 채움
+ARG APP_REVISION=unknown
+ENV APP_REVISION=$APP_REVISION
 EXPOSE 8888
 # exec 형식이라 JVM 이 PID 1 로 SIGTERM 을 직접 받아 graceful shutdown 함
 # 힙 제한은 JAVA_TOOL_OPTIONS 로, 배치 인자는 뒤에 붙여 program args 로 전달함
