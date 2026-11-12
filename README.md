@@ -2,13 +2,10 @@
 
 # Playalike: Steam Game Recommendations
 
-A service that helps you find your next Steam game using tags, free-text descriptions, your Steam profile and library, and game embeddings.
+Find Steam games from a game you like or a description of what you want to play. Enter a Steam ID to get recommendations from your library and recent play history.
 
-- Live: https://playalike.online (Korean / English)
-- Backend: Spring Boot REST API + PostgreSQL (pgvector)
-- Frontend: Next.js (deployed on Vercel)
-
-> Only games with 50+ reviews are collected (`app.crawler.min-reviews`), so games with few reviews may not show up.
+- [Try Playalike](https://playalike.online) — available in Korean and English
+- The catalog includes games with 50+ reviews. Games with fewer reviews may be missing from search results.
 
 ![Home](assets/readme/home.png)
 
@@ -16,134 +13,116 @@ A service that helps you find your next Steam game using tags, free-text descrip
 
 ## Features
 
-| Feature | Page | Description |
-| --- | --- | --- |
-| Random by tag | `/steam/random` | Random picks from selected tags, with review count / Korean support / free-only filters |
-| Describe a game | `/steam/input` | Describe what you want and get games close to that sentence |
-| Requirement match | `/steam/match` | Description plus session length, budget and player count; each pick comes with reasons and caveats |
-| Profile | `/steam/profile` | Analyzes the games owned by a Steam ID (public profiles only) |
-| Recent play | `/steam/recent` | Recommendations from the last two weeks of play |
-| Similar games | `/steam/similar` | Games close to a game you like |
-| Similarity graph | `/steam/graph` | Explore games as a network of similar titles (Cytoscape) |
-| Library analysis | `/library` | Builds a genre base from your play history, shows games to try now, games worth returning to, and genres that don't fit; shareable without exposing the profile |
-| Taste test | `/taste` | 16 questions place you in one of 16 types across 4 axes (explore/growth, narrative/system, relaxed/challenge, party/solo), plus matching games |
-| Game choice | `/steam/choice` | Pick one of two games for 7 rounds to find your taste |
-| Review guess | `/steam/review-guess` | Mini game: guess the game from real Steam reviews |
+### Find games
 
-Every recommendation card collects thumbs up/down feedback. Impressions, feedback and funnel events are shown on an internal metrics page (`/metrics`, token required).
+- **Random by tag** (`/steam/random`): Get random games with your selected tags. Filter by minimum reviews, Korean language support, and whether the game is free.
+- **Describe a game** (`/steam/input`): Describe what you want, such as "a light co-op game to play with a friend", to find matching games.
+- **Requirement match** (`/steam/match`): Add session length, budget, and player count to your description. Each recommendation includes reasons and caveats.
+- **Similar games** (`/steam/similar`): Choose a game you like to find similar ones.
+- **Similarity graph** (`/steam/graph`): Browse connections between similar games. Click a game to expand its recommendations.
 
-| Similar games | Similarity graph |
-| --- | --- |
-| ![Similar games](assets/readme/similar.png) | ![Similarity graph](assets/readme/graph.png) |
+### Use your Steam history
 
-| Taste test type |
-| --- |
-| ![Taste test](assets/readme/taste.png) |
+These features require a public Steam profile.
+
+- **Profile** (`/steam/profile`): Get recommendations for new games based on your whole library.
+- **Recent play** (`/steam/recent`): Get recommendations based on games you played in the last two weeks.
+- **Library analysis** (`/library`): Your most-played genre sets the scene for a 2D base. The report suggests games to try, games to return to, and genres that may not suit you. Share the report by link without exposing your profile information.
+
+### Taste tests and mini-games
+
+- **Taste test** (`/taste`): Answer 16 questions about exploration/growth, narrative/systems, relaxation/challenge, and party/solo play. Get one of 16 types, along with games that fit it.
+- **Game choice** (`/steam/choice`): Choose between two games over seven rounds to explore your preferences.
+- **Review guess** (`/steam/review-guess`): Read real Steam reviews and guess the game.
+
+Leave a thumbs up or down on recommendation cards. Games you dislike are excluded from future recommendations.
+
+<p>
+  <img src="assets/readme/similar.png" alt="Similar games" width="49%">
+  <img src="assets/readme/graph.png" alt="Similarity graph" width="49%">
+</p>
+<p>
+  <img src="assets/readme/taste.png" alt="Taste test type" width="49%">
+</p>
 
 ---
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    U[User] --> FE["Next.js frontend<br/>(Vercel)"]
-    FE -->|REST| CADDY["Caddy<br/>(HTTPS)"]
-    subgraph Server["AWS Lightsail (Docker Compose)"]
-        CADDY --> API["Spring Boot API"]
-        API --> DB[("PostgreSQL 16<br/>+ pgvector")]
-        GNN["tagemb batch<br/>(PyTorch Geometric)"] --> DB
-    end
-    API --> STEAM["Steam Web API<br/>Steam Store"]
-    API --> GEM["Gemini<br/>(embeddings, LLM fallback)"]
-    API --> GROQ["Groq<br/>(primary LLM)"]
-```
+![Playalike architecture](assets/readme/architecture.png)
 
-### Data Pipeline
+The Next.js frontend is hosted on Vercel. The Spring Boot backend, PostgreSQL database, game collection jobs, and GNN training jobs run on one Oracle Cloud server with Docker Compose. Caddy handles HTTPS.
 
-```mermaid
-flowchart LR
-    A["catalog<br/>sync Steam app list"] --> B["refresh tag co-occurrence"]
-    A --> C["detail<br/>crawl store details, tags, reviews"]
-    C --> D["embed<br/>embed description + tags with Gemini<br/>(768 dims)"]
-    C --> E["tagemb<br/>train GCN on game-tag graph"]
-    D --> V[("games.embedding<br/>HNSW index")]
-    E --> W[("tag-structure vectors")]
-```
+Game data comes from the Steam Web API and the Steam store. Groq LLM extracts recommendation constraints from text, and Google Gemini generates embeddings. If a Groq call fails, Gemini handles constraint extraction instead.
+
+### Data collection and training
+
+Data for recommendations is prepared in this order:
+
+1. Fetch the Steam game list and recalculate how often tags appear together.
+2. Collect each game's description, tags, and reviews from its Steam store page.
+3. Generate embeddings from descriptions and tags.
+4. Run a separate GNN training job to generate tag-structure vectors.
 
 ---
 
 ## Recommendation Logic
 
-### Common path: query vector → nearest candidates → tag top-up
+Description similarity is measured with Gemini embeddings and searched with pgvector.
 
-Describe, profile, recent play and similar games share one path; only the query vector differs.
+- **Embedding**: A vector of 768 numbers representing a game's description and tags. Similar content produces nearby vectors, which lets us search for recommendation candidates.
+- **pgvector**: A PostgreSQL extension for storing vectors and finding their nearest neighbors.
 
-```mermaid
-flowchart TD
-    subgraph Q["Build the query vector"]
-        Q1["Describe<br/>embed the sentence directly"]
-        Q2["Profile<br/>mean embedding of owned games"]
-        Q3["Recent play<br/>mean embedding of last 2 weeks"]
-        Q4["Similar games<br/>embedding of the chosen game"]
-    end
-    Q1 & Q2 & Q3 & Q4 --> N["pgvector nearest 40<br/>(review / Korean / free filters,<br/>exclude owned, already shown, disliked)"]
-    N --> S["Randomly sample 4<br/>(rerolls give new results)"]
-    S --> T{"Got 4?"}
-    T -->|yes| R[Result]
-    T -->|no| F["Top up with tag matching<br/>using top tags + co-occurring tags"]
-    F --> R
-```
+### 1. Shared recommendation flow
 
-- For descriptions, an LLM also extracts tags to display; if embedding fails, those tags are used for search.
-- Groq (`openai/gpt-oss-20b`) is tried first, then Gemini. Results for the same sentence are cached.
+Description, profile, recent-play, and similar-game recommendations start with a reference vector and search for nearby games. Each mode builds that reference differently.
 
-### Similar games: interleaving two rankers
+![Recommendation flow](assets/readme/recommendation-flow.png)
 
-With `app.recommend.similar-interleave-enabled`, results from description embeddings and GNN tag-structure embeddings are mixed.
+1. **Reference vector**: Description mode embeds your sentence. Profile mode averages the embeddings of your owned games; recent-play mode averages those of games played in the last two weeks. Similar-game mode uses the selected game's embedding.
+2. **Candidate search**: Find the 40 nearest games. Apply minimum-review, Korean language, and free-game filters, then exclude owned, already shown, and disliked games.
+3. **Random selection**: Choose 4 candidates at random. Always choosing the nearest games would repeat the same results when you ask again.
+4. **Tag fallback**: If fewer than 4 games match, fill the remaining slots using the reference's main tags and tags that often appear alongside them.
 
-```mermaid
-flowchart LR
-    S[Chosen game] --> A["Description embedding<br/>nearest"]
-    S --> B["Tag-structure (GNN) embedding<br/>nearest 30"]
-    B --> B2["Re-rank by averaging similarity rank<br/>and popularity rank, keep top 10"]
-    A --> I["Team Draft interleaving"]
-    B2 --> I
-    I --> R["Result<br/>(impression logs which ranker it came from)"]
-```
+### 2. Similar games
 
-If the GNN lookup fails, only description results are returned; if both are empty, the common path is used. Each impression records its source so the two rankers can be compared.
+Games with similar descriptions can play differently, so recommendations also compare their tag combinations.
 
-### Requirement match
+- **Description similarity**: Uses the embeddings described above.
+- **Tag similarity**: A GNN (graph neural network, GCN model) learns from a graph connecting games and tags. Games with similar tag combinations receive nearby vectors.
 
-```mermaid
-flowchart TD
-    IN["Form constraints + free text"] --> CR["Merge constraints<br/>LLM extracts constraints from text,<br/>form values always win"]
-    CR --> P{"Mood text given?"}
-    P -->|yes| NP["Nearest candidates by mood embedding"]
-    P -->|no / failed| QP["Candidates by review quality"]
-    NP & QP --> F["Budget / co-op / player count / excluded tag filters"]
-    F --> SM["Sample candidates<br/>matching session length first,<br/>weighted by taste if the user has likes"]
-    SM --> L{"Not enough?"}
-    L -->|yes| RX["Lower the review floor and refill"]
-    L -->|no| EX
-    RX --> EX["Build reasons and caveats<br/>(matched constraints, closest liked game)"]
-```
+The tag search finds 30 similar games, averages their similarity and popularity ranks, and keeps the top 10. Similarity alone can favor little-known games, while popularity alone can pull in hits from other genres.
 
-### Library analysis
+**Team Draft interleaving** takes one game from each candidate list in turn. Each game records its source list so we can compare which recommendations users click more often.
 
-```mermaid
-flowchart LR
-    ID[Steam ID] --> OG["Owned games + playtime<br/>(Steam Web API, cached 10 min)"]
-    OG --> AN["Playtime share per tag<br/>→ traits, diagnosis"]
-    OG --> GP["Assign each game's time to one genre<br/>→ base background"]
-    OG --> PK["Picks"]
-    PK --> P1["Try now<br/>unplayed games overlapping your top tags with good ratings"]
-    PK --> P2["Return to<br/>long-played games you haven't opened in a while"]
-    PK --> P3["Not your genre<br/>genre where most quickly-dropped games cluster"]
-    AN & GP & PK --> SH["Share result<br/>(no profile data, kept 90 days)"]
-```
+The `app.recommend.similar-interleave-enabled` setting controls interleaving. When disabled, recommendations use description similarity alone.
 
-The analysis is written as pure functions (no DB, clock or randomness), so the rules are pinned down by tests.
+### 3. Requirement match
+
+Requirement match combines your description with the conditions entered in the form.
+
+1. **Parse constraints**: An LLM extracts constraints from your description and combines them with the form's session length, budget, player count, and minimum reviews. Form values take precedence when they conflict with the text.
+2. **Find candidates**: If the text describes a mood, such as "relaxing", embed it to find nearby games. Otherwise, start with well-rated games. Filter candidates by budget, co-op support, player count, and excluded tags.
+3. **Select recommendations**: Prioritize games that fit your session length, if specified. Candidates similar to games you previously liked have a higher chance of selection.
+4. **Refill**: If there are too few recommendations, lower the minimum review count and search once more.
+5. **Show reasons**: Explain which conditions each game meets, how it resembles games you liked, and any caveats.
+
+---
+
+## Library Analysis
+
+Using a Steam ID, the service fetches owned games and playtime to build a taste report and a 2D base.
+
+- **Traits**: Calculate each tag's share of playtime.
+- **Base background**: Assign each game one main genre and add up playtime by genre. The genre with the most playtime determines the background.
+
+The report also includes:
+
+- **Try now**: Well-rated, unplayed games you own that share tags with games you spent time on
+- **Return to**: Games you played a lot but haven't launched in a while
+- **Not your genre**: The genre containing the most games you dropped after a short time
+
+Save the report as a share link to show it to others without including your profile information. Shared reports are kept for 90 days.
 
 ---
 
@@ -154,35 +133,29 @@ SteamGame_Recommend/
 ├── backend/                     # Spring Boot API (Java 17)
 │   ├── src/main/java/SteamGame/recommend/
 │   │   ├── controller/          # REST controllers
-│   │   ├── domain/              # recommendation, taste, library, graph, choice, guess, feedback, event, metrics ...
-│   │   └── infra/               # crawler (Steam), embedding, llm (Groq/Gemini), api, web (rate limit)
+│   │   ├── domain/              # recommendation, taste test, library analysis, graph, mini games, feedback, metrics
+│   │   └── infra/               # Steam crawler, embeddings, LLM (Groq, Gemini), external APIs, rate limiting
 │   ├── src/main/resources/
-│   │   ├── db/migration/        # Flyway migrations (V1–V9)
+│   │   ├── db/migration/        # Flyway migrations
 │   │   ├── taste/               # Taste test questions and types
-│   │   ├── library/             # Library analysis copy
-│   │   └── static/              # Legacy HTML UI (current UI lives in frontend)
+│   │   └── library/             # Library analysis copy
 │   ├── docker-compose.yml       # Local PostgreSQL (pgvector)
-│   ├── docker-compose.prod.yml  # Prod: postgres + app + caddy (+ tagemb batch)
-│   └── Caddyfile, Dockerfile
-├── frontend/                    # Next.js 16 + React 19, ko/en
-│   ├── app/[locale]/            # steam/*, library, taste pages
-│   ├── components/, lib/
-│   └── public/                  # Pixel art images, fonts
-├── ml/tag_embedding/            # PyTorch Geometric GCN training batch
-├── assets/readme/               # README images
-└── .github/workflows/deploy.yml # Test, build image, deploy
+│   └── docker-compose.prod.yml  # Prod: postgres, app, caddy, GNN training batch
+├── frontend/                    # Next.js 16, React 19 (Korean, English)
+├── ml/tag_embedding/            # GNN training batch (PyTorch Geometric)
+└── assets/readme/               # README images
 ```
 
 ---
 
 ## Tech Stack
 
-- **Backend**: Java 17, Spring Boot 3.4 (Web, WebFlux, Data JPA, Security, Validation, Actuator), Flyway, Resilience4j, Bucket4j + Caffeine, springdoc-openapi
-- **Database**: PostgreSQL 16 + pgvector
+- **Backend**: Java 17, Spring Boot 3.4, Spring Data JPA, Spring Security, Flyway, Resilience4j, Bucket4j
+- **Database**: PostgreSQL 16, pgvector
 - **Frontend**: Next.js 16, React 19, TypeScript, Cytoscape.js, Vitest
 - **ML**: PyTorch Geometric (GCN)
-- **AI**: Gemini Embedding, Groq / Gemini chat completion
-- **Infra**: Docker Compose, Caddy, AWS Lightsail, GitHub Actions, GHCR, Vercel
+- **AI**: Gemini embeddings, Groq and Gemini LLMs
+- **Infra**: Oracle Cloud, Docker Compose, Caddy, GitHub Actions, GHCR, Vercel
 
 ---
 
