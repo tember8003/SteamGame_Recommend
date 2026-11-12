@@ -6,7 +6,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
-      - 'electron/**'
       - 'frontend/**'
       - 'ml/**'
   pull_request:
@@ -14,7 +13,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
-      - 'electron/**'
       - 'frontend/**'
       - 'ml/**'
   workflow_dispatch:

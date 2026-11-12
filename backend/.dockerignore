@@ -4,7 +4,6 @@
 .gradle
 build
 **/build
-electron
 docs
 .superpowers
 .github
