@@ -1,298 +1,203 @@
-🌐 [한국어](README.ko.md) | **English**
+**English** | [한국어](README.ko.md)
 
-# 🎮 Steam Game Recommend API & UI
+# Playalike: Steam Game Recommendations
 
-Steam game recommendation system that uses tag information, user profiles, recent play history
+A service that helps you find your next Steam game using tags, free-text descriptions, your Steam profile and library, and game embeddings.
 
-> **Note**: To optimize database size with H2, we only include games that have 50+ reviews. Some games you're looking for might not be available due to this limitation.
+- Live: https://playalike.online (Korean / English)
+- Backend: Spring Boot REST API + PostgreSQL (pgvector)
+- Frontend: Next.js (deployed on Vercel)
 
----
+> Only games with 50+ reviews are collected (`app.crawler.min-reviews`), so games with few reviews may not show up.
 
-## 📁 Project Structure
-
-```
-recommend/
-├── src
-│   ├── main
-│   │   ├── java/SteamGame.recommend/  # Spring Boot REST API
-│   │   └── resources/
-│   │       ├── application.properties
-│   │       └── static/               # HTML-based UI
-│   │           ├── index.html        # Home (Feature menu)
-│   │           ├── random.html       # Tag-based random recommendations
-│   │           ├── input.html        # Direct input tag recommendations
-│   │           ├── profile.html      # Profile-based recommendations
-│   │           ├── recent.html       # Recent 2-week play recommendations
-│   │           ├── similar.html      # Similar tag recommendations
-│   │           ├── choice.html       # Game choice interactive feature
-│   │           └── review-guess.html # Review guessing game
-├── electron/                         # Electron desktop app
-│   ├── main.js                       # Main process
-│   ├── package.json                  # Build configuration
-│   ├── html/
-│   │   ├── config.html               # API key settings
-│   │   └── loading.html              # Loading screen
-│   └── resources/
-│       └── recommend-0.0.1-SNAPSHOT.jar
-└── data/                             # H2 Database files (auto-created)
-    └── gamedb.mv.db                  # H2 database file
-```
+![Home](assets/readme/home.png)
 
 ---
 
-## 📑 Prerequisites
+## Features
 
-- **General Requirements**
-    - JDK 17 or higher, Git
-    - No external database required (H2 embedded)
-- **Desktop Application**
-    - Windows 10/11 (64-bit)
-    - Java 17 or higher installed
-    - API keys can be configured when running the app
+| Feature | Page | Description |
+| --- | --- | --- |
+| Random by tag | `/steam/random` | Random picks from selected tags, with review count / Korean support / free-only filters |
+| Describe a game | `/steam/input` | Describe what you want and get games close to that sentence |
+| Requirement match | `/steam/match` | Description plus session length, budget and player count; each pick comes with reasons and caveats |
+| Profile | `/steam/profile` | Analyzes the games owned by a Steam ID (public profiles only) |
+| Recent play | `/steam/recent` | Recommendations from the last two weeks of play |
+| Similar games | `/steam/similar` | Games close to a game you like |
+| Similarity graph | `/steam/graph` | Explore games as a network of similar titles (Cytoscape) |
+| Library analysis | `/library` | Builds a genre base from your play history, shows games to try now, games worth returning to, and genres that don't fit; shareable without exposing the profile |
+| Taste test | `/taste` | 16 questions place you in one of 16 types across 4 axes (explore/growth, narrative/system, relaxed/challenge, party/solo), plus matching games |
+| Game choice | `/steam/choice` | Pick one of two games for 7 rounds to find your taste |
+| Review guess | `/steam/review-guess` | Mini game: guess the game from real Steam reviews |
 
----
+Every recommendation card collects thumbs up/down feedback. Impressions, feedback and funnel events are shown on an internal metrics page (`/metrics`, token required).
 
-## 🔑 API Key Setup
-
-### 1. Steam Web API Key
-
-1. Visit [Steam API Key Registration Page](https://steamcommunity.com/dev/apikey) and log in with your Steam account
-2. Enter any domain name (e.g., `localhost`)
-3. Check "I agree" and click "Register"
-4. Copy and save the generated API Key
-
-> Note: Steam Guard verification required. Community-restricted accounts cannot obtain API keys.
->
-
-### 2. Google Gemini API Key
-
-1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and log in
-2. Click "Create API Key"
-3. Copy and save the generated API Key
-
----
-
-## 🖥️ How to Run
-
-### Method 1: Desktop Application (Recommended)
-
-1. **Download & Install**
-    - Download the latest version from the [Releases page](https://github.com/tember8003/SteamGame_Recommend/releases)
-    - Run `Steam-Game-Recommend-Setup-x.x.x.exe`
-
-2. **Launch Application**
-    - API key configuration screen appears automatically on first run
-    - Enter your Steam API Key and Gemini API Key
-    - Click `Skip for Now` to use tag search without API keys
-    - API keys are stored locally at: `%AppData%\steam-game-recommend\api-keys.json`
-
-3. **Use Features**
-    - All features run in a single application
-    - No separate server environment variable setup required
-
----
-
-### Method 2: Developer/Server Execution
-
-1. **Clone Project**
-
-    ```bash
-    git clone https://github.com/tember8003/SteamGame_Recommend.git
-    cd SteamGame_Recommend
-    ```
-
-2. **Set Environment Variables** (Optional)
-    - macOS/Linux (bash, zsh)
-
-       ```bash
-       export STEAM_API_KEY=YOUR_STEAM_API_KEY
-       export GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-       ```
-
-    - Windows (PowerShell)
-
-       ```powershell
-       $Env:STEAM_API_KEY = "YOUR_STEAM_API_KEY"
-       $Env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-       ```
-
-3. **Start Server**
-
-    ```bash
-    cd backend
-    ./gradlew clean bootRun
-    ```
-
-    - Default server: [http://localhost:8888](http://localhost:8888/)
-    - H2 Console: http://localhost:8888/h2-console (for database management)
-    - Swagger-UI: http://localhost:8888/docs
-    - OpenAPI JSON: http://localhost:8888/v3/api-docs
-
----
-
-## 🖥️ UI Pages
-
-| Feature Description | Path |
+| Similar games | Similarity graph |
 | --- | --- |
-| Home (Feature selection) | `/` |
-| Tag-based recommendations | `/random.html` |
-| Direct input tag recommendations | `/input.html` |
-| Profile-based recommendations | `/profile.html` |
-| Recent 2-week play recommendations | `/recent.html` |
-| Similar tag recommendations | `/similar.html` |
+| ![Similar games](assets/readme/similar.png) | ![Similarity graph](assets/readme/graph.png) |
+
+| Taste test type |
+| --- |
+| ![Taste test](assets/readme/taste.png) |
 
 ---
 
-## 📦 Electron App Build (For Developers)
+## Architecture
 
-1. **Setup**
+```mermaid
+flowchart LR
+    U[User] --> FE["Next.js frontend<br/>(Vercel)"]
+    FE -->|REST| CADDY["Caddy<br/>(HTTPS)"]
+    subgraph Server["AWS Lightsail (Docker Compose)"]
+        CADDY --> API["Spring Boot API"]
+        API --> DB[("PostgreSQL 16<br/>+ pgvector")]
+        GNN["tagemb batch<br/>(PyTorch Geometric)"] --> DB
+    end
+    API --> STEAM["Steam Web API<br/>Steam Store"]
+    API --> GEM["Gemini<br/>(embeddings, LLM fallback)"]
+    API --> GROQ["Groq<br/>(primary LLM)"]
+```
 
-    ```bash
-    cd backend/electron
-    npm install
-    ```
+### Data Pipeline
 
-2. **Prepare JAR File**
-
-    ```bash
-    # Build JAR from main project
-    cd ..
-    ./gradlew clean bootJar
-    
-    # Copy JAR file
-    cp build/libs/recommend-0.0.1-SNAPSHOT.jar electron/resources/
-    ```
-
-3. **Build Application**
-
-    ```bash
-    cd electron
-    npm run build-win  # Windows build
-    ```
-
-    - Build output: `electron/dist/`
-
----
-
-## ⚙️ Configuration Example
-
-```properties
-# API Keys
-steam.api.key=${STEAM_API_KEY}
-spring.ai.google.api-key=${GEMINI_API_KEY}
-
-# H2 Database Configuration
-spring.datasource.url=jdbc:h2:file:./data/gamedb;DB_CLOSE_DELAY=-1;MODE=MySQL;AUTO_SERVER=TRUE;DATABASE_TO_LOWER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;CHARSET=UTF-8
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-# H2 Console
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
-# Server Configuration
-server.port=8888
+```mermaid
+flowchart LR
+    A["catalog<br/>sync Steam app list"] --> B["refresh tag co-occurrence"]
+    A --> C["detail<br/>crawl store details, tags, reviews"]
+    C --> D["embed<br/>embed description + tags with Gemini<br/>(768 dims)"]
+    C --> E["tagemb<br/>train GCN on game-tag graph"]
+    D --> V[("games.embedding<br/>HNSW index")]
+    E --> W[("tag-structure vectors")]
 ```
 
 ---
 
-## 📖 Key Features
+## Recommendation Logic
 
-- **🔍 Tag-based Recommendations**
-    - Random recommendations: Random game suggestions based on tags
-    - Similar tags: Game recommendations with tags similar to specific games
-- **😊 Profile-based Recommendations**
-    - Steam ID library analysis
-- **⏰ Recent Play-based Recommendations**
-    - Analysis of games played in the last 2 weeks
-    - Recommendations based on current interests
+### Common path: query vector → nearest candidates → tag top-up
 
----
+Describe, profile, recent play and similar games share one path; only the query vector differs.
 
-## 🆘 Troubleshooting
+```mermaid
+flowchart TD
+    subgraph Q["Build the query vector"]
+        Q1["Describe<br/>embed the sentence directly"]
+        Q2["Profile<br/>mean embedding of owned games"]
+        Q3["Recent play<br/>mean embedding of last 2 weeks"]
+        Q4["Similar games<br/>embedding of the chosen game"]
+    end
+    Q1 & Q2 & Q3 & Q4 --> N["pgvector nearest 40<br/>(review / Korean / free filters,<br/>exclude owned, already shown, disliked)"]
+    N --> S["Randomly sample 4<br/>(rerolls give new results)"]
+    S --> T{"Got 4?"}
+    T -->|yes| R[Result]
+    T -->|no| F["Top up with tag matching<br/>using top tags + co-occurring tags"]
+    F --> R
+```
 
-### Desktop Application
+- For descriptions, an LLM also extracts tags to display; if embedding fails, those tags are used for search.
+- Groq (`openai/gpt-oss-20b`) is tried first, then Gemini. Results for the same sentence are cached.
 
-- **Java Error**: Verify Java 17 or higher is installed
-- **API Key Error**: Verify correct API keys are entered
-- **Port Conflict**: Check if port 8888 is in use
+### Similar games: interleaving two rankers
 
-### Server Execution
+With `app.recommend.similar-interleave-enabled`, results from description embeddings and GNN tag-structure embeddings are mixed.
 
-- **Port Conflict**: Verify port 8888 is not in use by other applications
-- **Environment Variable Error**: Verify API keys are set correctly (optional for basic functionality)
-- **Database Error**: H2 database files are automatically created in `./data/` directory
+```mermaid
+flowchart LR
+    S[Chosen game] --> A["Description embedding<br/>nearest"]
+    S --> B["Tag-structure (GNN) embedding<br/>nearest 30"]
+    B --> B2["Re-rank by averaging similarity rank<br/>and popularity rank, keep top 10"]
+    A --> I["Team Draft interleaving"]
+    B2 --> I
+    I --> R["Result<br/>(impression logs which ranker it came from)"]
+```
 
----
+If the GNN lookup fails, only description results are returned; if both are empty, the common path is used. Each impression records its source so the two rankers can be compared.
 
-## 📁 API Key Storage Location
+### Requirement match
 
-The desktop application stores API keys locally at:
-- **Windows**: `%AppData%\steam-game-recommend\api-keys.json`
-- **Full path example**: `C:\Users\[Username]\AppData\Roaming\steam-game-recommend\api-keys.json`
+```mermaid
+flowchart TD
+    IN["Form constraints + free text"] --> CR["Merge constraints<br/>LLM extracts constraints from text,<br/>form values always win"]
+    CR --> P{"Mood text given?"}
+    P -->|yes| NP["Nearest candidates by mood embedding"]
+    P -->|no / failed| QP["Candidates by review quality"]
+    NP & QP --> F["Budget / co-op / player count / excluded tag filters"]
+    F --> SM["Sample candidates<br/>matching session length first,<br/>weighted by taste if the user has likes"]
+    SM --> L{"Not enough?"}
+    L -->|yes| RX["Lower the review floor and refill"]
+    L -->|no| EX
+    RX --> EX["Build reasons and caveats<br/>(matched constraints, closest liked game)"]
+```
 
-This ensures your API keys remain private and are not shared with others.
+### Library analysis
 
----
+```mermaid
+flowchart LR
+    ID[Steam ID] --> OG["Owned games + playtime<br/>(Steam Web API, cached 10 min)"]
+    OG --> AN["Playtime share per tag<br/>→ traits, diagnosis"]
+    OG --> GP["Assign each game's time to one genre<br/>→ base background"]
+    OG --> PK["Picks"]
+    PK --> P1["Try now<br/>unplayed games overlapping your top tags with good ratings"]
+    PK --> P2["Return to<br/>long-played games you haven't opened in a while"]
+    PK --> P3["Not your genre<br/>genre where most quickly-dropped games cluster"]
+    AN & GP & PK --> SH["Share result<br/>(no profile data, kept 90 days)"]
+```
 
-## 💾 Database
-
-The application uses **H2 embedded database** with the following features:
-- **Automatic initialization**: Database and tables are created automatically on first run
-- **Data persistence**: Game data persists between application restarts stored in `./data/gamedb` files
-- **Special character support**: Proper handling of Unicode characters including ®, ™ symbols
-- **MySQL compatibility mode**: Ensures compatibility with MySQL syntax
-- **H2 Console**: Built-in web interface for database management at `/h2-console`
-- **No external dependencies**: No need for separate database server installation
-
----
-
-## 🌐 API Endpoints
-
-### Game Recommendations
-- `POST /api/recommend/random` - Tag-based random recommendations
-- `POST /api/recommend/input` - Text input-based recommendations
-- `POST /api/recommend/profile` - Profile-based recommendations
-- `POST /api/recommend/recent-play` - Recent play-based recommendations
-- `POST /api/recommend/similar` - Similar game recommendations
-
-### Game Data
-- `GET /api/games/appid?appid={id}` - Get game by AppID
-- `GET /api/games/tags` - Get all available tags
-- `GET /api/games/search?query={name}` - Search games by name
-
-### Interactive Features
-- `POST /api/choice/start` - Start game choice session
-- `POST /api/choice/select` - Submit choice selection
-- `POST /api/choice/result` - Get choice recommendations
-
-### Review Guess Game
-- `POST /api/review-guess/start` - Start review guess game
-- `POST /api/review-guess/answer` - Submit answer
-- `GET /api/review-guess/{sessionId}/result` - Get game results
+The analysis is written as pure functions (no DB, clock or randomness), so the rules are pinned down by tests.
 
 ---
 
-## 🛠️ Technology Stack
+## Project Structure
 
-- **Backend**: Spring Boot 3.x, Java 17
-- **Database**: H2 (embedded, production) / MySQL (development)
-- **Frontend**: HTML, CSS, JavaScript
-- **Desktop**: Electron
-- **AI Integration**: Google Gemini API
-- **External API**: Steam Web API
-- **Build**: Gradle
-- **Database Console**: H2 Console (built-in web interface)
+```
+SteamGame_Recommend/
+├── backend/                     # Spring Boot API (Java 17)
+│   ├── src/main/java/SteamGame/recommend/
+│   │   ├── controller/          # REST controllers
+│   │   ├── domain/              # recommendation, taste, library, graph, choice, guess, feedback, event, metrics ...
+│   │   └── infra/               # crawler (Steam), embedding, llm (Groq/Gemini), api, web (rate limit)
+│   ├── src/main/resources/
+│   │   ├── db/migration/        # Flyway migrations (V1–V9)
+│   │   ├── taste/               # Taste test questions and types
+│   │   ├── library/             # Library analysis copy
+│   │   └── static/              # Legacy HTML UI (current UI lives in frontend)
+│   ├── docker-compose.yml       # Local PostgreSQL (pgvector)
+│   ├── docker-compose.prod.yml  # Prod: postgres + app + caddy (+ tagemb batch)
+│   └── Caddyfile, Dockerfile
+├── frontend/                    # Next.js 16 + React 19, ko/en
+│   ├── app/[locale]/            # steam/*, library, taste pages
+│   ├── components/, lib/
+│   └── public/                  # Pixel art images, fonts
+├── ml/tag_embedding/            # PyTorch Geometric GCN training batch
+├── assets/readme/               # README images
+└── .github/workflows/deploy.yml # Test, build image, deploy
+```
 
 ---
 
-## 📄 License
+## Deployment
 
-This project is available under the MIT License.
+```mermaid
+flowchart LR
+    P["push to main"] --> T["Tests<br/>(Gradle + Testcontainers)"]
+    T --> B["Build linux/arm64 image<br/>→ push to GHCR"]
+    B --> D["SSH into Lightsail<br/>docker compose pull · up -d"]
+    FP["frontend changes"] --> V["Vercel build & deploy"]
+```
 
 ---
 
-## 📞 Support
+## Tech Stack
 
-For project-related issues, please register them on the [Issues page](https://github.com/tember8003/SteamGame_Recommend/issues).
+- **Backend**: Java 17, Spring Boot 3.4 (Web, WebFlux, Data JPA, Security, Validation, Actuator), Flyway, Resilience4j, Bucket4j + Caffeine, springdoc-openapi
+- **Database**: PostgreSQL 16 + pgvector
+- **Frontend**: Next.js 16, React 19, TypeScript, Cytoscape.js, Vitest
+- **ML**: PyTorch Geometric (GCN)
+- **AI**: Gemini Embedding, Groq / Gemini chat completion
+- **Infra**: Docker Compose, Caddy, AWS Lightsail, GitHub Actions, GHCR, Vercel
+
+---
+
+## Support
+
+Please report issues on the [Issues page](https://github.com/tember8003/SteamGame_Recommend/issues).

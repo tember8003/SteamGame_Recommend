@@ -11,10 +11,6 @@ BOOT-INF/
 *.jar
 *.exe
 
-# exclude building electron
-electron/dist/
-electron/out/
-electron/node_modules/
 !gradle/wrapper/gradle-wrapper.jar
 
 # OS/IDE directory
