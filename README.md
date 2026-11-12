@@ -175,18 +175,6 @@ SteamGame_Recommend/
 
 ---
 
-## Deployment
-
-```mermaid
-flowchart LR
-    P["push to main"] --> T["Tests<br/>(Gradle + Testcontainers)"]
-    T --> B["Build linux/arm64 image<br/>→ push to GHCR"]
-    B --> D["SSH into Lightsail<br/>docker compose pull · up -d"]
-    FP["frontend changes"] --> V["Vercel build & deploy"]
-```
-
----
-
 ## Tech Stack
 
 - **Backend**: Java 17, Spring Boot 3.4 (Web, WebFlux, Data JPA, Security, Validation, Actuator), Flyway, Resilience4j, Bucket4j + Caffeine, springdoc-openapi

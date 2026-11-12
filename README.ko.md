@@ -175,18 +175,6 @@ SteamGame_Recommend/
 
 ---
 
-## 배포
-
-```mermaid
-flowchart LR
-    P["main에 push"] --> T["테스트<br/>(Gradle + Testcontainers)"]
-    T --> B["linux/arm64 이미지 빌드<br/>→ GHCR push"]
-    B --> D["SSH로 Lightsail 접속<br/>docker compose pull · up -d"]
-    FP["frontend 변경"] --> V["Vercel 빌드·배포"]
-```
-
----
-
 ## 기술 스택
 
 - **Backend**: Java 17, Spring Boot 3.4 (Web, WebFlux, Data JPA, Security, Validation, Actuator), Flyway, Resilience4j, Bucket4j + Caffeine, springdoc-openapi
