@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 final class LlmWebClientSupport {
 
     // 상태가 없어 스레드 안전함, 요청 본문 Map 직렬화에만 쓴다
-    private static final JsonMapper CLEAN_MAPPER = new JsonMapper();
+    private static final JsonMapper CLEAN_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
 
     private LlmWebClientSupport() {
     }

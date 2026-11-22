@@ -73,9 +73,9 @@ class LibraryAnalysisServiceTest {
     AtomicLong nanos = new AtomicLong();
     LibraryAnalysisService service;
 
-    // JacksonConfig 의 설정을 Boot 와 같은 방식(빌더에 얹기)으로 적용한 매퍼
+    // 운영처럼 Jackson 2 기본값(spring.jackson.use-jackson2-defaults)에 JacksonConfig 설정을 얹은 매퍼
     static ObjectMapper configuredMapper() {
-        JsonMapper.Builder builder = JsonMapper.builder();
+        JsonMapper.Builder builder = JsonMapper.builderWithJackson2Defaults();
         new JacksonConfig().jsonMapperCustomizer().customize(builder);
         return builder.build();
     }
