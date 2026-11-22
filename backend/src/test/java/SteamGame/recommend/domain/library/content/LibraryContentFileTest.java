@@ -3,7 +3,7 @@ package SteamGame.recommend.domain.library.content;
 import SteamGame.recommend.domain.library.analysis.CrimeCode;
 import SteamGame.recommend.domain.library.analysis.LedgerCode;
 import SteamGame.recommend.domain.library.analysis.StatCode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 

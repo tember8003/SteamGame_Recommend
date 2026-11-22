@@ -1,6 +1,6 @@
 package SteamGame.recommend.domain.recommendation.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

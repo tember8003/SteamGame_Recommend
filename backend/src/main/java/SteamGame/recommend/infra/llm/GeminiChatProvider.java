@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.llm;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,7 +77,7 @@ public class GeminiChatProvider implements ChatCompletionProvider {
             if (!candidates.isArray() || candidates.isEmpty()) {
                 return Optional.empty();
             }
-            String text = candidates.path(0).path("content").path("parts").path(0).path("text").asText("");
+            String text = candidates.path(0).path("content").path("parts").path(0).path("text").asString("");
             if (text.isBlank()) {
                 return Optional.empty();
             }

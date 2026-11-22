@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.library.steam;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +53,9 @@ public final class SteamLibraryParser {
                 return new SummaryParse(SummaryStatus.PRIVATE, null, null);
             }
             SteamProfile profile = new SteamProfile(
-                    player.path("steamid").asText(""),
-                    player.path("personaname").asText(""),
-                    player.path("avatarfull").asText(""));
+                    player.path("steamid").asString(""),
+                    player.path("personaname").asString(""),
+                    player.path("avatarfull").asString(""));
             return new SummaryParse(SummaryStatus.PUBLIC, profile, null);
         } catch (Exception e) {
             return unavailableSummary("SUMMARY_PARSE_FAILED");
@@ -98,7 +98,7 @@ public final class SteamLibraryParser {
                 long lastPlayed = g.path("rtime_last_played").asLong(0);
                 result.add(new OwnedGame(
                         appid,
-                        g.path("name").asText(""),
+                        g.path("name").asString(""),
                         g.path("playtime_forever").asInt(0),
                         g.path("playtime_2weeks").asInt(0),
                         lastPlayed > 0 ? Instant.ofEpochSecond(lastPlayed) : null));
@@ -135,10 +135,10 @@ public final class SteamLibraryParser {
         JsonNode response = MAPPER.readTree(json).path("response");
         int success = response.path("success").asInt(0);
         if (success == 1) {
-            if (!response.path("steamid").isTextual()) {
+            if (!response.path("steamid").isString()) {
                 throw new UnexpectedResponseException("VANITY_NO_STEAMID");
             }
-            return response.path("steamid").asText();
+            return response.path("steamid").asString();
         }
         if (success == 42) {
             return null;

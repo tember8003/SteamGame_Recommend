@@ -19,12 +19,12 @@ import SteamGame.recommend.domain.taste.service.TasteRecommendResult;
 import SteamGame.recommend.domain.taste.service.TasteRecommendService;
 import SteamGame.recommend.infra.web.ClientIpResolver;
 import SteamGame.recommend.infra.web.RateLimitFilter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -101,10 +101,10 @@ class TasteControllerTest {
         JsonNode question = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
                 .get("questions").get(0);
         Set<String> keys = new TreeSet<>();
-        question.fieldNames().forEachRemaining(keys::add);
+        question.propertyNames().forEach(keys::add);
         assertThat(keys).containsExactly("id", "options", "text");
         Set<String> optionKeys = new TreeSet<>();
-        question.get("options").get(0).fieldNames().forEachRemaining(optionKeys::add);
+        question.get("options").get(0).propertyNames().forEach(optionKeys::add);
         assertThat(optionKeys).containsExactly("key", "text");
     }
 
@@ -155,10 +155,10 @@ class TasteControllerTest {
         JsonNode question = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
                 .get("questions").get(0);
         Set<String> keys = new TreeSet<>();
-        question.fieldNames().forEachRemaining(keys::add);
+        question.propertyNames().forEach(keys::add);
         assertThat(keys).containsExactly("id", "options", "text");
         Set<String> optionKeys = new TreeSet<>();
-        question.get("options").get(0).fieldNames().forEachRemaining(optionKeys::add);
+        question.get("options").get(0).propertyNames().forEach(optionKeys::add);
         assertThat(optionKeys).containsExactly("key", "text");
     }
 
@@ -407,7 +407,7 @@ class TasteControllerTest {
                 .andReturn();
         JsonNode body = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8));
         Set<String> keys = new TreeSet<>();
-        body.fieldNames().forEachRemaining(keys::add);
+        body.propertyNames().forEach(keys::add);
         assertThat(keys).containsExactly("axisScores", "code", "type");
     }
 
@@ -607,7 +607,7 @@ class TasteControllerTest {
         JsonNode tag = objectMapper.readTree(res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
                 .get("tags").get(0);
         Set<String> keys = new TreeSet<>();
-        tag.fieldNames().forEachRemaining(keys::add);
+        tag.propertyNames().forEach(keys::add);
         assertThat(keys).containsExactly("tag", "weight");
         assertThat(tag.get("weight").isNumber()).isTrue();
     }

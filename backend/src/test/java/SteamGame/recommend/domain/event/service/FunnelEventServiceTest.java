@@ -5,7 +5,7 @@ import SteamGame.recommend.domain.event.entity.FunnelEventType;
 import SteamGame.recommend.domain.event.entity.ShareChannel;
 import SteamGame.recommend.domain.event.repository.FunnelEventRepository;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

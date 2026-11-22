@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.taste.content;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
@@ -48,7 +48,7 @@ class TasteV2ContentFileTest {
         assertThat(mutated).isNotEqualTo(raw);
         assertThatThrownBy(() -> TasteV2ContentLoader.read(new ObjectMapper(),
                 new ByteArrayInputStream(mutated.getBytes(StandardCharsets.UTF_8))))
-                .isInstanceOf(JsonMappingException.class);
+                .isInstanceOf(DatabindException.class);
     }
 
     // 소수를 허용하지 않아도 정수만 쓴 실제 파일은 그대로 읽히는지 본다

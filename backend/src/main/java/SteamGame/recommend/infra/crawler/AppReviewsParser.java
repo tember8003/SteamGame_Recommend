@@ -1,8 +1,8 @@
 package SteamGame.recommend.infra.crawler;
 
 import SteamGame.recommend.infra.crawler.dto.ReviewDetail;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class AppReviewsParser {
 
             String positiveText = null, negativeText = null;
             for (JsonNode r : root.path("reviews")) {
-                String t = r.path("review").asText("").strip();
+                String t = r.path("review").asString("").strip();
                 if (t.isBlank()) continue;
                 boolean up = r.path("voted_up").asBoolean(false);
                 if (up && positiveText == null) positiveText = trunc(t, maxChars);
@@ -52,7 +52,7 @@ public class AppReviewsParser {
 
     private static String text(JsonNode n, String field) {
         JsonNode v = n.path(field);
-        return v.isMissingNode() || v.isNull() ? null : v.asText();
+        return v.isMissingNode() || v.isNull() ? null : v.asString();
     }
 
     private static String trunc(String s, int max) {

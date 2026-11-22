@@ -5,7 +5,7 @@ import SteamGame.recommend.domain.metrics.DashboardRange;
 import SteamGame.recommend.domain.metrics.dto.MetricsDashboardDTO;
 import SteamGame.recommend.domain.metrics.repository.DashboardQueries;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

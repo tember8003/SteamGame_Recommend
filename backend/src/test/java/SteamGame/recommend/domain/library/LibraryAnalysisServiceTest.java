@@ -13,7 +13,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.slf4j.LoggerFactory;
 import SteamGame.recommend.domain.taste.content.Lang;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 import SteamGame.recommend.domain.library.content.LibraryContentLoader;
 import SteamGame.recommend.domain.library.share.LibraryShareService;
 import SteamGame.recommend.domain.library.steam.OwnedGame;
@@ -23,7 +23,8 @@ import SteamGame.recommend.domain.library.steam.SteamLibraryResult;
 import SteamGame.recommend.domain.library.steam.SteamProfile;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.domain.taste.service.TagRarityCache;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -68,9 +69,16 @@ class LibraryAnalysisServiceTest {
     static final Instant NOW = Instant.parse("2026-11-04T00:00:00Z");
     static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
     // 운영과 같은 설정(JacksonConfig)으로 저장하고 읽는다
-    ObjectMapper objectMapper = new JacksonConfig().objectMapper();
+    ObjectMapper objectMapper = configuredMapper();
     AtomicLong nanos = new AtomicLong();
     LibraryAnalysisService service;
+
+    // JacksonConfig 의 설정을 Boot 와 같은 방식(빌더에 얹기)으로 적용한 매퍼
+    static ObjectMapper configuredMapper() {
+        JsonMapper.Builder builder = JsonMapper.builder();
+        new JacksonConfig().jsonMapperCustomizer().customize(builder);
+        return builder.build();
+    }
 
     @BeforeEach
     void setUp() {
@@ -119,7 +127,7 @@ class LibraryAnalysisServiceTest {
     @Test
     void analyze_empty_422() {
         when(client.fetch(STEAM_ID)).thenReturn(new SteamLibraryResult.Empty());
-        assertStatus(() -> service.analyze("x"), HttpStatus.UNPROCESSABLE_ENTITY, "LIBRARY_EMPTY");
+        assertStatus(() -> service.analyze("x"), HttpStatus.UNPROCESSABLE_CONTENT, "LIBRARY_EMPTY");
     }
 
     @Test

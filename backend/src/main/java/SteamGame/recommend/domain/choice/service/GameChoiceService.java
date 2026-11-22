@@ -11,7 +11,7 @@ import SteamGame.recommend.domain.recommendation.service.CooccurrenceService;
 import SteamGame.recommend.domain.recommendation.service.InMemoryCacheService;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.domain.choice.dto.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

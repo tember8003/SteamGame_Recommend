@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.llm;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +100,7 @@ public class GroqChatProvider implements ChatCompletionProvider {
             if (!choices.isArray() || choices.isEmpty()) {
                 return Optional.empty();
             }
-            String content = choices.path(0).path("message").path("content").asText("");
+            String content = choices.path(0).path("message").path("content").asString("");
             if (content.isBlank()) {
                 return Optional.empty();
             }

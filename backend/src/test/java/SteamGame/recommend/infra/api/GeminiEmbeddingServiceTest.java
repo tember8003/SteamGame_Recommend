@@ -2,8 +2,9 @@ package SteamGame.recommend.infra.api;
 
 import SteamGame.recommend.config.StringCleanerSerializer;
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.codec.json.JacksonJsonEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
@@ -79,13 +80,12 @@ class GeminiEmbeddingServiceTest {
     // 기본 ObjectMapper 의 StringCleanerSerializer 가 붙은 오염 인코더를 빌더에 심은 서비스를 만든다
     // 서비스가 깨끗한 인코더로 덮어써 아웃바운드 본문의 한글이 보존되는지 검증하는 용도임
     private GeminiEmbeddingService serviceWithPoisonedEncoder() {
-        ObjectMapper poisoned = new ObjectMapper();
         SimpleModule cleaner = new SimpleModule();
         cleaner.addSerializer(String.class, new StringCleanerSerializer());
-        poisoned.registerModule(cleaner);
+        JsonMapper poisoned = JsonMapper.builder().addModule(cleaner).build();
         WebClient.Builder poisonedBuilder = WebClient.builder()
-                .codecs(c -> c.defaultCodecs().jackson2JsonEncoder(
-                        new Jackson2JsonEncoder(poisoned, MediaType.APPLICATION_JSON)));
+                .codecs(c -> c.defaultCodecs().jacksonJsonEncoder(
+                        new JacksonJsonEncoder(poisoned, MediaType.APPLICATION_JSON)));
         EmbeddingProperties props = new EmbeddingProperties();
         props.setBaseUrl(server.url("").toString().replaceAll("/$", ""));
         props.setModel("gemini-embedding-001");

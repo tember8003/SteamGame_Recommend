@@ -8,7 +8,7 @@ import SteamGame.recommend.domain.library.content.GenreRules;
 import SteamGame.recommend.domain.library.content.LibraryContent;
 import SteamGame.recommend.domain.library.content.LibraryContentLoader;
 import SteamGame.recommend.domain.library.steam.OwnedGame;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

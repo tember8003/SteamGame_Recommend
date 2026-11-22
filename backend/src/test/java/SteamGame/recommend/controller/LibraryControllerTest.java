@@ -15,12 +15,12 @@ import SteamGame.recommend.domain.library.steam.OwnedGame;
 import SteamGame.recommend.domain.library.steam.SteamProfile;
 import SteamGame.recommend.infra.web.ClientIpResolver;
 import SteamGame.recommend.infra.web.RateLimitFilter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -101,7 +101,7 @@ class LibraryControllerTest {
 
     private static Set<String> keys(JsonNode node) {
         Set<String> out = new TreeSet<>();
-        node.fieldNames().forEachRemaining(out::add);
+        node.propertyNames().forEach(out::add);
         return out;
     }
 
@@ -123,11 +123,11 @@ class LibraryControllerTest {
         assertThat(keys(body.get("genreProfile"))).containsExactlyInAnyOrder("primaryGenre", "secondaryGenre", "state",
                 "coverageRatio", "distribution");
         assertThat(keys(body.get("genreProfile").get("distribution").get(0))).containsExactlyInAnyOrder("code", "ratio");
-        assertThat(body.get("genreProfile").get("primaryGenre").asText()).isEqualTo("STRATEGY_MANAGEMENT");
-        assertThat(body.get("genreProfile").get("state").asText()).isEqualTo("READY");
-        assertThat(body.get("analysisId").asText()).isEqualTo("aid-1");
+        assertThat(body.get("genreProfile").get("primaryGenre").asString()).isEqualTo("STRATEGY_MANAGEMENT");
+        assertThat(body.get("genreProfile").get("state").asString()).isEqualTo("READY");
+        assertThat(body.get("analysisId").asString()).isEqualTo("aid-1");
         assertThat(keys(body.get("profile"))).containsExactlyInAnyOrder("personaName", "avatarUrl", "steamId64");
-        assertThat(body.get("profile").get("steamId64").asText()).isEqualTo("76561198012345678");
+        assertThat(body.get("profile").get("steamId64").asString()).isEqualTo("76561198012345678");
         assertThat(keys(body.get("stats"))).containsExactlyInAnyOrder("ownedCount", "totalHours", "zeroPlayCount",
                 "zeroPlayRatio", "mostPlayed", "recentGameCount", "recentHours", "matchedCount", "topTags");
         assertThat(keys(body.get("stats").get("mostPlayed")))
@@ -155,10 +155,10 @@ class LibraryControllerTest {
         String code = analysis.ledger().code();
         String koExpected = loader.content().phrases().get(code).get(analysis.ledger().phraseIndex()).text().ko();
         String enExpected = loader.content().phrases().get(code).get(analysis.ledger().phraseIndex()).text().en();
-        assertThat(ko.get("ledger").get("text").asText()).isEqualTo(koExpected);
-        assertThat(en.get("ledger").get("text").asText()).isEqualTo(enExpected);
-        assertThat(ko.get("gamerStats").get(0).get("label").asText())
-                .isNotEqualTo(en.get("gamerStats").get(0).get("label").asText());
+        assertThat(ko.get("ledger").get("text").asString()).isEqualTo(koExpected);
+        assertThat(en.get("ledger").get("text").asString()).isEqualTo(enExpected);
+        assertThat(ko.get("gamerStats").get(0).get("label").asString())
+                .isNotEqualTo(en.get("gamerStats").get(0).get("label").asString());
     }
 
     @Test
@@ -216,13 +216,13 @@ class LibraryControllerTest {
                 {HttpStatus.BAD_REQUEST, "INVALID_STEAM_ID"},
                 {HttpStatus.NOT_FOUND, "STEAM_PROFILE_NOT_FOUND"},
                 {HttpStatus.FORBIDDEN, "LIBRARY_PRIVATE"},
-                {HttpStatus.UNPROCESSABLE_ENTITY, "LIBRARY_EMPTY"},
+                {HttpStatus.UNPROCESSABLE_CONTENT, "LIBRARY_EMPTY"},
         };
         for (Object[] c : cases) {
             doThrow(new ResponseStatusException((HttpStatus) c[0], (String) c[1])).when(service).analyze(anyString());
             MvcResult res = analyze("", BODY);
             assertThat(res.getResponse().getStatus()).isEqualTo(((HttpStatus) c[0]).value());
-            assertThat(json(res).get("message").asText()).isEqualTo(c[1]);
+            assertThat(json(res).get("message").asString()).isEqualTo(c[1]);
         }
         doThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "STEAM_UNAVAILABLE"))
                 .when(service).analyze(anyString());
@@ -292,7 +292,7 @@ class LibraryControllerTest {
         assertThat(keys(body)).containsExactlyInAnyOrder("limitedData", "stats", "ledger", "verdict", "gamerStats",
                 "diagnosis", "genreProfile", "picks");
         String code = analysis.ledger().code();
-        assertThat(body.get("ledger").get("text").asText())
+        assertThat(body.get("ledger").get("text").asString())
                 .isEqualTo(loader.content().phrases().get(code).get(analysis.ledger().phraseIndex()).text().en());
     }
 
@@ -336,7 +336,7 @@ class LibraryControllerTest {
     private void assertNullKeysPresent(JsonNode body) {
         // 기록이 없으면 장르 결과는 INSUFFICIENT이고, 주력과 보조 장르 키는 null 값으로 남아야 한다
         JsonNode genre = body.get("genreProfile");
-        assertThat(genre.get("state").asText()).isEqualTo("INSUFFICIENT");
+        assertThat(genre.get("state").asString()).isEqualTo("INSUFFICIENT");
         assertThat(genre.has("primaryGenre")).isTrue();
         assertThat(genre.get("primaryGenre").isNull()).isTrue();
         assertThat(genre.has("secondaryGenre")).isTrue();
@@ -350,7 +350,7 @@ class LibraryControllerTest {
         for (JsonNode stat : body.get("gamerStats")) {
             assertThat(keys(stat)).containsExactlyInAnyOrder("code", "value", "label");
             if (stat.get("value").isNull()) {
-                nullStats.add(stat.get("code").asText());
+                nullStats.add(stat.get("code").asString());
             }
         }
         assertThat(nullStats).containsExactlyInAnyOrder("EXPLORATION", "STRATEGY", "DIVERSITY", "COOP");

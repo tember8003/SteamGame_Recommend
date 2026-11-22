@@ -2,8 +2,8 @@ package SteamGame.recommend.infra.crawler;
 
 import SteamGame.recommend.infra.crawler.dto.AppTag;
 import SteamGame.recommend.infra.crawler.dto.StoreItem;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +51,7 @@ public class StoreItemParser {
         if (json == null || json.isBlank()) return out;
         try {
             for (JsonNode t : objectMapper.readTree(json).path("response").path("tags")) {
-                String name = t.path("name").asText("");
+                String name = t.path("name").asString("");
                 if (t.hasNonNull("tagid") && !name.isBlank()) out.put(t.path("tagid").asInt(), name);
             }
         } catch (Exception e) {
@@ -82,7 +82,7 @@ public class StoreItemParser {
             try {
                 parseItem(it, tagNames, unknownIds, unknownCount).ifPresent(out::add);
             } catch (Exception e) {
-                log.warn("store item parse failed for appid {}, skipping", it.path("appid").asText("?"), e);
+                log.warn("store item parse failed for appid {}, skipping", it.path("appid").asString("?"), e);
             }
         }
         if (unknownCount[0] > 0) {
@@ -97,7 +97,7 @@ public class StoreItemParser {
         long appid = it.path("appid").asLong(0);
         String name = text(it, "name");
         if (appid <= 0 || name == null || name.isBlank()) {
-            log.debug("store item rejected, appid={}", it.path("appid").asText("?"));
+            log.debug("store item rejected, appid={}", it.path("appid").asString("?"));
             return Optional.empty();
         }
 
@@ -187,7 +187,7 @@ public class StoreItemParser {
 
     private static String text(JsonNode n, String field) {
         JsonNode v = n.path(field);
-        return v.isMissingNode() || v.isNull() ? null : v.asText();
+        return v.isMissingNode() || v.isNull() ? null : v.asString();
     }
 
     private static String trunc(String s, int max) {

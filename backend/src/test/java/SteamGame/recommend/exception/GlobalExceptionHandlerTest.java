@@ -208,7 +208,7 @@ class GlobalExceptionHandlerTest {
         RecentErrors recorder = new RecentErrors();
         GlobalExceptionHandler h = new GlobalExceptionHandler(providerOf(recorder));
 
-        h.handleNoResourceFound(new NoResourceFoundException(org.springframework.http.HttpMethod.GET, "/no-such-route"),
+        h.handleNoResourceFound(new NoResourceFoundException(org.springframework.http.HttpMethod.GET, "/no-such-route", "/no-such-route"),
                 requestWithRoute("/no-such-route"));
 
         RecentErrors.Snapshot snapshot = recorder.snapshot();
@@ -223,7 +223,7 @@ class GlobalExceptionHandlerTest {
         RecentErrors recorder = new RecentErrors();
         GlobalExceptionHandler h = new GlobalExceptionHandler(providerOf(recorder));
 
-        h.handleNoResourceFound(new NoResourceFoundException(org.springframework.http.HttpMethod.GET, "/favicon.ico"),
+        h.handleNoResourceFound(new NoResourceFoundException(org.springframework.http.HttpMethod.GET, "/favicon.ico", "/favicon.ico"),
                 requestWithRoute("/favicon.ico"));
 
         RecentErrors.Snapshot snapshot = recorder.snapshot();
@@ -238,7 +238,7 @@ class GlobalExceptionHandlerTest {
         GlobalExceptionHandler h = new GlobalExceptionHandler(providerOf(recorder));
 
         ResponseEntity<Void> res = h.handleNoResourceFound(
-                new NoResourceFoundException(org.springframework.http.HttpMethod.GET, path), requestWithRoute(path));
+                new NoResourceFoundException(org.springframework.http.HttpMethod.GET, path, path), requestWithRoute(path));
 
         assertThat(res.getStatusCode().value()).isEqualTo(404);
         assertThat(recorder.snapshot().counts()).isEmpty();

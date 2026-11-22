@@ -1,7 +1,8 @@
 package SteamGame.recommend.domain.taste.content;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class TasteV2ContentLoader {
     public TasteV2ContentLoader(ObjectMapper objectMapper, TasteContentLoader v1) {
         try (InputStream in = new ClassPathResource(RESOURCE).getInputStream()) {
             this.content = read(objectMapper, in);
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             throw new IllegalStateException("taste v2 content unreadable: " + RESOURCE, e);
         }
         TasteV2ContentValidator.validate(content, v1.content().axes());
