@@ -4,7 +4,7 @@ import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
 import SteamGame.recommend.infra.llm.ChatRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

@@ -8,7 +8,7 @@ import SteamGame.recommend.domain.taste.content.TasteContentLoader;
 import SteamGame.recommend.domain.taste.content.TasteType;
 import SteamGame.recommend.domain.taste.repository.TasteCandidate;
 import SteamGame.recommend.domain.taste.repository.TasteCandidateRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;

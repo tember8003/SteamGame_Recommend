@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
 import SteamGame.recommend.infra.llm.ChatRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -60,8 +60,8 @@ public class GeminiApiService {
             List<String> tags = new ArrayList<>();
             if (tagsNode.isArray()) {
                 for (JsonNode item : tagsNode) {
-                    if (item.isTextual()) {
-                        tags.add(item.asText());
+                    if (item.isString()) {
+                        tags.add(item.asString());
                     }
                 }
             }

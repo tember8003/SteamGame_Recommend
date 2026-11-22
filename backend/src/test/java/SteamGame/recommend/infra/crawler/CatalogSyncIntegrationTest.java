@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.crawler;
 
 import SteamGame.recommend.support.PostgresTestBase;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;

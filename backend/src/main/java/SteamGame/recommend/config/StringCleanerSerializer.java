@@ -1,18 +1,17 @@
 package SteamGame.recommend.config;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 // JacksonConfig 에 더는 등록하지 않는다(정상 UTF-8 을 ® 로 파괴하던 유물)
 // 회귀 테스트가 오염 인코더 픽스처로 쓰려고 클래스만 남긴다, 스프링 빈으로 등록하지 않음
-public class StringCleanerSerializer extends JsonSerializer<String> {
+public class StringCleanerSerializer extends ValueSerializer<String> {
 
     @Override
-    public void serialize(String value, JsonGenerator generator, SerializerProvider serializers) throws IOException {
+    public void serialize(String value, JsonGenerator generator, SerializationContext serializers) {
         if(value == null) {
             generator.writeNull();
             return;
@@ -49,9 +48,9 @@ public class StringCleanerSerializer extends JsonSerializer<String> {
     /**
      * Method to determine if it is an image_url field (if the current field name is known)
      */
-    private boolean isImageUrlField(SerializerProvider serializers) {
+    private boolean isImageUrlField(SerializationContext serializers) {
         try {
-            String currentFieldName = serializers.getGenerator().getOutputContext().getCurrentName();
+            String currentFieldName = serializers.getGenerator().streamWriteContext().currentName();
             return "imageUrl".equals(currentFieldName) ||
                     "image_url".equals(currentFieldName) ||
                     "url".equals(currentFieldName);

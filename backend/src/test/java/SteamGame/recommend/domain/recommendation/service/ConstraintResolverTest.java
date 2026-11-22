@@ -6,7 +6,7 @@ import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.api.GeminiConstraintService;
 import SteamGame.recommend.infra.utils.EncryptUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

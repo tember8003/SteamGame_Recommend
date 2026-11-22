@@ -3,8 +3,8 @@ package SteamGame.recommend.infra.api;
 import SteamGame.recommend.domain.game.dto.GamePlaytimeInfo;
 import SteamGame.recommend.domain.game.dto.PlayerStatsInfo;
 import SteamGame.recommend.exception.SteamApiException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
@@ -294,7 +294,7 @@ public class SteamApiService {
             }
 
             JsonNode player = players.get(0);
-            String playerName = player.path("personaname").asText("Unknown");
+            String playerName = player.path("personaname").asString("Unknown");
             Long accountCreated = player.path("timecreated").asLong(0L);
 
             log.info("Retrieved player information successfully: steamId={}, name={}", steamId, playerName);

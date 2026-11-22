@@ -4,8 +4,8 @@ import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
 import SteamGame.recommend.infra.llm.ChatRequest;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -152,7 +152,7 @@ public class GeminiConstraintService {
 
     private String asTextOrNull(JsonNode node, String field) {
         JsonNode v = node.path(field);
-        return (v.isMissingNode() || v.isNull()) ? null : v.asText();
+        return (v.isMissingNode() || v.isNull()) ? null : v.asString();
     }
 
     // enum 에 없는 문자열은 잘못된 응답으로 보고 null 로 흡수함
@@ -162,7 +162,7 @@ public class GeminiConstraintService {
             return null;
         }
         try {
-            return SessionLength.valueOf(v.asText().trim().toUpperCase());
+            return SessionLength.valueOf(v.asString().trim().toUpperCase());
         } catch (Exception e) {
             return null;
         }
@@ -176,8 +176,8 @@ public class GeminiConstraintService {
         }
         List<String> tags = new ArrayList<>();
         for (JsonNode item : v) {
-            if (item.isTextual() && TAG_LIST.contains(item.asText())) {
-                tags.add(item.asText());
+            if (item.isString() && TAG_LIST.contains(item.asString())) {
+                tags.add(item.asString());
             }
         }
         return tags;

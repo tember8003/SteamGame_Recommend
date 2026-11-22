@@ -1,14 +1,15 @@
 package SteamGame.recommend.infra.api;
 
 import SteamGame.recommend.infra.embedding.EmbeddingProperties;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.codec.json.JacksonJsonEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,10 +28,10 @@ import java.util.Map;
 @Slf4j
 @Service
 public class GeminiEmbeddingService {
-    // 요청 본문 직렬화 전용 ObjectMapper, 기본(@Primary) ObjectMapper 에는 StringCleanerSerializer 가 붙어
-    // 비 Latin-1 문자(한글 등)를 물음표로 뭉개므로 임베딩 대상 텍스트를 원문 그대로 보내려면 깨끗한 인코더가 필요하다
+    // 요청 본문 직렬화 전용 매퍼, 예전 기본 ObjectMapper 에 붙어 있던 StringCleanerSerializer 가
+    // 한글을 뭉갠 적이 있어서 기본 매퍼 설정이 바뀌어도 임베딩 대상 텍스트가 원문 그대로 가도록 따로 둔다
     // 상태가 없어 스레드 안전함
-    private static final ObjectMapper CLEAN_MAPPER = new ObjectMapper();
+    private static final JsonMapper CLEAN_MAPPER = new JsonMapper();
 
     private final ObjectMapper objectMapper;
     private final WebClient webClient;
@@ -49,7 +50,7 @@ public class GeminiEmbeddingService {
         this.webClient = webClientBuilder.clone()
                 .codecs(c -> {
                     c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                    c.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(CLEAN_MAPPER));
+                    c.defaultCodecs().jacksonJsonEncoder(new JacksonJsonEncoder(CLEAN_MAPPER));
                 })
                 .build();
     }

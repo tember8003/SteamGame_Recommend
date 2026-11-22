@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.crawler;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -68,7 +68,7 @@ class SteamWebApiClientTest {
         assertThat(input.at("/data_request/include_tag_count").asInt()).isEqualTo(20);
         assertThat(input.at("/data_request/include_reviews").asBoolean()).isTrue();
         assertThat(input.at("/data_request/include_supported_languages").asBoolean()).isTrue();
-        assertThat(input.at("/context/country_code").asText()).isEqualTo("US");
+        assertThat(input.at("/context/country_code").asString()).isEqualTo("US");
     }
 
     @Test

@@ -1,7 +1,7 @@
 package SteamGame.recommend.domain.recommendation.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,7 @@ public class InMemoryCacheService {
             LocalDateTime expireTime = ttl != null ? LocalDateTime.now().plus(ttl) : null;
             cache.put(key, new CacheItem(json, expireTime, CacheType.OBJECT));
             log.debug("Cache setObject: key={}, type={}, ttl={}", key, object.getClass().getSimpleName(), ttl);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize object for cache: key={}", key, e);
         }
     }
@@ -65,7 +65,7 @@ public class InMemoryCacheService {
         try {
             T object = objectMapper.readValue((String) item.getValue(), type);
             return Optional.of(object);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize object from cache: key={}, type={}", key, type.getSimpleName(), e);
             cache.remove(key); // Remove corrupted cache
             return Optional.empty();

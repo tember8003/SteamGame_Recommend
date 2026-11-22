@@ -16,15 +16,15 @@ import SteamGame.recommend.domain.library.steam.SteamLibraryResult;
 import SteamGame.recommend.domain.library.steam.SteamProfile;
 import SteamGame.recommend.domain.tag.repository.TagRepository;
 import SteamGame.recommend.domain.taste.service.TagRarityCache;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectReader;
+import tools.jackson.databind.node.ObjectNode;
 import SteamGame.recommend.domain.library.dto.LibraryViewMapper;
 import SteamGame.recommend.domain.library.dto.SharedAnalysisResponse;
 import SteamGame.recommend.domain.taste.content.Lang;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Ticker;
@@ -127,7 +127,7 @@ public class LibraryAnalysisService {
             throw status(HttpStatus.NOT_FOUND, "STEAM_PROFILE_NOT_FOUND");
         }
         if (result instanceof SteamLibraryResult.Empty) {
-            throw status(HttpStatus.UNPROCESSABLE_ENTITY, "LIBRARY_EMPTY");
+            throw status(HttpStatus.UNPROCESSABLE_CONTENT, "LIBRARY_EMPTY");
         }
         if (result instanceof SteamLibraryResult.Unavailable) {
             // 클라이언트가 이미 원인을 로그로 남긴다
@@ -184,7 +184,7 @@ public class LibraryAnalysisService {
     private String toJson(LibraryAnalysis analysis) {
         try {
             return objectMapper.writeValueAsString(new SharedSnapshot(SharedSnapshot.CURRENT_VERSION, analysis));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("library snapshot serialization failed", e);
         }
     }
@@ -200,7 +200,7 @@ public class LibraryAnalysisService {
         } catch (UnsupportedSnapshotVersionException e) {
             log.warn("library snapshot version unsupported shareId={} v={}", shareId, e.version);
             throw status(HttpStatus.NOT_FOUND, "SHARE_NOT_FOUND");
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             log.error("library snapshot unreadable shareId={}", shareId, e);
             throw status(HttpStatus.NOT_FOUND, "SHARE_NOT_FOUND");
         }
@@ -227,14 +227,14 @@ public class LibraryAnalysisService {
                 .with(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
                 .with(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
         if (!root.has("v")) {
-            return strict.readValue(withOptionalFields(root), LibraryAnalysis.class);
+            return strict.treeToValue(withOptionalFields(root), LibraryAnalysis.class);
         }
         JsonNode v = root.get("v");
         if (!v.isInt() || v.asInt() != SharedSnapshot.CURRENT_VERSION) {
             throw new UnsupportedSnapshotVersionException(v.isInt() ? String.valueOf(v.asInt()) : "non-integer");
         }
         withOptionalFields(root.get("analysis"));
-        return strict.readValue(root, SharedSnapshot.class).analysis();
+        return strict.treeToValue(root, SharedSnapshot.class).analysis();
     }
 
     // 나중에 더한 선택 필드가 옛 저장분에 없으면 null로 채운다, 빠진 필드를 실패로 보는 엄격 읽기를 다른 필드에는 그대로 적용하기 위함

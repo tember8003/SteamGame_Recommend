@@ -6,7 +6,7 @@ import SteamGame.recommend.domain.library.share.LibraryShareRepository;
 import SteamGame.recommend.domain.taste.content.TasteContentLoader;
 import SteamGame.recommend.domain.taste.repository.TasteCandidateRepository;
 import SteamGame.recommend.domain.taste.service.TagRarityCache;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;

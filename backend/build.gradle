@@ -1,26 +1,18 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.13'
+	id 'org.springframework.boot' version '4.1.3'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'SteamGame'
 version = '0.0.1-SNAPSHOT'
 
-// Security: promote transitive versions past the Spring Boot 3.4.13 BOM defaults
-// to clear residual CVEs. All are same-minor patch bumps (low risk).
-//   netty 4.1.130 -> 4.1.136  (CVE-2026-44249/45416/50010, 45674/47691 — netty-handler/resolver-dns)
-//   jackson 2.18.5 -> 2.18.9  (CVE-2026-54512/54513 — jackson-databind)
-//   spring-framework 6.2.15 -> 6.2.19  (CVE-2026-22735/22737/22740/22741/22745 — spring-webflux)
-ext['netty.version'] = '4.1.136.Final'
-ext['jackson-bom.version'] = '2.18.9'
-ext['spring-framework.version'] = '6.2.19'
-ext['commons-lang3.version'] = '3.18.0'   // CVE-2025-48924 (via springdoc/swagger-core)
-ext['assertj.version'] = '3.27.7'          // CVE-2026-24400 (test-only)
+// Boot 3.4 시절 CVE 때문에 직접 올리던 netty, jackson, spring-framework, commons-lang3, assertj 버전 고정은 지웠다
+// Boot 4.1.3 BOM 기본값이 그때 고정값보다 모두 새 버전이다
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
@@ -39,44 +31,51 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
 
 	// Flyway (schema migrations)
-	implementation 'org.flywaydb:flyway-core'
+	// Boot 4 부터 Flyway 자동 설정이 별도 모듈이라 flyway-core 만 두면 마이그레이션이 돌지 않는다, 스타터로 받는다
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 
 	// Spring Boot Core
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// 외부 API 호출에 WebClient 만 쓴다, 리액티브 서버까지 끌어오는 webflux 스타터 대신 클라이언트 스타터
+	implementation 'org.springframework.boot:spring-boot-starter-webclient'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	// Actuator (health 엔드포인트)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// Resilience4j
-	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.1.0'
+	implementation 'io.github.resilience4j:resilience4j-spring-boot4:2.4.0'
 
 	// Environment Management
-	implementation "me.paulschwarz:spring-dotenv:3.0.0"
+	implementation 'me.paulschwarz:springboot4-dotenv:5.1.0'
 
 	// Rate Limiting
 	implementation 'com.bucket4j:bucket4j-core:8.3.0'
 	implementation 'com.github.ben-manes.caffeine:caffeine'
 
 	// Documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
 	// Test dependencies
+	// Boot 4 는 테스트 슬라이스도 기술별 모듈로 나뉘었다(@WebMvcTest, @DataJpaTest, @JdbcTest)
+	// JUnit, Mockito 버전은 BOM 에 맡긴다, 예전처럼 5.9.3, 5.3.1 로 고정하면 BOM 의 JUnit 6 과 섞인다
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-jdbc-test'
+	// @WebMvcTest 에 SecurityConfig 가 올라가려면 보안 테스트 모듈이 있어야 한다
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
-	testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
 	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 

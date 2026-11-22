@@ -1,7 +1,7 @@
 package SteamGame.recommend.infra.web;
 
 import SteamGame.recommend.config.RateLimitProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
