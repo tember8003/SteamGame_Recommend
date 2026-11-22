@@ -31,7 +31,7 @@ public class GeminiEmbeddingService {
     // 요청 본문 직렬화 전용 매퍼, 예전 기본 ObjectMapper 에 붙어 있던 StringCleanerSerializer 가
     // 한글을 뭉갠 적이 있어서 기본 매퍼 설정이 바뀌어도 임베딩 대상 텍스트가 원문 그대로 가도록 따로 둔다
     // 상태가 없어 스레드 안전함
-    private static final JsonMapper CLEAN_MAPPER = new JsonMapper();
+    private static final JsonMapper CLEAN_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
 
     private final ObjectMapper objectMapper;
     private final WebClient webClient;

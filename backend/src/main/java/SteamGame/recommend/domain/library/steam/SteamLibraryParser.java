@@ -2,6 +2,7 @@ package SteamGame.recommend.domain.library.steam;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public final class SteamLibraryParser {
 
     private static final Logger log = LoggerFactory.getLogger(SteamLibraryParser.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JsonMapper.builderWithJackson2Defaults().build();
     private static final int VISIBILITY_PUBLIC = 3;
 
     private SteamLibraryParser() {
