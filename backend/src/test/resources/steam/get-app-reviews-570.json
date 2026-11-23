@@ -1,0 +1,89 @@
+{
+ "response": {
+  "query_summary": {
+   "num_reviews": 3,
+   "review_score": 8,
+   "review_score_desc": "Very Positive",
+   "total_positive": 741646,
+   "total_negative": 102982,
+   "total_reviews": 844628
+  },
+  "reviews": [
+   {
+    "recommendationid": "0",
+    "author": {
+     "num_reviews": 3,
+     "playtime_forever": 530171,
+     "playtime_last_two_weeks": 0,
+     "playtime_at_review": 530171,
+     "last_played": 1792639600
+    },
+    "language": "english",
+    "review": "This game lacks balance. The Rank system is broken. I have played this game for so long and someone can feed in the game with 0 punishment. They now punish you ",
+    "timestamp_created": 1792810164,
+    "timestamp_updated": 1792810164,
+    "voted_up": false,
+    "votes_up": 56,
+    "votes_funny": 6,
+    "weighted_vote_score": 0.7520585060119629,
+    "comment_count": 9,
+    "steam_purchase": true,
+    "received_for_free": false,
+    "written_during_early_access": false,
+    "primarily_steam_deck": false,
+    "refunded": false
+   },
+   {
+    "recommendationid": "0",
+    "author": {
+     "num_reviews": 18,
+     "playtime_forever": 47,
+     "playtime_last_two_weeks": 0,
+     "playtime_at_review": 47,
+     "last_played": 1717966238
+    },
+    "language": "english",
+    "review": "Played for 48 minutes. Got yelled at in 4 different languages, pinged 800 times, and reported by my own team. Peak gaming experience.\n",
+    "timestamp_created": 1793260814,
+    "timestamp_updated": 1793260814,
+    "voted_up": true,
+    "votes_up": 206,
+    "votes_funny": 134,
+    "weighted_vote_score": 0.9050488471984863,
+    "comment_count": 5,
+    "steam_purchase": true,
+    "received_for_free": false,
+    "written_during_early_access": false,
+    "primarily_steam_deck": false,
+    "refunded": false
+   },
+   {
+    "recommendationid": "0",
+    "author": {
+     "num_reviews": 2,
+     "playtime_forever": 413520,
+     "playtime_last_two_weeks": 10616,
+     "playtime_at_review": 401683,
+     "last_played": 1795386609
+    },
+    "language": "english",
+    "review": "Hear me out, if you wanna kill yourself play this game. you will actually start to love your life. this game is like going to the mental hospital with 9 others ",
+    "timestamp_created": 1793847253,
+    "timestamp_updated": 1793847253,
+    "voted_up": true,
+    "votes_up": 51,
+    "votes_funny": 27,
+    "weighted_vote_score": 0.7978149056434631,
+    "comment_count": 2,
+    "steam_purchase": true,
+    "received_for_free": false,
+    "written_during_early_access": false,
+    "primarily_steam_deck": false,
+    "refunded": false
+   }
+  ],
+  "cursor": "AoJ",
+  "day_range_used": 30,
+  "total_matching": 2724
+ }
+}
