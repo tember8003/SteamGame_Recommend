@@ -13,13 +13,16 @@ public class DetailUpsertRepository {
     }
 
     // 리뷰 본문 두 칸만 씀, 요약 칸은 catalog 배치 소유라 건드리지 않음
+    // 도움순 20개가 한쪽(예: 전부 긍정)으로만 오는 게임이 흔해서, 빈 쪽은 기존 본문을 지우지 않고 남김
+    // text_updated_at 은 본문을 한쪽이라도 새로 쓴 시각이라, 대시보드가 작업 보고와 별개로 저장 여부를 세는 근거가 됨
     public void upsertReviewDetail(SteamGame.recommend.infra.crawler.dto.ReviewDetail d) {
         jdbc.update("""
-            INSERT INTO reviews (appid, positive_review_text, negative_review_text)
-            VALUES (?, ?, ?)
+            INSERT INTO reviews (appid, positive_review_text, negative_review_text, text_updated_at)
+            VALUES (?, ?, ?, now())
             ON CONFLICT (appid) DO UPDATE SET
-                positive_review_text = EXCLUDED.positive_review_text,
-                negative_review_text = EXCLUDED.negative_review_text""",
+                positive_review_text = COALESCE(EXCLUDED.positive_review_text, reviews.positive_review_text),
+                negative_review_text = COALESCE(EXCLUDED.negative_review_text, reviews.negative_review_text),
+                text_updated_at = EXCLUDED.text_updated_at""",
             d.appid(), d.positiveText(), d.negativeText());
     }
 

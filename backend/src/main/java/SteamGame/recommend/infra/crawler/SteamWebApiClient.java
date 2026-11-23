@@ -20,6 +20,12 @@ public class SteamWebApiClient {
     // 리뷰 순(30)은 같은 요청에도 순서가 달라 페이지를 넘기면 게임이 빠지고 겹침
     static final int SORT_STABLE = 2;
 
+    // IUserReviewsService 열거값, 도움순 0, 리뷰 전체 0, 구매 경로 전체 1(Steam 구매만은 0)
+    static final int REVIEWS_FILTER_HELPFUL = 0;
+    static final int REVIEWS_TYPE_ALL = 0;
+    static final int REVIEWS_PURCHASE_ALL = 1;
+    static final int REVIEWS_PER_PAGE = 20;
+
     private final WebClient webClient;
     private final CrawlerProperties props;
     private final ObjectMapper objectMapper;
@@ -60,6 +66,26 @@ public class SteamWebApiClient {
 
         // JSON 의 중괄호가 URI 템플릿 변수로 읽히지 않게 값으로 넘겨 인코딩함
         URI uri = UriComponentsBuilder.fromUriString(props.getSteamApiBaseUrl() + "/IStoreQueryService/Query/v1/")
+                .queryParam("input_json", "{input}")
+                .encode()
+                .buildAndExpand(input.toString())
+                .toUri();
+        return getWithRetry(uri);
+    }
+
+    // 상점의 appreviews 주소는 2026-10 하순에 폐기돼 상점 첫 화면으로 넘어가므로 Web API 리뷰 서비스를 부름
+    // 예전 요청(filter=all, purchase_type=all, language=english)과 같은 기준이 되게 도움순, 구매 경로 전체로 맞춤
+    // 도움순은 최근 30일 안에서 고르고 없으면 기간을 넓힘(day_range_used), languages 를 비우면 영어만 옴(2026-11-23 실제 응답으로 확인)
+    // 성공 여부는 본문의 success 가 아니라 HTTP 상태로 판단함
+    public String fetchAppReviews(long appid) {
+        ObjectNode input = objectMapper.createObjectNode();
+        input.put("appid", appid);
+        input.put("filter", REVIEWS_FILTER_HELPFUL);
+        input.put("review_type", REVIEWS_TYPE_ALL);
+        input.put("purchase_type", REVIEWS_PURCHASE_ALL);
+        input.put("num_per_page", REVIEWS_PER_PAGE);
+
+        URI uri = UriComponentsBuilder.fromUriString(props.getSteamApiBaseUrl() + "/IUserReviewsService/GetAppReviews/v1/")
                 .queryParam("input_json", "{input}")
                 .encode()
                 .buildAndExpand(input.toString())

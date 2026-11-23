@@ -53,6 +53,32 @@ class DetailUpsertRepositoryTest extends PostgresTestBase {
         assertThat(jdbc.queryForObject("SELECT positive_review_text FROM reviews WHERE appid=?", String.class, appid)).isEqualTo("ok");
     }
 
+    // 대시보드가 작업 보고와 별개로 실제 저장 여부를 세는 근거라, 본문을 저장할 때만 시각이 찍혀야 한다
+    @Test
+    void upsertReviewDetail_stampsTextUpdatedAt_onlyWhenTextIsWritten() {
+        jdbc.update("INSERT INTO reviews (appid, total_reviews) VALUES (?, 1)", appid);
+        assertThat(jdbc.queryForObject("SELECT text_updated_at FROM reviews WHERE appid=?", java.sql.Timestamp.class, appid)).isNull();
+
+        repo.upsertReviewDetail(new ReviewDetail(appid, "Mixed", 200, new BigDecimal("55.00"), "great", null));
+        java.sql.Timestamp first = jdbc.queryForObject("SELECT text_updated_at FROM reviews WHERE appid=?", java.sql.Timestamp.class, appid);
+        assertThat(first).isNotNull();
+
+        repo.upsertReviewDetail(new ReviewDetail(appid, "Mixed", 200, new BigDecimal("55.00"), "again", null));
+        assertThat(jdbc.queryForObject("SELECT text_updated_at FROM reviews WHERE appid=?", java.sql.Timestamp.class, appid))
+                .isAfterOrEqualTo(first);
+    }
+
+    // 도움순 20개가 전부 긍정인 게임이 흔하다(Hollow Knight 실제 응답 20개 모두 긍정), 빈 쪽은 기존 본문을 지우지 않는다
+    @Test
+    void upsertReviewDetail_keepsExistingSide_whenNewResponseHasOnlyOneSide() {
+        repo.upsertReviewDetail(new ReviewDetail(appid, "Mixed", 200, new BigDecimal("55.00"), "old good", "old bad"));
+
+        repo.upsertReviewDetail(new ReviewDetail(appid, "Mixed", 200, new BigDecimal("55.00"), "new good", null));
+
+        assertThat(jdbc.queryForObject("SELECT positive_review_text FROM reviews WHERE appid=?", String.class, appid)).isEqualTo("new good");
+        assertThat(jdbc.queryForObject("SELECT negative_review_text FROM reviews WHERE appid=?", String.class, appid)).isEqualTo("old bad");
+    }
+
     @Test
     void upsertReviewDetail_insertsRowWhenMissing() {
         repo.upsertReviewDetail(new ReviewDetail(appid, "Mixed", 200, new BigDecimal("55.00"), "great", null));

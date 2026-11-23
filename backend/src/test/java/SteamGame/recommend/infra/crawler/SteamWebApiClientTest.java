@@ -71,6 +71,26 @@ class SteamWebApiClientTest {
         assertThat(input.at("/context/country_code").asString()).isEqualTo("US");
     }
 
+    // 예전 상점 appreviews 요청(filter=all, purchase_type=all, language=english)과 같은 리뷰가 나오게 맞춘 값이다
+    @Test
+    void fetchAppReviews_callsUserReviewsServiceWithHelpfulAllPurchasesInEnglish() throws Exception {
+        server.enqueue(ok("{\"response\":{}}"));
+
+        String body = client.fetchAppReviews(570L);
+
+        assertThat(body).contains("\"response\"");
+        RecordedRequest req = server.takeRequest();
+        assertThat(req.getMethod()).isEqualTo("GET");
+        assertThat(req.getRequestUrl().encodedPath()).isEqualTo("/IUserReviewsService/GetAppReviews/v1/");
+        JsonNode input = om.readTree(req.getRequestUrl().queryParameter("input_json"));
+        assertThat(input.path("appid").asLong()).isEqualTo(570L);
+        assertThat(input.path("filter").asInt()).isEqualTo(0);
+        assertThat(input.path("review_type").asInt()).isEqualTo(0);
+        assertThat(input.path("purchase_type").asInt()).isEqualTo(1);
+        assertThat(input.path("num_per_page").asInt()).isEqualTo(20);
+        assertThat(input.has("languages")).isFalse();
+    }
+
     @Test
     void retriesOn429_thenReturnsBody() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(429));

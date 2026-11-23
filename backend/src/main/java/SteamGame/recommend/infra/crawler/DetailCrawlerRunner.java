@@ -25,7 +25,7 @@ public class DetailCrawlerRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         log.info("=== detail rolling crawler starting ===");
         DetailCrawlerService.DetailResult result = service.runDetailBatch();
-        log.info("=== detail rolling done: processed={}, failed={} ===", result.processed(), result.failed());
+        log.info("=== detail rolling done: {} ===", DetailCrawlerService.note(result));
         int exitCode = SpringApplication.exit(context, () -> 0);
         System.exit(exitCode);
     }
