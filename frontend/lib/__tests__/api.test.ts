@@ -217,7 +217,6 @@ describe('recommend', () => {
 
     const result = await recommendMatch({
       rawText: 'cozy co-op',
-      sessionLength: 'SHORT',
       budgetUsd: 20,
       players: 2,
       review: 100,
@@ -231,7 +230,6 @@ describe('recommend', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rawText: 'cozy co-op',
-        sessionLength: 'SHORT',
         budgetUsd: 20,
         players: 2,
         review: 100,
@@ -256,7 +254,6 @@ describe('recommend', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rawText: 'anything',
-        sessionLength: null,
         budgetUsd: null,
         players: null,
         review: 0,

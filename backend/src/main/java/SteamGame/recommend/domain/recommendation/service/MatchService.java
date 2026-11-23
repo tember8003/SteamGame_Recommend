@@ -11,9 +11,7 @@ import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
 import SteamGame.recommend.domain.recommendation.dto.ReviewResponseDTO;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
-import SteamGame.recommend.domain.recommendation.util.VolumeBuckets;
 import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
 import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
 import SteamGame.recommend.domain.feedback.service.FeedbackSuppressionService;
@@ -97,12 +95,8 @@ public class MatchService {
 
         Pool initialPool = resolvePool(criteria, poolK);
 
-        Map<Long, Review> reviewMap = new HashMap<>();
-        loadReviews(reviewMap, appidsOfGames(initialPool.games()));
-
         float[] taste = resolveTasteVector(req.getClientId());
-        List<Selected> selected = sampleWithVolumeNudge(initialPool.games(), criteria, need, reviewMap,
-                initialPool.moodPath(), taste);
+        List<Selected> selected = sample(initialPool.games(), need, initialPool.moodPath(), taste);
 
         // 폴백 사다리 전체에서 이미 뽑힌 appid 를 누적해 다음 조회의 excludeAppids 에 반영함
         Set<Long> pickedAppids = selected.stream()
@@ -124,8 +118,8 @@ public class MatchService {
 
         boolean shortfall = selected.size() < need;
 
-        // 최종 목록 중 아직 리뷰를 못 가져온 appid 만 보충 조회함
-        loadReviews(reviewMap, missingAppids(selected, reviewMap));
+        // 샘플링이 리뷰를 쓰지 않으므로 설명과 응답에 필요한 최종 목록의 리뷰만 한 번에 조회함
+        Map<Long, Review> reviewMap = loadReviews(appidsOfSelected(selected));
         Map<Long, List<String>> tagMap = loadTags(appidsOfSelected(selected));
 
         // 후보마다 가장 비슷한 좋아요 게임 이름을 구해 취향 설명에 실음, 없으면 빈 맵이라 설명이 안 붙음
@@ -153,35 +147,14 @@ public class MatchService {
         return new Pool(gameService.matchQualityPool(criteria, poolK), false);
     }
 
-    // 세션 길이가 지정되면 리뷰 볼륨 버킷이 맞는 후보를 먼저 샘플하고 모자라면 불일치에서 채움
-    // taste 가 있으면 각 버킷을 취향 가중으로 뽑고 없으면 균일로 뽑음
-    private List<Selected> sampleWithVolumeNudge(List<Game> pool, RecommendationCriteria criteria, int need,
-                                                  Map<Long, Review> reviewMap, boolean moodPath, float[] taste) {
+    // 1차 풀에서 need 개를 뽑음, taste 가 있으면 취향 가중으로 뽑고 없으면 균일로 뽑음
+    private List<Selected> sample(List<Game> pool, int need, boolean moodPath, float[] taste) {
         // 취향이 있을 때만 풀 후보 임베딩을 배치로 읽음, 없으면 빈 맵
         Map<Long, float[]> vecs = (taste == null)
                 ? Map.of()
                 : embeddingRepository.findEmbeddingsByAppids(appidsOfGames(pool));
 
-        List<Game> chosen;
-        if (criteria.getSessionLength() != null) {
-            List<Game> matched = new ArrayList<>();
-            List<Game> unmatched = new ArrayList<>();
-            for (Game game : pool) {
-                Review review = reviewMap.get(game.getAppid());
-                SessionLength bucket = review == null ? null : VolumeBuckets.classify(review.getPositiveGameHour());
-                if (bucket == criteria.getSessionLength()) {
-                    matched.add(game);
-                } else {
-                    unmatched.add(game);
-                }
-            }
-            chosen = new ArrayList<>(pickFromPool(matched, need, taste, vecs, random));
-            if (chosen.size() < need) {
-                chosen.addAll(pickFromPool(unmatched, need - chosen.size(), taste, vecs, random));
-            }
-        } else {
-            chosen = pickFromPool(pool, need, taste, vecs, random);
-        }
+        List<Game> chosen = pickFromPool(pool, need, taste, vecs, random);
 
         List<Selected> result = new ArrayList<>();
         for (Game game : chosen) {
@@ -285,7 +258,6 @@ public class MatchService {
     private RecommendationCriteria withExcludeAndReview(RecommendationCriteria c, int review, Set<Long> excludeAppids) {
         return RecommendationCriteria.builder()
                 .players(c.getPlayers())
-                .sessionLength(c.getSessionLength())
                 .budgetCents(c.getBudgetCents())
                 .moodText(c.getMoodText())
                 .excludeTags(c.getExcludeTags())
@@ -297,24 +269,15 @@ public class MatchService {
                 .build();
     }
 
-    private void loadReviews(Map<Long, Review> reviewMap, List<Long> appids) {
+    private Map<Long, Review> loadReviews(List<Long> appids) {
+        Map<Long, Review> reviewMap = new HashMap<>();
         if (appids.isEmpty()) {
-            return;
+            return reviewMap;
         }
         for (Review review : reviewRepository.findByAppidIn(appids)) {
             reviewMap.put(review.getAppid(), review);
         }
-    }
-
-    private List<Long> missingAppids(List<Selected> selected, Map<Long, Review> reviewMap) {
-        List<Long> missing = new ArrayList<>();
-        for (Selected s : selected) {
-            Long appid = s.game().getAppid();
-            if (!reviewMap.containsKey(appid)) {
-                missing.add(appid);
-            }
-        }
-        return missing;
+        return reviewMap;
     }
 
     // findGameTagPairs 는 appid, tagName 쌍이라 appid 별로 묶어야 ExplanationBuilder 에 넘길 수 있음

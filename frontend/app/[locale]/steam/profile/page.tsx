@@ -13,10 +13,9 @@ import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
 import styles from "./page.module.css";
 
-// profile.html 의 리뷰 섹션 구성(제목 있음, 시간 통계 없음, 추천율 막대 있음, 원문 없음)
+// profile.html 의 리뷰 섹션 구성(제목 있음, 추천율 막대 있음, 원문 없음)
 const REVIEW_OPTIONS: ReviewDisplayOptions = {
   showHeader: true,
-  showHours: false,
   showRatingBar: true,
   showReviewText: false,
 };

@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import MatchResults from "../MatchResults";
 import type { MatchExplanation, ReviewResponse, SteamApp } from "@/lib/types";
+import { en } from "@/lib/i18n/messages/en";
 
 vi.mock("@/lib/feedback", () => ({ sgrFeedback: vi.fn() }));
 
@@ -18,9 +19,9 @@ const GAMES: SteamApp[] = [
 const REVIEWS: ReviewResponse[] = [{ positiveRating: 90 }, { positiveRating: 80 }];
 const EXPLANATIONS: MatchExplanation[] = [
   { reasons: [{ code: "IS_FREE", params: {} }], caveats: [] },
-  { reasons: [{ code: "VOLUME_FITS", params: {} }], caveats: [] },
+  { reasons: [{ code: "SOLO_FRIENDLY", params: {} }], caveats: [] },
 ];
-const OPTS = { showHeader: true, showHours: false, showRatingBar: true, showReviewText: false };
+const OPTS = { showHeader: true, showRatingBar: true, showReviewText: false };
 
 describe("MatchResults", () => {
   it("게임마다 카드와 설명을 렌더하고 피드백 버튼을 붙인다", () => {
@@ -36,7 +37,7 @@ describe("MatchResults", () => {
     );
     expect(screen.getByText("Alpha")).toBeInTheDocument();
     expect(screen.getByText("Free to play")).toBeInTheDocument();
-    expect(screen.getByText("Fits your session length")).toBeInTheDocument();
+    expect(screen.getByText(en.explain.reason.soloFriendly)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Like this game" })).toHaveLength(2);
   });
 

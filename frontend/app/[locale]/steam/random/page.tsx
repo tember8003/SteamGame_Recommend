@@ -24,10 +24,9 @@ const TAGS_LIST = [
   "Rhythm", "Music", "Management", "Clicker", "Tactical", "Stealth", "Exploration",
 ];
 
-// random.html 의 리뷰 섹션 구성(제목 없음, 시간 통계 있음, 추천율 막대 없음, 원문 있음)
+// random.html 의 리뷰 섹션 구성(제목 없음, 추천율 막대 없음, 원문 있음)
 const REVIEW_OPTIONS: ReviewDisplayOptions = {
   showHeader: false,
-  showHours: true,
   showRatingBar: false,
   showReviewText: true,
 };

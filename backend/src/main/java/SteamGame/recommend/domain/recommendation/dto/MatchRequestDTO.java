@@ -9,12 +9,12 @@ import lombok.Setter;
 import java.util.List;
 import java.util.Set;
 
+// 예전 세션 길이 필드는 더 받지 않는다, 이전 프론트가 보내도 JacksonConfig 가 모르는 필드를 무시해 200 으로 처리됨
 @Getter
 @Setter
 public class MatchRequestDTO {
     private String rawText;
     @Min(1) private Integer players;              // null 이면 인원 제약이 없고 값이 있으면 1 이상이어야 한다
-    private SessionLength sessionLength;          // 잘못된 값은 역직렬화에서 걸러 400 으로 응답한다
     @PositiveOrZero private Integer budgetUsd;    // 예산 상한을 달러로 받는다
     private List<String> moodTags;
     private List<String> excludeTags;

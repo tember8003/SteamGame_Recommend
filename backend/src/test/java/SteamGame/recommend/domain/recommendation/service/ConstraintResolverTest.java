@@ -3,10 +3,11 @@ package SteamGame.recommend.domain.recommendation.service;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.api.GeminiConstraintService;
 import SteamGame.recommend.infra.utils.EncryptUtils;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,7 @@ class ConstraintResolverTest {
     @Test
     void formWinsOverNaturalLanguage() {
         when(parser.parseConstraints(any())).thenReturn(
-                new ParsedConstraints(3, 50, SessionLength.LONG, true, "느긋한", List.of("Gore")));
+                new ParsedConstraints(3, 50, true, "느긋한", List.of("Gore")));
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("아무 문장");
         req.setPlayers(4);
@@ -49,7 +50,6 @@ class ConstraintResolverTest {
 
         assertThat(c.getPlayers()).isEqualTo(4);
         assertThat(c.getBudgetCents()).isEqualTo(2000);
-        assertThat(c.getSessionLength()).isEqualTo(SessionLength.LONG);
         assertThat(c.getExcludeTags()).contains("Horror", "Gore");
         assertThat(c.isNlParseFailed()).isFalse();
     }
@@ -87,7 +87,7 @@ class ConstraintResolverTest {
     @Test
     void moodTextCombinesFormTagsAndParsedMood() {
         when(parser.parseConstraints(any())).thenReturn(
-                new ParsedConstraints(null, null, null, null, "느긋한 분위기", null));
+                new ParsedConstraints(null, null, null, "느긋한 분위기", null));
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("문장");
         req.setMoodTags(List.of("코옵", "캐주얼"));
@@ -101,7 +101,7 @@ class ConstraintResolverTest {
     @Test
     void cachedRawTextSkipsParser() {
         // 캐시가 직렬화된 ParsedConstraints 를 돌려주면 parser 를 부르지 않는다
-        when(cache.getCachedConstraints(any())).thenReturn("{\"players\":3,\"budgetUsd\":null,\"sessionLength\":null,\"needsCoop\":true,\"moodText\":null,\"excludeTags\":[]}");
+        when(cache.getCachedConstraints(any())).thenReturn("{\"players\":3,\"budgetUsd\":null,\"needsCoop\":true,\"moodText\":null,\"excludeTags\":[]}");
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("친구랑 협동");
 
@@ -112,9 +112,26 @@ class ConstraintResolverTest {
     }
 
     @Test
+    void legacyCacheEntryWithSessionLengthStillReads() {
+        // 세션 길이를 빼기 전에 저장된 캐시 값에는 sessionLength 가 남아 있다, 운영 매퍼처럼 모르는 필드를 무시하면 파서를 다시 부르지 않는다
+        ObjectMapper lenient = JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .build();
+        ConstraintResolver lenientResolver = new ConstraintResolver(parser, cache, lenient);
+        when(cache.getCachedConstraints(any())).thenReturn("{\"players\":3,\"budgetUsd\":null,\"sessionLength\":\"SHORT\",\"needsCoop\":true,\"moodText\":null,\"excludeTags\":[]}");
+        MatchRequestDTO req = new MatchRequestDTO();
+        req.setRawText("친구랑 협동");
+
+        RecommendationCriteria c = lenientResolver.resolve(req);
+
+        assertThat(c.getPlayers()).isEqualTo(3);
+        verifyNoInteractions(parser);
+    }
+
+    @Test
     void cacheMissCallsParserThenStores() {
         when(cache.getCachedConstraints(any())).thenReturn(null);
-        when(parser.parseConstraints(any())).thenReturn(new ParsedConstraints(2, null, null, true, null, List.of()));
+        when(parser.parseConstraints(any())).thenReturn(new ParsedConstraints(2, null, true, null, List.of()));
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("협동");
 
@@ -127,7 +144,7 @@ class ConstraintResolverTest {
     void corruptCacheEntrySelfHeals() {
         // 손상된 캐시 값(깨진 JSON)은 미스로 취급되어 parser 를 호출하고 정상 결과로 재저장한다
         when(cache.getCachedConstraints(any())).thenReturn("not-json{{");
-        when(parser.parseConstraints(any())).thenReturn(new ParsedConstraints(2, null, null, true, null, List.of()));
+        when(parser.parseConstraints(any())).thenReturn(new ParsedConstraints(2, null, true, null, List.of()));
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("협동");
 
@@ -155,7 +172,7 @@ class ConstraintResolverTest {
         // 전 필드 빈 파싱 결과는 캐시하지 않는다, 일시적 추출 실패가 TTL 동안 박히는 오염을 막음
         when(cache.getCachedConstraints(any())).thenReturn(null);
         when(parser.parseConstraints(any())).thenReturn(
-                new ParsedConstraints(null, null, null, null, null, List.of()));
+                new ParsedConstraints(null, null, null, null, List.of()));
         MatchRequestDTO req = new MatchRequestDTO();
         req.setRawText("그냥 재밌는 거 추천");
 

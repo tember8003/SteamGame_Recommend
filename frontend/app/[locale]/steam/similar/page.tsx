@@ -11,10 +11,9 @@ import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { GameSearchResult, RecommendationResult } from "@/lib/types";
 import styles from "./page.module.css";
 
-// similar.html 의 리뷰 섹션 구성(제목 없음, 시간 통계 있음, 추천율 막대 있음, 원문 없음)
+// similar.html 의 리뷰 섹션 구성(제목 없음, 추천율 막대 있음, 원문 없음)
 const REVIEW_OPTIONS: ReviewDisplayOptions = {
   showHeader: false,
-  showHours: true,
   showRatingBar: true,
   showReviewText: false,
 };

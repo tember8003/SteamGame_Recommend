@@ -50,9 +50,9 @@ describe('describeCaveat', () => {
       .toBe('Could not match your mood, showing top-quality picks instead')
   })
 
-  it('LONGER_THAN_REQUESTED 는 typicalHours 를 반올림해 넣는다', () => {
-    expect(describeCaveat({ code: 'LONGER_THAN_REQUESTED', params: { typicalHours: 42.6 } }, t))
-      .toBe('Usually longer than you asked (about 43h)')
+  it('세션 길이 조건을 없애며 뺀 주의점 코드는 미지 코드처럼 null 을 반환한다', () => {
+    expect(describeCaveat({ code: 'LONGER_THAN_REQUESTED', params: { typicalHours: 42.6 } }, t)).toBeNull()
+    expect(describeCaveat({ code: 'SHORTER_THAN_REQUESTED', params: { typicalHours: 3 } }, t)).toBeNull()
   })
 
   it('미지 코드는 null 을 반환한다', () => {

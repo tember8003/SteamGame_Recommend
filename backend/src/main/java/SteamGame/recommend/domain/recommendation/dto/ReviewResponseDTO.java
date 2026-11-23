@@ -13,8 +13,6 @@ import java.math.BigDecimal;
 public class ReviewResponseDTO {
     private String positiveReview;
     private String negativeReview;
-    private BigDecimal negativeHours;
-    private BigDecimal positiveHours;
     private String reviewSummary;
     private BigDecimal positiveRating;
 }

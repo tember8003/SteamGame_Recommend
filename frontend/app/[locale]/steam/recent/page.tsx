@@ -13,10 +13,9 @@ import { mergeShownAppids, toExcludeAppids } from "@/lib/reroll";
 import type { RecommendationResult } from "@/lib/types";
 import styles from "./page.module.css";
 
-// recent.html 의 리뷰 섹션 구성(제목 있음, 시간 통계 있음, 추천율 막대 있음, 원문 있음)
+// recent.html 의 리뷰 섹션 구성(제목 있음, 추천율 막대 있음, 원문 있음)
 const REVIEW_OPTIONS: ReviewDisplayOptions = {
   showHeader: true,
-  showHours: true,
   showRatingBar: true,
   showReviewText: true,
 };

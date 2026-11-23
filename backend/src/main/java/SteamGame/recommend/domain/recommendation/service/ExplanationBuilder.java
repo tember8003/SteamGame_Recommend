@@ -6,8 +6,6 @@ import SteamGame.recommend.domain.recommendation.MatchConstants;
 import SteamGame.recommend.domain.recommendation.dto.ExplanationItem;
 import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
-import SteamGame.recommend.domain.recommendation.util.VolumeBuckets;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,11 +26,8 @@ public class ExplanationBuilder {
         Integer priceCents = game == null ? null : game.getPrice();
         Integer reviewCount = game == null ? null : game.getReviewCount();
         BigDecimal positivePct = review == null ? null : review.getPositivePercentage();
-        BigDecimal positiveHour = review == null ? null : review.getPositiveGameHour();
         Integer budgetCents = c.getBudgetCents();
         Integer players = c.getPlayers();
-        SessionLength requestedSession = c.getSessionLength();
-        SessionLength actualSession = VolumeBuckets.classify(positiveHour);
 
         List<ExplanationItem> reasons = new ArrayList<>();
         addBecauseYouLikedReason(reasons, likedGameName);
@@ -40,14 +35,11 @@ public class ExplanationBuilder {
         addCoopReason(reasons, c.needsCoop(), tags);
         addSoloReason(reasons, players, tags);
         reasons.add(wellReviewedReason(positivePct, reviewCount));
-        addVolumeFitsReason(reasons, requestedSession, actualSession);
         addMoodMatchReason(reasons, moodPath, rank);
 
         List<ExplanationItem> caveats = new ArrayList<>();
         addIf(caveats, c.needsCoop(), "PLAYER_COUNT_APPROX");
         addIf(caveats, budgetCents != null && !isFree, "PRICE_NO_DISCOUNT");
-        addVolumeMismatchCaveat(caveats, requestedSession, actualSession, positiveHour);
-        addIf(caveats, requestedSession != null && positiveHour == null, "VOLUME_UNKNOWN");
         addIf(caveats, c.hasMood() && !moodPath, "MOOD_UNAVAILABLE");
         addIf(caveats, reviewRelaxed, "REVIEW_RELAXED");
 
@@ -100,28 +92,11 @@ public class ExplanationBuilder {
         return new ExplanationItem("WELL_REVIEWED", params);
     }
 
-    // 요청 세션 버킷과 실제 볼륨 버킷이 같을 때만 냄
-    private void addVolumeFitsReason(List<ExplanationItem> reasons, SessionLength requestedSession, SessionLength actualSession) {
-        if (requestedSession != null && requestedSession == actualSession) {
-            reasons.add(new ExplanationItem("VOLUME_FITS", Map.of()));
-        }
-    }
-
     // 임베딩 분위기 경로로 뽑힌 게임에만 냄, 순위 산정과 최종 개수 자르기는 오케스트레이션 책임임
     private void addMoodMatchReason(List<ExplanationItem> reasons, boolean moodPath, int rank) {
         if (moodPath) {
             reasons.add(new ExplanationItem("MOOD_MATCH", Map.of("rank", rank)));
         }
-    }
-
-    // 요청 버킷과 실제 버킷이 둘 다 있고 서로 다를 때만 방향에 맞는 코드를 냄
-    private void addVolumeMismatchCaveat(List<ExplanationItem> caveats, SessionLength requestedSession,
-                                         SessionLength actualSession, BigDecimal positiveHour) {
-        if (requestedSession == null || actualSession == null || requestedSession == actualSession) {
-            return;
-        }
-        String code = actualSession.ordinal() > requestedSession.ordinal() ? "LONGER_THAN_REQUESTED" : "SHORTER_THAN_REQUESTED";
-        caveats.add(new ExplanationItem(code, Map.of("typicalHours", positiveHour)));
     }
 
     // 파라미터 없는 주의점 공통 추가, 조건이 참일 때만 리스트에 넣음

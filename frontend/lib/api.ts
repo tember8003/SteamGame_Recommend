@@ -116,7 +116,6 @@ export const recommendRandom = (tags: string[], options: RecommendRandomOptions)
 export const recommendMatch = (options: MatchOptions) =>
   postJson<MatchResult>('/api/recommend/match', {
     rawText: options.rawText,
-    sessionLength: options.sessionLength ?? null,
     budgetUsd: options.budgetUsd ?? null,
     players: options.players ?? null,
     review: options.review,

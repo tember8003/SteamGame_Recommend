@@ -118,7 +118,7 @@ describe("MatchPage", () => {
     expect(vi.mocked(recommendMatch).mock.calls[1][0].excludeAppids).toEqual([1]);
   });
 
-  it("세션 길이 세그먼트에서 Short 를 고르면 페이로드에 SHORT 를 싣는다", async () => {
+  it("세션 길이 선택지는 없고 페이로드에도 세션 길이를 싣지 않는다", async () => {
     vi.mocked(recommendMatch).mockResolvedValue({
       criteria: { nlParseFailed: false },
       games: [{ appid: 1, name: "Alpha", headerImage: "a.jpg" }],
@@ -128,11 +128,14 @@ describe("MatchPage", () => {
     });
 
     render(<MatchView initialQuery="" />);
-    fireEvent.click(screen.getByRole("radio", { name: "Short" }));
+    expect(screen.queryByRole("radio", { name: "Short" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Session Length")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/describe/i), { target: { value: "cozy" } });
     fireEvent.click(screen.getByRole("button", { name: /match/i }));
 
     await waitFor(() => expect(recommendMatch).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(recommendMatch).mock.calls[0][0].sessionLength).toBe("SHORT");
+    expect(vi.mocked(recommendMatch).mock.calls[0][0]).not.toHaveProperty("sessionLength");
   });
 
   it("?q= 를 서버에서 읽어 서술 입력창을 채운다", async () => {
