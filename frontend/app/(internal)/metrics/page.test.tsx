@@ -34,13 +34,54 @@ const sample: Dashboard = {
   },
 };
 
-// 운영 상태 샘플, 서버 상태+이벤트 1건(장부 판정 있음)+오류 없음
+const LONG_NOTE = 'pages=141 stop=end-of-results skipped=1 unknownTags=0 extra=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+// 운영 상태 샘플, 서버 상태+이벤트 1건(장부 판정 있음)+오류 없음+수집 상태(경고 없음)
 const sampleStatus: Status = {
   server: { revision: 'abcdef1234567890', startedAt: '2026-11-08T05:47:22Z', flywayVersion: '29' },
   recentEvents: [
     { at: '2026-11-08T05:47:22Z', type: 'LIBRARY_COMPLETE', ref: null, channel: null, ledgerCode: 'PRACTICAL', crimeCode: null, genreCode: null },
   ],
   errors: { since: '2026-11-08T05:47:22Z', counts: [], recent: [] },
+  collection: {
+    jobs: [
+      {
+        batchType: 'steam_catalog', lastStartedAt: '2026-11-20T05:30:00Z', lastFinishedAt: '2026-11-20T06:00:00Z',
+        lastProcessed: 39958, lastFailed: 0, lastNote: LONG_NOTE, lastRunFailed: false, running: false, stuck: false,
+        lastSuccessAt: '2026-11-20T06:00:00Z', lastSuccessProcessed: 39958, expectedIntervalHours: 26,
+        stale: false, runs7d: 7, failedRuns7d: 0,
+      },
+      {
+        batchType: 'tag_cooccurrence', lastStartedAt: '2026-11-20T06:00:00Z', lastFinishedAt: '2026-11-20T06:01:00Z',
+        lastProcessed: 74389, lastFailed: 0, lastNote: 'pairs=74389', lastRunFailed: false, running: false, stuck: false,
+        lastSuccessAt: '2026-11-20T06:01:00Z', lastSuccessProcessed: 74389, expectedIntervalHours: 26,
+        stale: false, runs7d: 7, failedRuns7d: 0,
+      },
+      {
+        batchType: 'detail_rolling', lastStartedAt: '2026-11-20T12:00:00Z', lastFinishedAt: null,
+        lastProcessed: 0, lastFailed: 0, lastNote: null, lastRunFailed: false, running: true, stuck: false,
+        lastSuccessAt: '2026-11-20T06:10:00Z', lastSuccessProcessed: 120, expectedIntervalHours: 7,
+        stale: false, runs7d: 28, failedRuns7d: 0,
+      },
+      {
+        batchType: 'embed_backfill', lastStartedAt: '2026-11-20T06:15:00Z', lastFinishedAt: '2026-11-20T06:20:00Z',
+        lastProcessed: 1000, lastFailed: 0, lastNote: 'processed=1000 failed=0 (api_down)', lastRunFailed: false,
+        running: false, stuck: false, lastSuccessAt: '2026-11-20T06:20:00Z', lastSuccessProcessed: 1000, expectedIntervalHours: 26,
+        stale: false, runs7d: 7, failedRuns7d: 0,
+      },
+      {
+        batchType: 'tag_embedding', lastStartedAt: null, lastFinishedAt: null, lastProcessed: null, lastFailed: null,
+        lastNote: null, lastRunFailed: false, running: false, stuck: false, lastSuccessAt: null, lastSuccessProcessed: null,
+        expectedIntervalHours: null, stale: false, runs7d: 0, failedRuns7d: 0,
+      },
+    ],
+    data: {
+      games: 44656, embeddingMissing: 12, tagVectorMissing: 300, reviewTextWrites24h: 950,
+      lastFunnelEventAt: '2026-11-20T11:00:00Z', lastImpressionAt: null,
+    },
+    flags: [{ name: 'similarInterleave', enabled: false }],
+    warnings: [],
+  },
 };
 
 beforeEach(() => {
@@ -255,5 +296,93 @@ describe('MetricsPage', () => {
     render(<MetricsPage />);
     // UTC 2026-11-08T05:47:22Z 는 한국 시간으로 11-08 14:47 이다
     expect(await screen.findByText('11-08 14:47')).toBeInTheDocument();
+  });
+
+  it('shows the collection section with no warnings, Korean job names, data figures and the flag', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    const section = await screen.findByLabelText('수집');
+    expect(within(section).getByText('경고 없음')).toBeInTheDocument();
+
+    const jobs = within(section).getByLabelText('배치 작업');
+    const catalogRow = within(jobs).getByText('카탈로그 수집').closest('tr')!;
+    expect(within(catalogRow).getByText('39,958 / 0')).toBeInTheDocument();
+    expect(within(catalogRow).getByText('정상')).toBeInTheDocument();
+    // 기록이 없는 작업은 칸을 비우고 기록 없음으로 보인다
+    const gnnRow = within(jobs).getByText('GNN 학습').closest('tr')!;
+    expect(within(gnnRow).getByText('기록 없음')).toBeInTheDocument();
+    const detailRow = within(jobs).getByText('상세 수집').closest('tr')!;
+    expect(within(detailRow).getByText('실행 중')).toBeInTheDocument();
+
+    const data = within(section).getByLabelText('실제 데이터');
+    expect(within(data).getByText('44,656')).toBeInTheDocument();
+    expect(within(data).getByText('GNN 벡터 없는 게임').nextSibling).toHaveTextContent('300');
+    // 마지막 퍼널 이벤트 UTC 2026-11-20T11:00:00Z 는 한국 시간으로 11-20 20:00 이다
+    expect(within(data).getByText('2026-11-20 20:00')).toBeInTheDocument();
+    expect(within(data).getByText('마지막 추천 노출').nextSibling).toHaveTextContent('-');
+
+    expect(within(section).getByLabelText('기능 설정')).toHaveTextContent('인터리빙꺼짐');
+  });
+
+  it('lists each collection warning in Korean and marks failing jobs', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    const jobs = sampleStatus.collection.jobs.map(j =>
+      j.batchType === 'embed_backfill' ? { ...j, stale: true }
+        : j.batchType === 'tag_cooccurrence' ? { ...j, lastRunFailed: true }
+        : j.batchType === 'tag_embedding' ? { ...j, lastStartedAt: '2026-11-18T00:00:00Z', stuck: true }
+        : j);
+    vi.mocked(fetchStatus).mockResolvedValue({
+      ...sampleStatus,
+      collection: {
+        ...sampleStatus.collection,
+        jobs,
+        warnings: [
+          { code: 'JOB_STUCK', batchType: 'tag_embedding' },
+          { code: 'JOB_FAILED', batchType: 'tag_cooccurrence' },
+          { code: 'JOB_STALE', batchType: 'embed_backfill' },
+          { code: 'CATALOG_DROP', batchType: 'steam_catalog' },
+          { code: 'DETAIL_NO_WRITES', batchType: 'detail_rolling' },
+        ],
+      },
+    });
+    render(<MetricsPage />);
+    const warnings = await screen.findByLabelText('수집 경고');
+    expect(within(warnings).getByText('GNN 학습 24시간 넘게 끝나지 않음 (멈춤 추정)')).toBeInTheDocument();
+    expect(within(warnings).getByText('태그 쌍 마지막 실행 실패')).toBeInTheDocument();
+    expect(within(warnings).getByText('임베딩 주기 초과')).toBeInTheDocument();
+    expect(within(warnings).getByText('카탈로그 저장 수 5% 넘게 감소')).toBeInTheDocument();
+    expect(within(warnings).getByText('상세 수집이 돌았는데 24시간 동안 저장된 리뷰 본문 0')).toBeInTheDocument();
+    expect(within(warnings).queryByText('경고 없음')).not.toBeInTheDocument();
+
+    const table = screen.getByLabelText('배치 작업');
+    expect(within(within(table).getByText('태그 쌍').closest('tr')!).getByText('실패')).toBeInTheDocument();
+    expect(within(within(table).getByText('임베딩').closest('tr')!).getByText('주기 초과')).toBeInTheDocument();
+    expect(within(within(table).getByText('GNN 학습').closest('tr')!).getByText('멈춤 추정')).toBeInTheDocument();
+  });
+
+  it('cuts a long job note and keeps the full note in the title', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue(sampleStatus);
+    render(<MetricsPage />);
+    const table = await screen.findByLabelText('배치 작업');
+    const row = within(table).getByText('카탈로그 수집').closest('tr')!;
+    const note = within(row).getByTitle(LONG_NOTE);
+    expect(note.textContent!.length).toBeLessThan(LONG_NOTE.length);
+    expect(note.textContent!.endsWith('…')).toBe(true);
+  });
+
+  it('shows the interleaving flag as on when it is enabled', async () => {
+    localStorage.setItem(TOKEN_KEY, 'secret');
+    vi.mocked(fetchDashboard).mockResolvedValue(sample);
+    vi.mocked(fetchStatus).mockResolvedValue({
+      ...sampleStatus,
+      collection: { ...sampleStatus.collection, flags: [{ name: 'similarInterleave', enabled: true }] },
+    });
+    render(<MetricsPage />);
+    expect(await screen.findByLabelText('기능 설정')).toHaveTextContent('인터리빙켜짐');
   });
 });

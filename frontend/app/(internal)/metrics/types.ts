@@ -27,8 +27,29 @@ export interface StatusEvent {
 export interface StatusCodeCount { status: number; errorCode: string; count: number }
 export interface StatusErrorEntry { at: string; status: number; errorCode: string; route: string }
 export interface StatusErrors { since: string; counts: StatusCodeCount[]; recent: StatusErrorEntry[] }
+// 수집 상태, 작업이 남긴 기록(jobs)과 실제 DB 상태(data)를 나란히 보여 주려고 둘 다 담는다
+// 시각과 개수 칸은 기록이 없으면 null 이다, stuck 은 24시간 넘게 끝나지 않은 실행이고 이때 running 은 false 다
+export interface CollectionJob {
+  batchType: string;
+  lastStartedAt: string | null; lastFinishedAt: string | null;
+  lastProcessed: number | null; lastFailed: number | null; lastNote: string | null;
+  lastRunFailed: boolean; running: boolean; stuck: boolean;
+  lastSuccessAt: string | null; lastSuccessProcessed: number | null;
+  expectedIntervalHours: number | null; stale: boolean;
+  runs7d: number; failedRuns7d: number;
+}
+export interface CollectionData {
+  games: number; embeddingMissing: number; tagVectorMissing: number; reviewTextWrites24h: number;
+  lastFunnelEventAt: string | null; lastImpressionAt: string | null;
+}
+export interface CollectionFlag { name: string; enabled: boolean }
+export interface CollectionWarning { code: string; batchType: string | null }
+export interface Collection {
+  jobs: CollectionJob[]; data: CollectionData; flags: CollectionFlag[]; warnings: CollectionWarning[];
+}
 export interface Status {
   server: StatusServer;
   recentEvents: StatusEvent[];
   errors: StatusErrors;
+  collection: Collection;
 }
