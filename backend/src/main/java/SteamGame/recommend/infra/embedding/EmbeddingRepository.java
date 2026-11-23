@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,12 +23,14 @@ public class EmbeddingRepository {
     }
 
     // 임베딩이 없는 게임을 먼저, 그다음 리뷰 많은 순으로 고름, 재임베딩 대상이 신작을 밀어내지 않게 함
+    // 재임베딩은 임베딩 글의 내용이 바뀐 게임만 고름, content_updated_at 은 카탈로그 저장이 찍음
+    // 상세 수집의 last_crawled_at 은 리뷰 본문만 받아도 찍혀서, 예전에 이것을 기준으로 삼았을 때 같은 글을 하루 약 1,000개씩 다시 임베딩했음
     public List<Long> selectNextToEmbed(int n) {
         return jdbc.queryForList("""
             SELECT appid FROM games
             WHERE embedding IS NULL
-               OR (last_crawled_at IS NOT NULL
-                   AND (embedding_updated_at IS NULL OR last_crawled_at > embedding_updated_at))
+               OR (content_updated_at IS NOT NULL
+                   AND (embedding_updated_at IS NULL OR content_updated_at > embedding_updated_at))
             ORDER BY (embedding IS NULL) DESC, review_count DESC NULLS LAST
             LIMIT ?""", Long.class, n);
     }
@@ -37,6 +40,14 @@ public class EmbeddingRepository {
         jdbc.update(
                 "UPDATE games SET embedding = CAST(? AS vector), embedding_updated_at = now() WHERE appid = ?",
                 VectorLiterals.toPgVector(vec), appid);
+    }
+
+    // 임베딩 시각을 게임 내용을 읽은 시각으로 남김, 저장 시각(now())으로 남기면 Gemini 호출과 재시도 사이에
+    // 카탈로그가 내용을 바꿨을 때 content_updated_at 이 임베딩 시각보다 앞서 그 변경을 영영 다시 고르지 못함
+    public void updateEmbedding(long appid, float[] vec, OffsetDateTime contentReadAt) {
+        jdbc.update(
+                "UPDATE games SET embedding = CAST(? AS vector), embedding_updated_at = ? WHERE appid = ?",
+                VectorLiterals.toPgVector(vec), contentReadAt, appid);
     }
 
     // 단일 게임 임베딩 (유사게임 시드용), 없으면 null

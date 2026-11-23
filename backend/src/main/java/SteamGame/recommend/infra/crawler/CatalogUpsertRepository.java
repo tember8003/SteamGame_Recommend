@@ -23,11 +23,19 @@ public class CatalogUpsertRepository {
     // is_free 는 스팀이 유료 게임에서 필드를 빼므로 없으면 false 로 보고 그대로 덮음
     // 가격은 무료면 null 로 비우고 유료인데 값이 없으면 기존 값을 지킴
     // korean_support 는 언어 목록이 없어 null 이면 기존 값을 지키고 새 행은 false 로 넣음, 칼럼이 NOT NULL 이라 필요함
+    // content_updated_at 은 Steam 이 직접 주는 이름과 설명이 실제로 달라질 때만 찍음, 재임베딩의 기준이라 매일 같은 값이 다시 들어와도 그대로 둠
+    // 태그는 상위 20개 구성이 자주 바뀌어 넣으면 대량 재임베딩이 생기므로 뺌, 장르도 상위 20개 태그에서 가중치 순으로 뽑은 값이라 같은 이유로 뺌
+    // 그래서 태그와 장르만 바뀐 게임은 임베딩 글의 Tags, Genres 줄이 다음 설명 변경 때까지 예전 값으로 남음, 태그 구조는 GNN 벡터가 따로 반영함
+    // SET 의 games.칼럼은 갱신 전 값이라 새 값과 견줄 수 있음, 새 값은 다른 칸과 같은 COALESCE 규칙으로 계산함
     private static final String UPSERT_GAME = """
         INSERT INTO games (appid, name, description, image_url, is_free, korean_support, genres, price,
                            release_date, developer, publisher, review_count)
         VALUES (?, ?, ?, ?, ?, COALESCE(?::boolean, FALSE), ?, ?, ?, ?, ?, ?)
         ON CONFLICT (appid) DO UPDATE SET
+            content_updated_at = CASE
+                WHEN games.name IS DISTINCT FROM EXCLUDED.name
+                  OR games.description IS DISTINCT FROM COALESCE(EXCLUDED.description, games.description)
+                THEN now() ELSE games.content_updated_at END,
             name           = EXCLUDED.name,
             description    = COALESCE(EXCLUDED.description, games.description),
             image_url      = COALESCE(EXCLUDED.image_url, games.image_url),

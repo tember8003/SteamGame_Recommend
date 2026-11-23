@@ -67,7 +67,7 @@ class EmbeddingBackfillServiceTest {
         assertThat(result.processed()).isEqualTo(1);
         assertThat(result.failed()).isEqualTo(0);
         verify(gemini, times(2)).embedBatch(anyList());   // 최초 1 + 재시도 1
-        verify(embeddingRepository).updateEmbedding(eq(1L), any(float[].class));
+        verify(embeddingRepository).updateEmbedding(eq(1L), any(float[].class), any(java.time.OffsetDateTime.class));
     }
 
     @Test
@@ -84,6 +84,6 @@ class EmbeddingBackfillServiceTest {
         // maxBatchRetries=3 → 최초 1 + 재시도 3 = 4회 호출 후 중단함
         verify(gemini, times(4)).embedBatch(anyList());
         assertThat(result.processed()).isEqualTo(0);
-        verify(embeddingRepository, never()).updateEmbedding(anyLong(), any());
+        verify(embeddingRepository, never()).updateEmbedding(anyLong(), any(), any());
     }
 }
