@@ -60,6 +60,8 @@ public class EmbeddingBackfillService {
                 break;
             }
 
+            // 게임 내용을 읽기 직전 시각을 임베딩 시각으로 남김, 이 뒤에 카탈로그가 바꾼 내용은 다음 실행에서 다시 고름
+            OffsetDateTime contentReadAt = OffsetDateTime.now();
             Map<Long, Game> gameByAppid = new HashMap<>();
             for (Game g : gameRepository.findByAppidIn(batch)) {
                 gameByAppid.put(g.getAppid(), g);
@@ -103,7 +105,7 @@ public class EmbeddingBackfillService {
                     continue;
                 }
                 try {
-                    embeddingRepository.updateEmbedding(appid, vec);
+                    embeddingRepository.updateEmbedding(appid, vec, contentReadAt);
                     processed++;
                 } catch (Exception e) {
                     failedIds.add(appid);

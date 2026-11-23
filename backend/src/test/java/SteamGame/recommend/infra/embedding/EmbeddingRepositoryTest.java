@@ -195,11 +195,49 @@ class EmbeddingRepositoryTest extends PostgresTestBase {
         game(351L, "StalePopular");
         jdbc.update("UPDATE games SET review_count = 60 WHERE appid = 350");
         repo.updateEmbedding(351L, vec(1.0));
-        jdbc.update("UPDATE games SET review_count = 900000, last_crawled_at = now() + interval '1 day' WHERE appid = 351");
+        jdbc.update("UPDATE games SET review_count = 900000, content_updated_at = now() + interval '1 day' WHERE appid = 351");
 
         List<Long> next = repo.selectNextToEmbed(50);
 
         assertThat(next).contains(350L, 351L);
         assertThat(next.indexOf(350L)).isLessThan(next.indexOf(351L));
+    }
+
+    // 상세 수집은 리뷰 본문만 받고 last_crawled_at 을 찍는다, 임베딩 글(이름, 장르, 태그, 설명)과 무관해 다시 임베딩하지 않는다
+    // 예전에는 이 시각을 기준으로 삼아 같은 글을 하루 약 1,000개씩 다시 임베딩하며 Gemini 무료 한도를 다 썼다
+    @Test
+    void selectNextToEmbed_ignoresReviewOnlyCrawl() {
+        game(360L, "ReviewOnly");
+        repo.updateEmbedding(360L, vec(1.0));
+        jdbc.update("UPDATE games SET last_crawled_at = now() + interval '1 day' WHERE appid = 360");
+
+        assertThat(repo.selectNextToEmbed(50)).doesNotContain(360L);
+    }
+
+    // 배치가 내용을 읽은 뒤 Gemini 호출 사이에 카탈로그가 내용을 바꾼 경우, 임베딩 시각이 읽은 시각이라 다음 실행에서 다시 고른다
+    @Test
+    void contentChangedWhileEmbedding_isPickedAgain() {
+        game(380L, "Racy");
+        java.time.OffsetDateTime readAt = java.time.OffsetDateTime.now().minusMinutes(5);
+        jdbc.update("UPDATE games SET content_updated_at = now() - interval '1 minute' WHERE appid = 380");
+
+        repo.updateEmbedding(380L, vec(1.0), readAt);
+
+        assertThat(repo.selectNextToEmbed(50)).contains(380L);
+    }
+
+    @Test
+    void selectNextToEmbed_picksGamesWhoseContentChangedAfterEmbedding() {
+        game(370L, "ChangedAfter");
+        game(371L, "ChangedBefore");
+        repo.updateEmbedding(370L, vec(1.0));
+        repo.updateEmbedding(371L, vec(1.0));
+        jdbc.update("UPDATE games SET content_updated_at = embedding_updated_at + interval '1 minute' WHERE appid = 370");
+        jdbc.update("UPDATE games SET content_updated_at = embedding_updated_at - interval '1 minute' WHERE appid = 371");
+
+        List<Long> next = repo.selectNextToEmbed(50);
+
+        assertThat(next).contains(370L);
+        assertThat(next).doesNotContain(371L);
     }
 }
