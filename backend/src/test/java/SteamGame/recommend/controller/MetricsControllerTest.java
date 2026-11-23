@@ -72,7 +72,9 @@ class MetricsControllerTest {
         return new MetricsStatusDTO(
                 new MetricsStatusDTO.Server("abc1234", "2026-11-08T00:00:00Z", "10"),
                 List.of(new MetricsStatusDTO.Event("2026-11-08T00:00:00Z", "LANDING_VISIT", null, null, null, null, null)),
-                new MetricsStatusDTO.Errors("2026-11-08T00:00:00Z", List.of(), List.of()));
+                new MetricsStatusDTO.Errors("2026-11-08T00:00:00Z", List.of(), List.of()),
+                new MetricsStatusDTO.Collection(List.of(), new MetricsStatusDTO.Data(0, 0, 0, 0, null, null),
+                        List.of(), List.of()));
     }
 
     @Test

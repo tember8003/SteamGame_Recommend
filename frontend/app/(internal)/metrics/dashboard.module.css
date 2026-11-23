@@ -430,6 +430,41 @@
   overflow-wrap: anywhere;
 }
 
+/* 수집 영역의 경고 목록과 작업 상태 표시 */
+.warnings {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--critical);
+  font-size: 0.9rem;
+}
+
+.warnings li {
+  padding: 2px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--ink-secondary);
+  font-size: 0.8rem;
+}
+
+.badgeRun {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.badgeBad {
+  border-color: var(--critical);
+  color: var(--critical);
+}
+
+.badgeIdle {
+  color: var(--ink-muted);
+}
+
 @media (max-width: 720px) {
   .kpis {
     grid-template-columns: repeat(2, 1fr);

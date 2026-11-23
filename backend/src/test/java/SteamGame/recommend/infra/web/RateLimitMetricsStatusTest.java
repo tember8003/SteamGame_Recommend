@@ -42,7 +42,9 @@ class RateLimitMetricsStatusTest {
     void status_31stRequest_429() throws Exception {
         when(statusService.status()).thenReturn(new MetricsStatusDTO(
                 new MetricsStatusDTO.Server("abc1234", "2026-11-08T00:00:00Z", "10"), List.of(),
-                new MetricsStatusDTO.Errors("2026-11-08T00:00:00Z", List.of(), List.of())));
+                new MetricsStatusDTO.Errors("2026-11-08T00:00:00Z", List.of(), List.of()),
+                new MetricsStatusDTO.Collection(List.of(), new MetricsStatusDTO.Data(0, 0, 0, 0, null, null),
+                        List.of(), List.of())));
 
         for (int i = 0; i < 30; i++) {
             mvc.perform(statusFrom("10.4.0.1")).andExpect(status().isOk());

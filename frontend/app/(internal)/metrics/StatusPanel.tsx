@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import CollectionPanel from './CollectionPanel';
 import styles from './dashboard.module.css';
 import {
   eventTypeLabel, FEATURE_LABEL, formatKst, formatKstShort, num,
@@ -51,6 +52,9 @@ export default function StatusPanel({
 
       {status ? (
         <>
+          {/* 수집 경고가 가장 먼저 눈에 띄도록 서버 상태보다 위에 둔다 */}
+          <CollectionPanel collection={status.collection} />
+
           <div className={styles.two}>
             <div className={styles.card} aria-label="서버 상태">
               <h3>서버 상태</h3>

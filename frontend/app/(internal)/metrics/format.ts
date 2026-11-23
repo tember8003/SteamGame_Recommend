@@ -1,4 +1,5 @@
 import { genreName } from '@/lib/library/base';
+import type { CollectionJob } from './types';
 
 // 숫자는 천 단위 쉼표, 비율은 소수 없는 퍼센트로 표기한다
 export const num = (n: number) => n.toLocaleString('ko-KR');
@@ -84,3 +85,41 @@ export const verdictLabel = (e: Verdictish) =>
 // verdictLabel 과 짝을 이루는 title 속성용, 원래 코드를 그대로 쉼표로 이어 쓴다
 export const verdictCodeTitle = (e: Verdictish) =>
   [e.ledgerCode, e.crimeCode, e.genreCode].filter((v): v is string => v !== null).join(', ');
+
+// 수집 작업(crawl_log 의 batch_type) 이름표, 모르는 종류는 코드 그대로 보여 준다
+export const JOB_LABEL: Record<string, string> = {
+  steam_catalog: '카탈로그 수집', tag_cooccurrence: '태그 쌍', detail_rolling: '상세 수집',
+  embed_backfill: '임베딩', tag_embedding: 'GNN 학습',
+};
+export const jobLabel = (batchType: string) => JOB_LABEL[batchType] ?? batchType;
+
+// 기능 설정 이름표, 모르는 이름은 그대로 보여 준다
+export const FLAG_LABEL: Record<string, string> = { similarInterleave: '인터리빙' };
+
+export type JobState = '정상' | '실행 중' | '실패' | '주기 초과' | '기록 없음' | '멈춤 추정';
+
+// 멈춤, 실패, 주기 초과를 실행 중보다 먼저 본다, 프로세스가 죽어 끝나지 않은 기록이 실행 중으로만 보이면 문제가 가려짐
+export const jobState = (j: CollectionJob): JobState => {
+  if (j.lastStartedAt === null) return '기록 없음';
+  if (j.stuck) return '멈춤 추정';
+  if (j.lastRunFailed) return '실패';
+  if (j.stale) return '주기 초과';
+  if (j.running) return '실행 중';
+  return '정상';
+};
+
+// 백엔드 경고 코드를 한글 문장으로 바꾼다, 모르는 코드는 코드 그대로 두고 작업 이름을 괄호로 붙인다
+export const warningText = (w: { code: string; batchType: string | null }) => {
+  const job = w.batchType ? jobLabel(w.batchType) : '';
+  switch (w.code) {
+    case 'JOB_STUCK': return `${job} 24시간 넘게 끝나지 않음 (멈춤 추정)`;
+    case 'JOB_STALE': return `${job} 주기 초과`;
+    case 'JOB_FAILED': return `${job} 마지막 실행 실패`;
+    case 'CATALOG_DROP': return '카탈로그 저장 수 5% 넘게 감소';
+    case 'DETAIL_NO_WRITES': return '상세 수집이 돌았는데 24시간 동안 저장된 리뷰 본문 0';
+    default: return job ? `${w.code}(${job})` : w.code;
+  }
+};
+
+// 긴 글을 max 글자에서 자르고 말줄임표를 붙인다, 전체 글은 호출부가 title 에 둔다
+export const truncate = (text: string, max: number) => (text.length > max ? `${text.slice(0, max)}…` : text);
