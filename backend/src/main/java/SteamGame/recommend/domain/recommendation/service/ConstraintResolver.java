@@ -3,7 +3,6 @@ package SteamGame.recommend.domain.recommendation.service;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.api.GeminiConstraintService;
 import SteamGame.recommend.infra.utils.EncryptUtils;
 import tools.jackson.databind.ObjectMapper;
@@ -61,7 +60,6 @@ public class ConstraintResolver {
         }
 
         Integer players = req.getPlayers() != null ? req.getPlayers() : parsedPlayers(parsed);
-        SessionLength sessionLength = req.getSessionLength() != null ? req.getSessionLength() : parsedSessionLength(parsed);
         Integer budgetUsd = req.getBudgetUsd() != null ? req.getBudgetUsd() : parsedBudgetUsd(parsed);
         Integer budgetCents = budgetUsd != null ? budgetUsd * 100 : null;
 
@@ -70,7 +68,6 @@ public class ConstraintResolver {
 
         return RecommendationCriteria.builder()
                 .players(players)
-                .sessionLength(sessionLength)
                 .budgetCents(budgetCents)
                 .moodText(moodText)
                 .excludeTags(excludeTags)
@@ -105,10 +102,6 @@ public class ConstraintResolver {
         return parsed == null ? null : parsed.players();
     }
 
-    private SessionLength parsedSessionLength(ParsedConstraints parsed) {
-        return parsed == null ? null : parsed.sessionLength();
-    }
-
     private Integer parsedBudgetUsd(ParsedConstraints parsed) {
         return parsed == null ? null : parsed.budgetUsd();
     }
@@ -125,7 +118,6 @@ public class ConstraintResolver {
     private boolean isEmpty(ParsedConstraints p) {
         return p.players() == null
                 && p.budgetUsd() == null
-                && p.sessionLength() == null
                 && p.needsCoop() == null
                 && (p.moodText() == null || p.moodText().isBlank())
                 && (p.excludeTags() == null || p.excludeTags().isEmpty());

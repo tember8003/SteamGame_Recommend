@@ -1,5 +1,6 @@
 package SteamGame.recommend.controller;
 
+import SteamGame.recommend.config.JacksonConfig;
 import SteamGame.recommend.config.RateLimitProperties;
 import SteamGame.recommend.config.SecurityConfig;
 import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
@@ -31,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // 컨트롤러 생성자가 RecommendService, MatchService 둘 다 요구해 둘 다 목으로 채움
 // RateLimitFilter 는 SecurityConfig 생성자 의존이라 슬라이스에 함께 들여옴, 필터 자체 동작은 이 슬라이스 밖 수기 검증 항목임
 @WebMvcTest(RecommendController.class)
-@Import({SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class})
+// JacksonConfig 를 함께 올려, 옛 프론트가 보내는 sessionLength 를 무시하는 것이 운영 매퍼 설정 그대로인지 검사함
+@Import({SecurityConfig.class, RateLimitFilter.class, RateLimitProperties.class, ClientIpResolver.class, JacksonConfig.class})
 class RecommendControllerMatchTest {
 
     @Autowired MockMvc mvc;
@@ -60,10 +62,14 @@ class RecommendControllerMatchTest {
     }
 
     @Test
-    void badSessionEnumReturns400() throws Exception {
+    void legacySessionLengthFieldIsIgnored() throws Exception {
+        // 세션 길이 조건은 없어졌지만 이전 프론트가 아직 보낼 수 있어 알 수 없는 필드로 무시하고 200 을 준다
+        when(matchService.recommend(any())).thenReturn(sampleResult());
+
         mvc.perform(post("/api/recommend/match").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"sessionLength\":\"HUGE\"}"))
-                .andExpect(status().isBadRequest()); // 열거형 역직렬화 실패가 HttpMessageNotReadableException 으로 400 이 됨
+                        .content("{\"players\":2,\"sessionLength\":\"SHORT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.games").isArray());
     }
 
     @Test

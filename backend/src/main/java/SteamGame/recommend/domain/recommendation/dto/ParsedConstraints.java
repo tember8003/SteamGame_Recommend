@@ -6,7 +6,6 @@ import java.util.List;
 public record ParsedConstraints(
         Integer players,
         Integer budgetUsd,
-        SessionLength sessionLength,
         Boolean needsCoop,
         String moodText,
         List<String> excludeTags) {

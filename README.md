@@ -17,7 +17,7 @@ Find Steam games from a game you like or a description of what you want to play.
 
 - **Random by tag** (`/steam/random`): Get random games with your selected tags. Filter by minimum reviews, Korean language support, and whether the game is free.
 - **Describe a game** (`/steam/input`): Describe what you want, such as "a light co-op game to play with a friend", to find matching games.
-- **Requirement match** (`/steam/match`): Add session length, budget, and player count to your description. Each recommendation includes reasons and caveats.
+- **Requirement match** (`/steam/match`): Add budget and player count to your description. Each recommendation includes reasons and caveats.
 - **Similar games** (`/steam/similar`): Choose a game you like to find similar ones.
 - **Similarity graph** (`/steam/graph`): Browse connections between similar games. Click a game to expand its recommendations.
 
@@ -101,9 +101,9 @@ The `app.recommend.similar-interleave-enabled` setting controls interleaving. Wh
 
 Requirement match combines your description with the conditions entered in the form.
 
-1. **Parse constraints**: An LLM extracts constraints from your description and combines them with the form's session length, budget, player count, and minimum reviews. Form values take precedence when they conflict with the text.
+1. **Parse constraints**: An LLM extracts constraints from your description and combines them with the form's budget, player count, and minimum reviews. Form values take precedence when they conflict with the text.
 2. **Find candidates**: If the text describes a mood, such as "relaxing", embed it to find nearby games. Otherwise, start with well-rated games. Filter candidates by budget, co-op support, player count, and excluded tags.
-3. **Select recommendations**: Prioritize games that fit your session length, if specified. Candidates similar to games you previously liked have a higher chance of selection.
+3. **Select recommendations**: Candidates similar to games you previously liked have a higher chance of selection.
 4. **Refill**: If there are too few recommendations, lower the minimum review count and search once more.
 5. **Show reasons**: Explain which conditions each game meets, how it resembles games you liked, and any caveats.
 

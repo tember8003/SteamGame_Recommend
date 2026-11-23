@@ -10,7 +10,6 @@ import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
 import SteamGame.recommend.domain.recommendation.dto.MatchRequestDTO;
 import SteamGame.recommend.domain.recommendation.dto.MatchResultDTO;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.domain.recommendation.dto.SteamAppDTO;
 import SteamGame.recommend.domain.feedback.entity.FeedbackSignal;
 import SteamGame.recommend.domain.feedback.repository.RecommendationFeedbackRepository;
@@ -21,7 +20,6 @@ import SteamGame.recommend.infra.embedding.EmbeddingProperties;
 import SteamGame.recommend.infra.embedding.EmbeddingRepository;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -152,34 +150,23 @@ class MatchServiceTest {
     }
 
     @Test
-    void volumeNudgePrefersBucketMatchingCandidatesFirst() {
-        RecommendationCriteria criteria = RecommendationCriteria.builder().sessionLength(SessionLength.SHORT).build();
-        when(resolver.resolve(any())).thenReturn(criteria);
-
-        List<Game> matched = pool(2, 900L);
-        List<Game> mismatched = pool(4, 910L);
-        List<Game> wholePool = new ArrayList<>();
-        wholePool.addAll(matched);
-        wholePool.addAll(mismatched);
-        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(wholePool);
-
-        List<Review> reviews = new ArrayList<>();
-        for (Game g : matched) {
-            reviews.add(review(g.getAppid(), new BigDecimal("5")));
-        }
-        for (Game g : mismatched) {
-            reviews.add(review(g.getAppid(), new BigDecimal("60")));
-        }
-        when(reviewRepository.findByAppidIn(any())).thenReturn(reviews);
-
-        // 실제 셔플이 일어나는 불일치 파트만 시드로 고정, 결과 집합 검증에는 순서가 필요 없음
-        service.useRandom(new Random(7));
+    void reviewsAreLoadedOnceOnlyForSelectedGames() {
+        // 샘플링이 리뷰를 읽지 않으므로 풀 전체가 아니라 최종 선택된 게임의 리뷰만 한 번에 조회해야 한다
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
+        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(pool(10, 800L));
+        when(reviewRepository.findByAppidIn(any())).thenAnswer(inv -> {
+            List<Long> ids = inv.getArgument(0);
+            return ids.stream().map(this::review).toList();
+        });
+        service.useRandom(new Random(5));
 
         MatchResultDTO r = service.recommend(new MatchRequestDTO());
 
         List<Long> resultAppids = r.games().stream().map(SteamAppDTO::getAppid).toList();
         assertThat(resultAppids).hasSize(4);
-        assertThat(resultAppids).contains(900L, 901L);
+        verify(reviewRepository, times(1)).findByAppidIn(any());
+        verify(reviewRepository).findByAppidIn(eq(resultAppids));
+        assertThat(r.reviews()).hasSize(4);
     }
 
     @Test
@@ -230,7 +217,7 @@ class MatchServiceTest {
 
     @Test
     void tasteBoost_tinyTau_picksNearestCandidate() {
-        when(resolver.resolve(any())).thenReturn(emptyCriteria()); // sessionLength 없음 → 전체 풀에서 뽑음
+        when(resolver.resolve(any())).thenReturn(emptyCriteria());
         List<Game> pool = new ArrayList<>();
         pool.add(game(501L));
         pool.add(game(502L));
@@ -281,55 +268,6 @@ class MatchServiceTest {
         List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
         assertThat(ids).hasSize(4);
         assertThat(List.of(600L, 601L, 602L, 603L, 604L)).containsAll(ids);
-    }
-
-    @Test
-    void tasteBoost_withSessionLength_picksNearestFromMatchedBucket() {
-        // 세션길이 넛지와 취향 가중 합성, matched 버킷 우선 + 그 안에서 취향 최근접이 뽑혀야 함
-        RecommendationCriteria criteria = RecommendationCriteria.builder().sessionLength(SessionLength.SHORT).build();
-        when(resolver.resolve(any())).thenReturn(criteria);
-
-        List<Game> matched = new ArrayList<>();
-        matched.add(game(700L));
-        matched.add(game(701L));
-        matched.add(game(702L));
-        List<Game> mismatched = new ArrayList<>();
-        mismatched.add(game(710L));
-        mismatched.add(game(711L));
-        List<Game> wholePool = new ArrayList<>();
-        wholePool.addAll(matched);
-        wholePool.addAll(mismatched);
-        when(gameService.matchQualityPool(any(), anyInt())).thenReturn(wholePool);
-
-        List<Review> reviews = new ArrayList<>();
-        for (Game g : matched) {
-            reviews.add(review(g.getAppid(), new BigDecimal("5")));    // SHORT 버킷
-        }
-        for (Game g : mismatched) {
-            reviews.add(review(g.getAppid(), new BigDecimal("60")));   // SHORT 아님
-        }
-        when(reviewRepository.findByAppidIn(any())).thenReturn(reviews);
-
-        props.setResultSize(1);   // need=1 로 좁혀 matched 버킷만으로 채워짐
-        props.setTasteTau(1e-6);  // 그리디
-        when(feedbackRepository.findAppidsByClientIdAndSignal("cid", FeedbackSignal.UP))
-                .thenReturn(List.of(900L));
-        when(embeddingRepository.findMeanEmbeddingByAppids(List.of(900L)))
-                .thenReturn(new float[]{1f, 0f});
-        Map<Long, float[]> vecs = new HashMap<>();
-        vecs.put(700L, new float[]{0f, 1f});    // cos 0
-        vecs.put(701L, new float[]{1f, 0f});    // cos 1, matched 중 최근접
-        vecs.put(702L, new float[]{-1f, 0f});   // cos -1
-        vecs.put(710L, new float[]{1f, 0f});    // mismatched 최근접이지만 버킷 우선이라 안 뽑힘
-        when(embeddingRepository.findEmbeddingsByAppids(any())).thenReturn(vecs);
-        service.useRandom(new Random(3));
-
-        MatchRequestDTO req = new MatchRequestDTO();
-        req.setClientId("cid");
-        MatchResultDTO r = service.recommend(req);
-
-        List<Long> ids = r.games().stream().map(SteamAppDTO::getAppid).toList();
-        assertThat(ids).containsExactly(701L);
     }
 
     @Test
@@ -595,10 +533,9 @@ class MatchServiceTest {
         return pool(4, 200L);
     }
 
-    private Review review(long appid, BigDecimal positiveGameHour) {
+    private Review review(long appid) {
         Review r = new Review();
         r.setAppid(appid);
-        r.setPositiveGameHour(positiveGameHour);
         return r;
     }
 

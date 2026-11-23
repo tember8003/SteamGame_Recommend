@@ -27,7 +27,7 @@ export default function LibraryRecommendations({ steamId, locale }: { steamId: s
   }
   return <section className={styles.recommendations} aria-labelledby="library-recommendations" aria-busy={loading}>
     <h2 id="library-recommendations">{c.recommendation}</h2><p>{c.recommendationHint}</p>
-    {result ? <RecommendResults games={result.recommendedGame} usedTags={result.usedTags} reviews={result.review} context="PROFILE" steamId={steamId} reviewOptions={{ showHeader: true, showHours: false, showRatingBar: true, showReviewText: false }} onRecommendAgain={() => void recommend()} recommendAgainDisabled={loading} /> : <button className={styles.button} disabled={loading} onClick={() => void recommend()}>{loading ? c.loading : c.recommend}</button>}
+    {result ? <RecommendResults games={result.recommendedGame} usedTags={result.usedTags} reviews={result.review} context="PROFILE" steamId={steamId} reviewOptions={{ showHeader: true, showRatingBar: true, showReviewText: false }} onRecommendAgain={() => void recommend()} recommendAgainDisabled={loading} /> : <button className={styles.button} disabled={loading} onClick={() => void recommend()}>{loading ? c.loading : c.recommend}</button>}
     {result?.recommendedGame.length === 0 ? <p>{c.empty}</p> : null}
     {error ? <p role="alert" className={styles.error}>{c.recommendError}</p> : null}
   </section>;

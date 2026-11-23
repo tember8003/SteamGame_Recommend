@@ -1,7 +1,6 @@
 package SteamGame.recommend.infra.api;
 
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
 import SteamGame.recommend.infra.llm.ChatRequest;
 import tools.jackson.databind.ObjectMapper;
@@ -34,14 +33,13 @@ class GeminiConstraintServiceTest {
     @Test
     void parsesJsonObjectFromRouterOutput() {
         when(router.complete(any())).thenReturn(Optional.of(
-                "{\"players\":3,\"budgetUsd\":20,\"sessionLength\":\"SHORT\",\"needsCoop\":true,\"moodText\":\"왁자지껄 협동\",\"excludeTags\":[\"Horror\"]}"
+                "{\"players\":3,\"budgetUsd\":20,\"needsCoop\":true,\"moodText\":\"왁자지껄 협동\",\"excludeTags\":[\"Horror\"]}"
         ));
 
         ParsedConstraints pc = service.parseConstraints("친구 3명이랑 20달러 이하 협동, 호러 빼줘");
 
         assertThat(pc.players()).isEqualTo(3);
         assertThat(pc.budgetUsd()).isEqualTo(20);
-        assertThat(pc.sessionLength()).isEqualTo(SessionLength.SHORT);
         assertThat(pc.needsCoop()).isTrue();
         assertThat(pc.moodText()).isEqualTo("왁자지껄 협동");
         assertThat(pc.excludeTags()).containsExactly("Horror");
@@ -55,7 +53,7 @@ class GeminiConstraintServiceTest {
         assertThat(sent.jsonSchema().get("additionalProperties")).isEqualTo(false);
 
         List<String> expectedFields = List.of(
-                "players", "budgetUsd", "sessionLength", "needsCoop", "moodText", "excludeTags");
+                "players", "budgetUsd", "needsCoop", "moodText", "excludeTags");
         @SuppressWarnings("unchecked")
         List<Object> required = (List<Object>) sent.jsonSchema().get("required");
         assertThat(required).containsExactlyElementsOf(expectedFields);
@@ -80,22 +78,38 @@ class GeminiConstraintServiceTest {
     }
 
     @Test
-    void invalidSessionLengthStringIsAbsorbedToNull() {
+    void unknownExtraFieldFromModelIsIgnored() {
+        // 스키마에서 뺀 필드를 모델이 그래도 내보내도 파싱이 깨지지 않아야 한다
         when(router.complete(any())).thenReturn(Optional.of(
-                "{\"players\":null,\"budgetUsd\":null,\"sessionLength\":\"UNKNOWN\",\"needsCoop\":null,\"moodText\":null,\"excludeTags\":[]}"
+                "{\"players\":2,\"budgetUsd\":null,\"sessionLength\":\"SHORT\",\"needsCoop\":null,\"moodText\":null,\"excludeTags\":[]}"
         ));
 
         ParsedConstraints pc = service.parseConstraints("아무 텍스트");
 
-        assertThat(pc.players()).isNull();
-        assertThat(pc.sessionLength()).isNull();
+        assertThat(pc.players()).isEqualTo(2);
         assertThat(pc.excludeTags()).isEmpty();
+    }
+
+    @Test
+    void schemaAndPromptNoLongerMentionSessionLength() {
+        when(router.complete(any())).thenReturn(Optional.empty());
+
+        service.parseConstraints("짧게 즐길 게임");
+
+        ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
+        verify(router).complete(captor.capture());
+        ChatRequest sent = captor.getValue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> properties = (Map<String, Object>) sent.jsonSchema().get("properties");
+        assertThat(properties).doesNotContainKey("sessionLength");
+        assertThat(sent.jsonSchema().get("required").toString()).doesNotContain("sessionLength");
+        assertThat(sent.user()).doesNotContain("sessionLength");
     }
 
     @Test
     void excludeTagsFiltersOutValuesNotInTagList() {
         when(router.complete(any())).thenReturn(Optional.of(
-                "{\"players\":null,\"budgetUsd\":null,\"sessionLength\":null,\"needsCoop\":null,\"moodText\":null,\"excludeTags\":[\"Horror\",\"NotARealTag\"]}"
+                "{\"players\":null,\"budgetUsd\":null,\"needsCoop\":null,\"moodText\":null,\"excludeTags\":[\"Horror\",\"NotARealTag\"]}"
         ));
 
         ParsedConstraints pc = service.parseConstraints("호러 말고 이상한태그도 빼줘");
@@ -106,7 +120,7 @@ class GeminiConstraintServiceTest {
     @Test
     void wrongTypedFieldsAreAbsorbedToNullInsteadOfCoerced() {
         when(router.complete(any())).thenReturn(Optional.of(
-                "{\"players\":\"three\",\"budgetUsd\":\"twenty\",\"sessionLength\":null,\"needsCoop\":\"yes\",\"moodText\":null,\"excludeTags\":[]}"
+                "{\"players\":\"three\",\"budgetUsd\":\"twenty\",\"needsCoop\":\"yes\",\"moodText\":null,\"excludeTags\":[]}"
         ));
 
         ParsedConstraints pc = service.parseConstraints("타입이 이상한 응답");

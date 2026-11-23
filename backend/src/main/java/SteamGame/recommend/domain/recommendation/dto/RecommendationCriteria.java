@@ -10,7 +10,6 @@ import java.util.Set;
 @Builder
 public class RecommendationCriteria {
     private Integer players;
-    private SessionLength sessionLength;
     private Integer budgetCents;
     private String moodText;
     private List<String> excludeTags;
@@ -27,6 +26,6 @@ public class RecommendationCriteria {
     // 하드 제약이 하나도 없으면 빈 요청으로 봄
     public boolean isEmpty() {
         return !hasMood() && budgetCents == null && !needsCoop()
-                && (excludeTags == null || excludeTags.isEmpty()) && sessionLength == null;
+                && (excludeTags == null || excludeTags.isEmpty());
     }
 }

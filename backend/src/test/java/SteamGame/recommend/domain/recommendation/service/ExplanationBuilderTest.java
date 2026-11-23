@@ -5,7 +5,6 @@ import SteamGame.recommend.domain.game.entity.Review;
 import SteamGame.recommend.domain.recommendation.dto.ExplanationItem;
 import SteamGame.recommend.domain.recommendation.dto.MatchExplanation;
 import SteamGame.recommend.domain.recommendation.dto.RecommendationCriteria;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -21,12 +20,12 @@ class ExplanationBuilderTest {
     @Test
     void freeCoopGameProducesExpectedCodes() {
         Game g = game(true, 0, 152000);
-        Review r = review(96, new BigDecimal("8"));
-        RecommendationCriteria c = criteria(4, SessionLength.SHORT, 2000, "협동");
+        Review r = review(96);
+        RecommendationCriteria c = criteria(4, 2000, "협동");
 
         MatchExplanation e = builder.build(g, r, List.of("Online Co-Op"), c, true, 1, false, null);
 
-        assertThat(codes(e.reasons())).contains("IS_FREE", "COOP_SUPPORTED", "WELL_REVIEWED", "VOLUME_FITS", "MOOD_MATCH");
+        assertThat(codes(e.reasons())).contains("IS_FREE", "COOP_SUPPORTED", "WELL_REVIEWED", "MOOD_MATCH");
         assertThat(codes(e.caveats())).contains("PLAYER_COUNT_APPROX");
         assertThat(codes(e.caveats())).doesNotContain("PRICE_NO_DISCOUNT");
         assertThat(itemOf(e.reasons(), "COOP_SUPPORTED").params()).isEqualTo(Map.of("tag", "Online Co-Op"));
@@ -34,60 +33,22 @@ class ExplanationBuilderTest {
     }
 
     @Test
-    void moodUnavailableWithoutSessionSkipsVolumeUnknown() {
+    void moodRequestedWithoutMoodPathAddsMoodUnavailable() {
         Game g = game(false, 999, 10);
-        Review r = review(90, null);
-        RecommendationCriteria c = criteria(1, null, null, "cozy");
+        Review r = review(90);
+        RecommendationCriteria c = criteria(1, null, "cozy");
 
         MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
         assertThat(codes(e.caveats())).contains("MOOD_UNAVAILABLE");
-        assertThat(codes(e.caveats())).doesNotContain("VOLUME_UNKNOWN");
         assertThat(codes(e.reasons())).doesNotContain("MOOD_MATCH");
-    }
-
-    @Test
-    void sessionRequestedWithUnknownVolumeAddsCaveat() {
-        Game g = game(false, 999, 500);
-        Review r = review(80, null);
-        RecommendationCriteria c = criteria(1, SessionLength.MEDIUM, null, null);
-
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
-
-        assertThat(codes(e.caveats())).contains("VOLUME_UNKNOWN");
-        assertThat(codes(e.caveats())).doesNotContain("MOOD_UNAVAILABLE");
-    }
-
-    @Test
-    void volumeMismatchAddsLongerCaveat() {
-        Game g = game(false, 999, 100);
-        Review r = review(90, new BigDecimal("60"));
-        RecommendationCriteria c = criteria(1, SessionLength.SHORT, null, null);
-
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
-
-        assertThat(codes(e.caveats())).contains("LONGER_THAN_REQUESTED");
-        assertThat(codes(e.caveats())).doesNotContain("SHORTER_THAN_REQUESTED");
-        assertThat(codes(e.reasons())).doesNotContain("VOLUME_FITS");
-        assertThat(itemOf(e.caveats(), "LONGER_THAN_REQUESTED").params()).isEqualTo(Map.of("typicalHours", new BigDecimal("60")));
-    }
-
-    @Test
-    void volumeMismatchAddsShorterCaveat() {
-        Game g = game(false, 999, 100);
-        Review r = review(90, new BigDecimal("5"));
-        RecommendationCriteria c = criteria(1, SessionLength.LONG, null, null);
-
-        MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
-
-        assertThat(codes(e.caveats())).contains("SHORTER_THAN_REQUESTED");
     }
 
     @Test
     void soloFriendlyReasonForSingleplayerTag() {
         Game g = game(false, 500, 300);
-        Review r = review(85, new BigDecimal("20"));
-        RecommendationCriteria c = criteria(1, null, null, null);
+        Review r = review(85);
+        RecommendationCriteria c = criteria(1, null, null);
 
         MatchExplanation e = builder.build(g, r, List.of("Singleplayer"), c, false, 1, false, null);
 
@@ -98,8 +59,8 @@ class ExplanationBuilderTest {
     @Test
     void withinBudgetReasonAndPriceNoDiscountCaveat() {
         Game g = game(false, 1500, 50);
-        Review r = review(70, null);
-        RecommendationCriteria c = criteria(1, null, 2000, null);
+        Review r = review(70);
+        RecommendationCriteria c = criteria(1, 2000, null);
 
         MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
@@ -111,8 +72,8 @@ class ExplanationBuilderTest {
     @Test
     void reviewRelaxedFlagAddsCaveat() {
         Game g = game(false, 500, 50);
-        Review r = review(70, null);
-        RecommendationCriteria c = criteria(1, null, null, null);
+        Review r = review(70);
+        RecommendationCriteria c = criteria(1, null, null);
 
         MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, true, null);
 
@@ -122,8 +83,8 @@ class ExplanationBuilderTest {
     @Test
     void coopSupportedPicksFirstMatchingTagInGameOrder() {
         Game g = game(false, 999, 10);
-        Review r = review(80, null);
-        RecommendationCriteria c = criteria(2, null, null, null);
+        Review r = review(80);
+        RecommendationCriteria c = criteria(2, null, null);
 
         MatchExplanation e = builder.build(g, r, List.of("Multiplayer", "Co-op"), c, false, 1, false, null);
 
@@ -133,8 +94,8 @@ class ExplanationBuilderTest {
     @Test
     void wellReviewedAlwaysAddedButOmitsNullParams() {
         Game g = game(false, 999, null);
-        Review r = review(null, null);
-        RecommendationCriteria c = criteria(1, null, null, null);
+        Review r = review(null);
+        RecommendationCriteria c = criteria(1, null, null);
 
         MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, null);
 
@@ -145,8 +106,8 @@ class ExplanationBuilderTest {
     @Test
     void likedGameNameAddsBecauseYouLikedReasonFirst() {
         Game g = game(false, 500, 300);
-        Review r = review(85, new BigDecimal("20"));
-        RecommendationCriteria c = criteria(1, null, null, null);
+        Review r = review(85);
+        RecommendationCriteria c = criteria(1, null, null);
 
         MatchExplanation e = builder.build(g, r, List.of(), c, false, 1, false, "Hollow Knight");
 
@@ -157,8 +118,8 @@ class ExplanationBuilderTest {
     @Test
     void blankOrNullLikedGameNameOmitsBecauseYouLikedReason() {
         Game g = game(false, 500, 300);
-        Review r = review(85, new BigDecimal("20"));
-        RecommendationCriteria c = criteria(1, null, null, null);
+        Review r = review(85);
+        RecommendationCriteria c = criteria(1, null, null);
 
         assertThat(codes(builder.build(g, r, List.of(), c, false, 1, false, null).reasons()))
                 .doesNotContain("BECAUSE_YOU_LIKED");
@@ -174,19 +135,17 @@ class ExplanationBuilderTest {
         return g;
     }
 
-    private Review review(Integer positivePct, BigDecimal positiveHour) {
+    private Review review(Integer positivePct) {
         Review r = new Review();
         if (positivePct != null) {
             r.setPositivePercentage(BigDecimal.valueOf(positivePct));
         }
-        r.setPositiveGameHour(positiveHour);
         return r;
     }
 
-    private RecommendationCriteria criteria(Integer players, SessionLength session, Integer budgetCents, String moodText) {
+    private RecommendationCriteria criteria(Integer players, Integer budgetCents, String moodText) {
         return RecommendationCriteria.builder()
                 .players(players)
-                .sessionLength(session)
                 .budgetCents(budgetCents)
                 .moodText(moodText)
                 .build();

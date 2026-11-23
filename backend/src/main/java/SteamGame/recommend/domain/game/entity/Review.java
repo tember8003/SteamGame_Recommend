@@ -34,9 +34,6 @@ public class Review {
     @Column(name = "positive_percentage", precision = 5, scale = 2)
     private BigDecimal positivePercentage;
 
-    @Column(name = "positive_game_hour", precision = 7, scale = 2)
-    private BigDecimal positiveGameHour;
-
-    @Column(name = "negative_game_hour", precision = 7, scale = 2)
-    private BigDecimal negativeGameHour;
+    // positive_game_hour, negative_game_hour 컬럼은 DB 에 남아 있지만 채우는 코드가 없어 전부 0 이라 매핑하지 않는다
+    // 컬럼을 바로 지우지 않는 규칙이라 남겨 두며 ddl-auto=validate 는 매핑 안 된 컬럼을 검사하지 않는다
 }

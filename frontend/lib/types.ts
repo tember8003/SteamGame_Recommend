@@ -42,8 +42,6 @@ export interface SteamApp {
 export interface ReviewResponse {
   positiveReview?: string
   negativeReview?: string
-  negativeHours?: number
-  positiveHours?: number
   reviewSummary?: string
   positiveRating?: number
 }
@@ -94,7 +92,6 @@ export interface MatchResult {
 // /match 요청 옵션, 필드명은 MatchRequestDTO 와 동일하게 맞춤
 export interface MatchOptions {
   rawText: string
-  sessionLength?: 'SHORT' | 'MEDIUM' | 'LONG' | null
   budgetUsd?: number | null
   players?: number | null
   review: number

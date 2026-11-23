@@ -23,9 +23,7 @@ public class GameMapper {
     public static ReviewResponseDTO convertToReviewDTO(Review review){
         ReviewResponseDTO dto = new ReviewResponseDTO();
         dto.setPositiveReview(review.getPositiveReviewText());
-        dto.setPositiveHours(review.getPositiveGameHour());
         dto.setNegativeReview(review.getNegativeReviewText());
-        dto.setNegativeHours(review.getNegativeGameHour());
         dto.setReviewSummary(review.getReviewScore());
         dto.setPositiveRating(review.getPositivePercentage());
         return dto;

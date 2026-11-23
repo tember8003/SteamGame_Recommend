@@ -1,7 +1,6 @@
 package SteamGame.recommend.infra.api;
 
 import SteamGame.recommend.domain.recommendation.dto.ParsedConstraints;
-import SteamGame.recommend.domain.recommendation.dto.SessionLength;
 import SteamGame.recommend.infra.llm.ChatCompletionRouter;
 import SteamGame.recommend.infra.llm.ChatRequest;
 import tools.jackson.databind.JsonNode;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,19 +41,17 @@ public class GeminiConstraintService {
             .collect(Collectors.joining(", ")) + "]";
 
     // Groq strict 모드 요구사항을 따름, 모든 프로퍼티는 required 에 포함하고 additionalProperties 는 false 로 고정함
-    // nullable 값은 type 을 union([타입, "null"]) 으로 표현하고 nullable enum 은 enum 배열 안에 null 을 포함시킴(List.of 는 null 불허라 Arrays.asList 사용)
+    // nullable 값은 type 을 union([타입, "null"]) 으로 표현함
     private static final Map<String, Object> CONSTRAINT_SCHEMA = Map.of(
             "type", "object",
             "properties", Map.of(
                     "players", Map.of("type", List.of("integer", "null")),
                     "budgetUsd", Map.of("type", List.of("integer", "null")),
-                    "sessionLength", Map.of("type", List.of("string", "null"),
-                            "enum", Arrays.asList("SHORT", "MEDIUM", "LONG", null)),
                     "needsCoop", Map.of("type", List.of("boolean", "null")),
                     "moodText", Map.of("type", List.of("string", "null")),
                     "excludeTags", Map.of("type", "array", "items", Map.of("type", "string"))
             ),
-            "required", List.of("players", "budgetUsd", "sessionLength", "needsCoop", "moodText", "excludeTags"),
+            "required", List.of("players", "budgetUsd", "needsCoop", "moodText", "excludeTags"),
             "additionalProperties", false
     );
 
@@ -108,7 +104,6 @@ public class GeminiConstraintService {
         Fields:
         - players: integer, how many people are playing together (null if not mentioned)
         - budgetUsd: integer, budget in US dollars (null if not mentioned)
-        - sessionLength: one of "SHORT", "MEDIUM", "LONG" (null if not mentioned)
         - needsCoop: boolean, whether cooperative play is required (null if not mentioned)
         - moodText: string, a short phrase describing the desired mood or atmosphere (null if not mentioned)
         - excludeTags: array of strings picked only from the tag list below, tags to exclude (empty array if none)
@@ -120,7 +115,7 @@ public class GeminiConstraintService {
 
         Example:
         Input sentence: 친구 3명이랑 20달러 이하 협동, 호러 빼줘
-        Output: {"players":3,"budgetUsd":20,"sessionLength":null,"needsCoop":true,"moodText":null,"excludeTags":["Horror"]}
+        Output: {"players":3,"budgetUsd":20,"needsCoop":true,"moodText":null,"excludeTags":["Horror"]}
 
         Input sentence: %s
         Output:
@@ -131,7 +126,6 @@ public class GeminiConstraintService {
         return new ParsedConstraints(
                 asIntOrNull(node, "players"),
                 asIntOrNull(node, "budgetUsd"),
-                asSessionLengthOrNull(node, "sessionLength"),
                 asBooleanOrNull(node, "needsCoop"),
                 asTextOrNull(node, "moodText"),
                 asExcludeTagsOrNull(node, "excludeTags")
@@ -153,19 +147,6 @@ public class GeminiConstraintService {
     private String asTextOrNull(JsonNode node, String field) {
         JsonNode v = node.path(field);
         return (v.isMissingNode() || v.isNull()) ? null : v.asString();
-    }
-
-    // enum 에 없는 문자열은 잘못된 응답으로 보고 null 로 흡수함
-    private SessionLength asSessionLengthOrNull(JsonNode node, String field) {
-        JsonNode v = node.path(field);
-        if (v.isMissingNode() || v.isNull()) {
-            return null;
-        }
-        try {
-            return SessionLength.valueOf(v.asString().trim().toUpperCase());
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     // 태그 리스트에 없는 값은 환각으로 보고 걸러내며, 필드 자체가 없으면 null 로 둔다

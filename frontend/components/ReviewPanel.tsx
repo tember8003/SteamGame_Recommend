@@ -5,11 +5,10 @@ import { useT } from "@/lib/i18n/useT";
 import type { ReviewResponse } from "@/lib/types";
 import styles from "./ReviewPanel.module.css";
 
-// 원본 3개 페이지의 리뷰 섹션이 서로 달라서(header 유무, 시간 통계 유무, 막대 유무, 원문 유무)
+// 원본 3개 페이지의 리뷰 섹션이 서로 달라서(header 유무, 막대 유무, 원문 유무)
 // 페이지가 자신에게 맞는 조합을 넘기도록 옵션으로 뺌
 export type ReviewDisplayOptions = {
   showHeader: boolean;
-  showHours: boolean;
   showRatingBar: boolean;
   showReviewText: boolean;
 };
@@ -59,8 +58,6 @@ export default function ReviewPanel({ review, options }: { review: ReviewRespons
 
   const positiveRating = review?.positiveRating ?? 0;
   const reviewSummary = review?.reviewSummary || t("review.noRating");
-  const positiveHours = review?.positiveHours ?? 0;
-  const negativeHours = review?.negativeHours ?? 0;
   const positiveReview = review?.positiveReview ?? "";
   const negativeReview = review?.negativeReview ?? "";
 
@@ -70,7 +67,7 @@ export default function ReviewPanel({ review, options }: { review: ReviewRespons
       <div className={styles.reviewStats}>
         <div className={styles.statItem}>
           <span className={styles.statValue}>{positiveRating}%</span>
-          <div className={styles.statLabel}>{options.showHours ? t("review.positive") : t("review.positiveRating")}</div>
+          <div className={styles.statLabel}>{t("review.positiveRating")}</div>
           {options.showRatingBar ? (
             <div className={styles.ratingBar}>
               <div className={styles.ratingFill} style={{ width: `${positiveRating}%` }} />
@@ -79,20 +76,8 @@ export default function ReviewPanel({ review, options }: { review: ReviewRespons
         </div>
         <div className={styles.statItem}>
           <span className={styles.statValue}>{reviewSummary}</span>
-          <div className={styles.statLabel}>{options.showHours ? t("review.rating") : t("review.overallRating")}</div>
+          <div className={styles.statLabel}>{t("review.overallRating")}</div>
         </div>
-        {options.showHours ? (
-          <>
-            <div className={styles.statItem}>
-              <span className={styles.statValue}>{t("review.hours", { h: positiveHours })}</span>
-              <div className={styles.statLabel}>{t("review.posHours")}</div>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statValue}>{t("review.hours", { h: negativeHours })}</span>
-              <div className={styles.statLabel}>{t("review.negHours")}</div>
-            </div>
-          </>
-        ) : null}
       </div>
 
       {options.showReviewText && (positiveReview || negativeReview) ? (
