@@ -31,7 +31,15 @@ class CollectionHealthTest {
                 new CollectionHealth.JobSpec("tag_cooccurrence", 26),
                 new CollectionHealth.JobSpec("detail_rolling", 7),
                 new CollectionHealth.JobSpec("embed_backfill", 26),
-                new CollectionHealth.JobSpec("tag_embedding", null));
+                new CollectionHealth.JobSpec("tag_embedding", 192));
+    }
+
+    // GNN 학습은 주 1회라 8일까지는 정상, 1초라도 넘으면 주기 초과다
+    @Test
+    void stale_gnnTrainingAfterEightDays() {
+        Integer gnn = CollectionHealth.intervalOf("tag_embedding");
+        assertThat(CollectionHealth.stale(gnn, NOW.minus(Duration.ofDays(8)), NOW)).isFalse();
+        assertThat(CollectionHealth.stale(gnn, NOW.minus(Duration.ofDays(8)).minusSeconds(1), NOW)).isTrue();
     }
 
     @Test
@@ -71,7 +79,7 @@ class CollectionHealthTest {
                 ok("tag_cooccurrence", recent, 74389, null),
                 ok("detail_rolling", recent, 100, null),
                 ok("embed_backfill", recent, 1000, null),
-                none("tag_embedding"));
+                ok("tag_embedding", NOW.minus(Duration.ofDays(3)), 44656, null));
 
         assertThat(CollectionHealth.warnings(jobs, 50, NOW)).isEmpty();
     }
@@ -88,7 +96,7 @@ class CollectionHealthTest {
                 none("tag_cooccurrence"),
                 failedDetail,
                 ok("embed_backfill", recent, 1000, null),
-                none("tag_embedding"));
+                ok("tag_embedding", recent, 44656, null));
 
         assertThat(CollectionHealth.warnings(jobs, 0, NOW)).containsExactly(
                 new MetricsStatusDTO.Warning("JOB_STALE", "tag_cooccurrence"),
@@ -175,13 +183,14 @@ class CollectionHealthTest {
         assertThat(CollectionHealth.stuck(null, null, NOW)).isFalse();
     }
 
-    // 주기가 없는 GNN 학습도 프로세스가 죽어 끝나지 않으면 멈춤 경고가 붙는다
+    // 프로세스가 죽어 끝나지 않은 GNN 학습은 멈춤 경고가 먼저 붙고, 한 번도 성공하지 못했으니 주기 초과도 뒤따른다
     @Test
     void warnings_stuckJobGetsJobStuckFirst() {
         StatusQueries.JobSummary dead = new StatusQueries.JobSummary("tag_embedding",
                 NOW.minus(Duration.ofHours(30)), null, 0, 0, null, null, false, null, null, null, 1, 0);
 
-        assertThat(CollectionHealth.warnings(List.of(dead), 1, NOW))
-                .containsExactly(new MetricsStatusDTO.Warning("JOB_STUCK", "tag_embedding"));
+        assertThat(CollectionHealth.warnings(List.of(dead), 1, NOW)).containsExactly(
+                new MetricsStatusDTO.Warning("JOB_STUCK", "tag_embedding"),
+                new MetricsStatusDTO.Warning("JOB_STALE", "tag_embedding"));
     }
 }
