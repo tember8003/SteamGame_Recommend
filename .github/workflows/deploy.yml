@@ -3,11 +3,13 @@ name: Deploy
 on:
   push:
     branches: [ main ]
+    # backend/ops 는 서버에 직접 복사하는 운영 스크립트라 이미지에 들어가지 않음, 바뀌어도 앱을 다시 배포하지 않음
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
       - 'frontend/**'
       - 'ml/**'
+      - 'backend/ops/**'
   pull_request:
     branches: [ main ]
     paths-ignore:
@@ -15,6 +17,7 @@ on:
       - '**/*.md'
       - 'frontend/**'
       - 'ml/**'
+      - 'backend/ops/**'
   workflow_dispatch:
 
 # PR 테스트가 배포 대기열을 막지 않게 PR 은 브랜치별 그룹으로 나누고, 새 커밋이 오면 이전 실행을 취소함

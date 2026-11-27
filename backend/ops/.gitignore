@@ -1,0 +1,4 @@
+# 웹훅 주소는 비밀값이라 서버에만 둔다
+alert.env
+alert-state.json*
+__pycache__/
