@@ -144,8 +144,8 @@ class MetricsStatusServiceTest {
         assertThat(catalog).isEqualTo(new MetricsStatusDTO.Job("steam_catalog", null, null, null, null, null,
                 false, false, false, null, null, 26, true, 0, 0));
         MetricsStatusDTO.Job gnn = dto.collection().jobs().get(4);
-        assertThat(gnn.expectedIntervalHours()).isNull();
-        assertThat(gnn.stale()).isFalse();
+        assertThat(gnn.expectedIntervalHours()).isEqualTo(192);
+        assertThat(gnn.stale()).isTrue();
     }
 
     // 마지막 성공이 12시간 전이라 7시간 주기를 넘겨 주기 초과다
@@ -200,7 +200,8 @@ class MetricsStatusServiceTest {
                         recent, false, recent, 0, null, 1, 0),
                 new StatusQueries.JobSummary("embed_backfill", recent, recent, 1000, 0, "processed=1000 failed=0 (api_down)",
                         recent, false, recent, 1000, null, 1, 0),
-                none("tag_embedding")));
+                new StatusQueries.JobSummary("tag_embedding", recent, recent, 44656, 0, "games=44656",
+                        recent, false, recent, 44656, null, 1, 0)));
 
         assertThat(service("abc").status().collection().warnings())
                 .containsExactly(new MetricsStatusDTO.Warning("DETAIL_NO_WRITES", "detail_rolling"));

@@ -25,7 +25,8 @@ public final class CollectionHealth {
     static final String DETAIL = "detail_rolling";
 
     // 하루 한 번 도는 작업은 실행 시간이 밀리는 만큼 2시간 여유를 둬 26시간으로 잡는다, 6시간마다 도는 상세 수집은 7시간
-    // tag_embedding 은 아직 정기 실행이 없어 주기를 두지 않음, steamspy_seed 는 더 쓰지 않아 목록에서 뺀다
+    // tag_embedding 은 매주 일요일 cron 이라 하루 여유를 둬 8일(192시간)로 잡는다, 주기가 없을 때 cron 이 한 번도 돌지 않은 것을 열흘 넘게 몰랐음
+    // steamspy_seed 는 더 쓰지 않아 목록에서 뺀다
     public record JobSpec(String batchType, Integer expectedIntervalHours) {
     }
 
@@ -34,7 +35,7 @@ public final class CollectionHealth {
             new JobSpec("tag_cooccurrence", 26),
             new JobSpec(DETAIL, 7),
             new JobSpec("embed_backfill", 26),
-            new JobSpec("tag_embedding", null));
+            new JobSpec("tag_embedding", 192));
 
     // 카탈로그 저장 수가 직전 성공보다 이 비율 넘게 줄면 경고한다
     private static final int CATALOG_DROP_PERCENT = 5;
